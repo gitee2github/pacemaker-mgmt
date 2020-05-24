@@ -1,0 +1,168 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+from sync import syncview
+
+class script_generatorview:
+        src_file = "@HA_DATADIR@/heartbeat-gui/script"
+	des_dir = "/usr/lib/ocf/resource.d/pacemaker/"
+        def save(self):
+                name = self.widget_name.get_text()
+                start_path = self.widget_start_path.get_text()
+                stop_path = self.widget_stop_path.get_text()
+                start, end = self.widget_processes.get_buffer().get_bounds()
+                processes = start.get_text(end).split()
+
+                if name == "":
+                        msgbox(self.top_window, _("Please input the name of the script!\n"))
+                        return 1
+
+                if start_path == "":
+                        msgbox(self.top_window, _("Please input the path of the script start!\n"))
+                        return 1
+
+                if stop_path == "":
+                        msgbox(self.top_window, _("Please input the path of the script stop!\n"))
+                        return 1
+
+                if processes == []:
+                        msgbox(self.top_window, _("Please input the processes the script should monitor!\n"))
+                        return 1
+
+		f = self.manager.do_cmd("get_file_context\n" + self.des_dir + name)
+                if f != None and f != []:
+			retval = confirmbox(self.top_window, _("A file with the same name already exists") +_(": ")
+                                 + self.des_dir + name + "\n"
+                                 +_("Do you want to overwrite it?"),
+                                   (gtk.STOCK_NO, gtk.RESPONSE_NO,
+                                    gtk.STOCK_YES, gtk.RESPONSE_YES),
+                                    _("Replace it?"))
+                        if retval in [gtk.RESPONSE_NO, gtk.RESPONSE_DELETE_EVENT] :
+				return 1
+
+                self.file_new = []
+                f = self.manager.do_cmd("get_file_context\n"+script_generatorview.src_file)
+                if f == None or f == []:
+                        msgbox(self.top_window, _("File %s not exist!")%(str(script_generatorview.src_file)))
+                        return 1
+
+                for line in f:
+                        self.file_new.append(line)
+                        if "#" in line:
+                                strline = line.split("#")[0]
+                        else:
+                                strline = line
+
+                        strline = strline.strip()
+                        m = re.match('^name="(.*)"$', strline)
+                        if m is not None:
+                                self.file_new.pop()
+                                self.file_new.append('name="%s"'%(name))
+
+                        m = re.match('^start_path="(.*)"$', strline)
+                        if m is not None:
+                                self.file_new.pop()
+                                self.file_new.append('start_path="%s"'%(start_path))
+
+                        m = re.match('^stop_path="(.*)"$', strline)
+                        if m is not None:
+                                self.file_new.pop()
+                                self.file_new.append('stop_path="%s"'%(stop_path))
+
+                        m = re.match('^ret0=`ps -ef |grep -v grep |grep $monitor_process0 |wc -l`$', strline)
+                        if m is not None:
+                                self.file_new.pop()
+                                start_str = "if [ 1 "
+                                stop_str = "elif [ 1 "
+                                i = 0
+                                for process in processes:
+                                        self.file_new.append('\tret%d=`ps -ef |grep -v grep |grep %s|wc -l`'%(i, process))
+                                        start_str = start_str + " -a $ret%d -gt 0"%(i)
+                                        stop_str = stop_str + " -a $ret%d -eq 0"%(i)
+                                        i = i + 1
+                                self.file_new.append('\t%s ]; then'%(start_str))
+                                self.file_new.append("\t\treturn $OCF_SUCCESS;")
+                                self.file_new.append('\t%s ]; then'%(stop_str))
+                                self.file_new.append("\t\treturn $OCF_NOT_RUNNING;")
+                                self.file_new.append("\telse")
+                                self.file_new.append("\t\treturn $OCF_ERR_GENERIC;")
+                                self.file_new.append("\tfi")
+
+                content_str = ""
+                for line in self.file_new:
+                        content_str = content_str + line + "\n"
+
+                ret = self.manager.do_cmd("save_file_context\nfalse\nfalse\n%s\n%s"%(str(self.des_dir + name), str(content_str)))
+                if self.manager.failed_reason != "" :
+                        msgbox(self.top_window, self.manager.failed_reason)
+                        return 1
+
+		self.manager.do_cmd("system\n%s"%(str("chmod +x "+ self.des_dir + name)))
+		if self.manager.failed_reason != "" :
+                        msgbox(self.top_window, self.manager.failed_reason)
+                        return 1
+                else:
+			msgbox(self.top_window, _("The Script has saved.\n")+_("But the Configuration File must be synchronized to other nodes.\n"), image=gtk.STOCK_DIALOG_INFO)
+
+	                file = [str(self.des_dir + name)]
+        	        syncview(self.window, self.manager, file, _("Script Generator"), self.manager.get_all_nodes())
+
+                return 0
+
+        def __init__(self, window, manager):
+                self.window = window
+                self.top_window = window.win_widget
+                self.manager = manager
+                dialog = gtk.Dialog(_("Script Generator"), self.top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+                glade = gtk.glade.XML(UI_FILE, "scriptdlg", "haclient")
+
+                layout = glade.get_widget("scriptdlg")
+                dialog.vbox.add(layout)
+
+		self.widget_name = glade.get_widget("name")
+		self.widget_start_path = glade.get_widget("start_path")
+		self.widget_stop_path = glade.get_widget("stop_path")
+		self.widget_processes = glade.get_widget("processes")
+
+                save_top_window = self.top_window
+                self.top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                self.top_window = save_top_window
+                                dialog.destroy()
+                                return None
+                        else:
+                                if self.save() == 0 :
+                                        self.top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+

@@ -1,0 +1,132 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+class importview:
+	def on_selfile(self, widget):
+		dialog = gtk.FileChooserDialog("Open..",
+				None, gtk.FILE_CHOOSER_ACTION_OPEN,
+				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+		dialog.set_default_response(gtk.RESPONSE_OK)
+
+		response = dialog.run()
+		if response == gtk.RESPONSE_OK:
+			self.dir_path.set_text(dialog.get_filename())
+
+		dialog.destroy()
+
+	def on_import(self):
+		ret = confirmbox(top_window, _("This will replace the existing resources,\nconstraints and constes with new cib file.\n\n Do you want to continue?"),
+					(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO))
+
+		if ret == gtk.RESPONSE_NO:
+			return 1
+
+		cmd = "cibadmin --replace --scope resources --xml-file " + self.dir_path.get_text()
+                ret = self.manager.do_cmd("system\n%s"%(str(cmd)))
+                if ret != [] :
+			#ret_msg = ""
+			#for r in ret:
+			#	ret_msg += r + "\n";
+			msgbox(top_window, _("Failed to import!\n")+_("Please check the file to import! It must can be cib.xml!\n")+_("And make sure all the resources in the current cluster are stopped.\n"))
+                        return 0
+
+		cmd = "cibadmin --replace --scope constes --xml-file " + self.dir_path.get_text()
+                ret = self.manager.do_cmd("system\n%s"%(str(cmd)))
+                if ret != [] :
+			msgbox(top_window, _("Failed to import!\n")+_("Please check the file to import! It must can be cib.xml!\n")+_("And make sure all the resources in the current cluster are stopped.\n"))
+                        return 0
+
+		cmd = "cibadmin --replace --scope constraints --xml-file " + self.dir_path.get_text()
+                ret = self.manager.do_cmd("system\n%s"%(str(cmd)))
+		if ret != []:
+			msgbox(top_window, _("Failed to import!\n")+_("Please check the file to import! It must can be cib.xml!\n")+_("And make sure all the resources in the current cluster are stopped.\n"))
+                        return 0
+		self.manager.do_cmd("crm_shadow\nreset\n\ntrue")
+		self.manager.update_cib_xml()
+
+		'''xml_constraints = self.manager.xml_nodes["cib"].getElementsByTagName("constraints")[0]
+		for rsc_location in xml_constraints.getElementsByTagName("rsc_location") :
+			if rsc_location.hasAttribute("node") and rsc_location.getAttribute("node") not in self.manager.get_all_nodes():
+				xml_constraints.removeChild(rsc_location)
+		xml_str = xml_constraints.toxml().replace("\n", "")
+		self.manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("constraints"), str(xml_str)))
+		if self.manager.failed_reason != "" :
+			msgbox(top_window, self.manager.failed_reason)
+			return 0
+
+		xml_constes = self.manager.xml_nodes["cib"].getElementsByTagName("constes")[0]
+		for conste_node in xml_constes.getElementsByTagName("conste_nodes") :
+			if conste_node.getAttribute("nodeid") not in self.manager.get_all_nodes():
+				xml_constes.removeChild(conste_node)
+		xml_str = xml_constes.toxml().replace("\n", "")
+		self.manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("constes"), str(xml_str)))
+		if self.manager.failed_reason != "" :
+			msgbox(top_window, self.manager.failed_reason)
+			return 0'''
+
+                msgbox(top_window, _("Imported successfully! Please adjust the resources, constraints and constes attributes to adapt current cluster!"), image=gtk.STOCK_DIALOG_INFO)
+                return 1
+
+	def __init__(self, top_window, manager):
+                self.manager = manager
+                dialog = gtk.Dialog(_("Rapid Deployment"), top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                dialog.set_border_width(5)
+                dialog.set_default_response(gtk.RESPONSE_OK)
+
+		hbox = gtk.HBox()
+		name_label = gtk.Label(_("Rapid Deployment will replace the existing resources,\nconstraints and constes with new cib file.\n")+"\n"+_("Please enter the file path to import:"))
+		name_label.set_alignment(0, 0.5)
+		hbox.pack_start(name_label, False, padding=2)
+		dialog.vbox.pack_start(hbox, False, padding=2)
+
+		hbox = gtk.HBox()
+		self.dir_path = gtk.Entry()
+		hbox.pack_start(self.dir_path, True, padding=10)
+		button = gtk.Button(_("Browsing..."))
+		button.connect('clicked', self.on_selfile)
+		hbox.pack_start(button, False, padding=2)
+		dialog.vbox.pack_start(hbox, True, padding=10)
+
+                save_top_window = top_window
+                top_window = dialog
+                dialog.show_all()
+
+		while True:
+	                ret = dialog.run()
+        	        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                	        top_window = save_top_window
+                        	dialog.destroy()
+	                        return None
+			else:
+				if self.on_import() == 1:
+					top_window = save_top_window
+					dialog.destroy()
+					return None
+

@@ -1,0 +1,15 @@
+Makefile.in
+Makefile
+.deps
+.libs
+*.la
+*.lo
+.*.swp
+hbagent
+*.beam
+MISC_ERRORS
+parser-messages
+SNMPAgentSanityCheck
+*.beam
+parser-messages
+MISC_ERRORS

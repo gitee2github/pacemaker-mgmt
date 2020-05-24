@@ -1,0 +1,79 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+class sfexview:
+        def on_save(self):
+                m = re.match('^.+$', self.disk.get_text())
+                if m is None:
+                        msgbox(top_window, _("Please input the device, for example: /dev/hda"))
+                        return 0
+
+        	m = re.match('^\d+$', self.num.get_text())
+                if m is None:
+			msgbox(top_window, _("Please input the numlocks, for example: 20"))
+			return 0
+
+		cmd = "/usr/sbin/sfex_init" + " -n " + self.num.get_text() + " " + self.disk.get_text()
+		ret = manager.do_cmd("system\n"+cmd)
+		if ret == []:
+			msgbox(top_window, _("The device had initialized!"), image=gtk.STOCK_DIALOG_INFO)
+			return 1
+		else:
+			#for r in ret:
+			msgbox(top_window, _("Please confirm the configure!\nThe device initializion had failed!"))
+			return 0
+
+        def __init__(self):
+                global top_window
+		dialog = gtk.Dialog(_("Shared Disk File EXclusiveness"), top_window, gtk.DIALOG_MODAL, 
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+                glade = gtk.glade.XML(UI_FILE, "sfexdlg", "haclient")
+
+                layout = glade.get_widget("sfexdlg")
+                dialog.vbox.add(layout)
+
+		self.disk = glade.get_widget('disk')
+                self.num = glade.get_widget('number')
+
+                save_top_window = top_window
+                top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                top_window = save_top_window
+                                dialog.destroy()
+                                return None
+			else:
+                                ret = self.on_save()
+                                if ret == 1:
+                                        top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+

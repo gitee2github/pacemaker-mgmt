@@ -1,0 +1,391 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+from sync import syncview
+
+class drbdview:
+	filename = "/etc/drbd.d/drbd0.res"
+	def data_init(self):
+                self.nodes = manager.get_all_nodes()
+                if self.nodes != None:
+                        self.nodes.sort()
+		if len(self.nodes) != 2:
+			msgbox(top_window, _("Note: DRBD can only be run in two-node cluster!"))
+
+		self.drbd_list = []
+		self.get_drbd()
+		self.node_ip = manager.get_node_ip()
+
+	def get_drbd(self):
+		f = manager.do_cmd("get_file_context\n"+drbdview.filename)
+		if f == None or f == []:
+                        return
+
+		drbd = {}
+                index = 0
+                while index < len(f):
+                        #self.file_drbd_org.append(f[index])
+                        if "#" in f[index]:
+                                strline = f[index].split("#")[0]
+                        else:
+                                strline = f[index]
+
+			strline = strline.strip()
+			if drbd.has_key("name1") and drbd.has_key("ip1") and drbd.has_key("disk1"):
+	                        m = re.match('^on(.+){$', strline)
+        	                if m is not None:
+                                	drbd["name2"] = m.groups()[0].strip()
+				m = re.match('^disk(.+);$', strline)
+				if m is not None:
+					drbd["disk2"] = m.groups()[0].strip()
+
+				m = re.match('^address(.+):(.+);$', strline)
+				if m is not None:
+					drbd["ip2"] = m.groups()[0].strip()
+			else:
+                                m = re.match('^on(.+){$', strline)
+                                if m is not None:
+                                        drbd["name1"] = m.groups()[0].strip()
+                                m = re.match('^disk(.+);$', strline)
+                                if m is not None:
+                                        drbd["disk1"] = m.groups()[0].strip()
+                
+                                m = re.match('^address(.+):(.+);$', strline)
+                                if m is not None:
+                                        drbd["ip1"] = m.groups()[0].strip()
+			index = index + 1
+
+		if drbd.has_key("name1") and drbd.has_key("ip1") and drbd.has_key("disk1") and drbd.has_key("name2") and drbd.has_key("ip2") and drbd.has_key("disk2"):
+			self.drbd_list.append(drbd)
+		return
+
+	def update(self):
+                drbdlist = gtk.ListStore(str, str, str, str, str, str)
+                for drbd in self.drbd_list:
+                        drbdlist.append([drbd["name1"], drbd["ip1"], drbd["disk1"], drbd["name2"], drbd["ip2"], drbd["disk2"]])
+
+                self.widget_drbdview.set_model(drbdlist)
+		if len(self.drbd_list) > 0:
+			self.widget_adddrbd.set_sensitive(False)
+		else:
+			self.widget_adddrbd.set_sensitive(True)
+
+		return
+
+        def get_selected_drbd(self):
+                (model, iter) = self.widget_drbdview.get_selection().get_selected()
+                if iter == None:
+                        return None
+                else:
+                        return model.get_path(iter)[0]
+
+	def on_change_name1(self, widget):
+                name = widget.child.get_text()
+		combo_name_list = gtk.ListStore(gobject.TYPE_STRING)
+                for node in self.nodes:
+			if node != name:
+	                        combo_name_list.append([node])
+                self.widget_name2.set_model(combo_name_list)
+
+		if name in self.node_ip.keys():
+			self.widget_ip1.set_text(self.node_ip[name])
+		return
+
+	def on_change_name2(self, widget):
+                name = widget.child.get_text()
+		combo_name_list = gtk.ListStore(gobject.TYPE_STRING)
+                for node in self.nodes:
+			if node != name:
+	                        combo_name_list.append([node])
+                self.widget_name1.set_model(combo_name_list)
+
+		if name in self.node_ip.keys():
+			self.widget_ip2.set_text(self.node_ip[name])
+		return
+
+	def on_pop_dialog(self, widget):
+		if widget.get_name() == "add":
+                        title = _("Add DRBD")
+			if len(self.drbd_list) > 0 :
+				return
+                else:
+                        selected_drbd = self.get_selected_drbd()
+                        if selected_drbd == None:
+                                return
+                        title = _("Edit DRBD")
+
+                global top_window
+                dialog = gtk.Dialog(title, top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                glade = gtk.glade.XML(UI_FILE, "edit_drbddlg", "haclient")
+                layout = glade.get_widget("edit_drbddlg")
+                dialog.vbox.add(layout)
+
+		self.widget_name1 = glade.get_widget("name1")
+		self.widget_ip1 = glade.get_widget("ip1")
+		self.widget_disk1 = glade.get_widget("disk1")
+		self.widget_name2 = glade.get_widget("name2")
+		self.widget_ip2 = glade.get_widget("ip2")
+		self.widget_disk2 = glade.get_widget("disk2")
+		self.widget_name1.child.set_editable(False)
+		self.widget_name2.child.set_editable(False)
+
+                combo_name1_list = gtk.ListStore(gobject.TYPE_STRING)
+                combo_name2_list = gtk.ListStore(gobject.TYPE_STRING)
+                for node in self.nodes:
+                        combo_name1_list.append([node])
+                        combo_name2_list.append([node])
+                self.widget_name1.set_model(combo_name1_list)
+                #self.widget_name1.set_text_column(0)
+                self.widget_name2.set_model(combo_name2_list)
+                #self.widget_name2.set_text_column(0)
+
+		self.widget_name1.connect('changed', self.on_change_name1)
+		self.widget_name2.connect('changed', self.on_change_name2)
+
+		if widget.get_name() != "add" :
+			self.widget_name1.child.set_text(self.drbd_list[selected_drbd]["name1"])
+			self.widget_ip1.set_text(self.drbd_list[selected_drbd]["ip1"])
+			self.widget_disk1.set_text(self.drbd_list[selected_drbd]["disk1"])
+			self.widget_name2.child.set_text(self.drbd_list[selected_drbd]["name2"])
+			self.widget_ip2.set_text(self.drbd_list[selected_drbd]["ip2"])
+			self.widget_disk2.set_text(self.drbd_list[selected_drbd]["disk2"])
+
+                save_top_window = top_window
+                top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                top_window = save_top_window
+                                dialog.destroy()
+                                return None
+                        else :
+                                if widget.get_name() == "add":
+                                        if self.add_drbd() == 0:
+                                                top_window = save_top_window
+                                                dialog.destroy()
+                                                return None
+                                else:
+                                        if self.edit_drbd(selected_drbd) == 0:
+                                                top_window = save_top_window
+                                                dialog.destroy()
+                                                return None
+
+        def add_drbd(self):
+                drbd = {}
+                name1 = self.widget_name1.child.get_text()
+                ip1 = self.widget_ip1.get_text()
+		disk1 = self.widget_disk1.get_text()
+                name2 = self.widget_name2.child.get_text()
+                ip2 = self.widget_ip2.get_text()
+		disk2 = self.widget_disk2.get_text()
+
+                if self.check(name1, ip1, disk1, name2, ip2, disk2) == 1:
+                        return 1
+
+                drbd["name1"] = name1
+                drbd["ip1"] = ip1
+                drbd["disk1"] = disk1
+                drbd["name2"] = name2
+                drbd["ip2"] = ip2
+                drbd["disk2"] = disk2
+
+                self.drbd_list.append(drbd)
+                self.update()
+                self.changed = True
+                return 0 
+
+        def del_drbd(self, widget):
+                index = self.get_selected_drbd()
+                self.drbd_list.pop(index)
+                self.update()
+                self.changed = True
+                return
+
+        def edit_drbd(self, index):
+                name1 = self.widget_name1.child.get_text()
+                ip1 = self.widget_ip1.get_text()
+                disk1 = self.widget_disk1.get_text()
+                name2 = self.widget_name2.child.get_text()
+                ip2 = self.widget_ip2.get_text()
+                disk2 = self.widget_disk2.get_text()
+
+                if self.check(name1, ip1, disk1, name2, ip2, disk2) == 1:
+                        return 1
+
+                self.drbd_list[index]["name1"] = name1
+                self.drbd_list[index]["ip1"] = ip1
+                self.drbd_list[index]["disk1"] = disk1
+                self.drbd_list[index]["name2"] = name2
+                self.drbd_list[index]["ip2"] = ip2
+                self.drbd_list[index]["disk2"] = disk2
+                self.update()
+                self.changed = True
+                return 0
+
+	def check(self, name1, ip1, disk1, name2, ip2, disk2):
+		if name1 == name2 :
+			msgbox(top_window, _("Please confirm the two nodes, they must be different!\n"))
+			return 1
+
+		if name1 == "" or name2 =="":
+			msgbox(top_window, _("Please select nodes!\n"))
+			return 1
+
+		m = re.match('^(\d+)\.(\d+)\.(\d+)\.(\d+)$', ip1)
+                if m is None or int(m.groups()[0])<=0 or int(m.groups()[0])>255 or int(m.groups()[1])<0 or int(m.groups()[1])>255 or int(m.groups()[2])<0 or int(m.groups()[2])>255 or int(m.groups()[3])<0 or int(m.groups()[3])>255 :
+                        msgbox(top_window, _("Please confirm the IP address of %s!\n")%(name1))
+                        return 1
+
+		m = re.match('^(\d+)\.(\d+)\.(\d+)\.(\d+)$', ip2)
+                if m is None or int(m.groups()[0])<=0 or int(m.groups()[0])>255 or int(m.groups()[1])<0 or int(m.groups()[1])>255 or int(m.groups()[2])<0 or int(m.groups()[2])>255 or int(m.groups()[3])<0 or int(m.groups()[3])>255 :
+                        msgbox(top_window, _("Please confirm the IP address of %s!\n")%(name2))
+                        return 1
+
+		if str(ip1) == str(ip2):
+                        msgbox(top_window, _("Please confirm the IP addresses! They must be different!\n"))
+                        return 1
+
+		if not manager.check_device(disk1) or not manager.check_device(disk2):
+			msgbox(top_window, _("Please input the device you want!\n"))
+			return 1
+
+		return 0
+
+        def on_click(self, widget, event) :
+                if (event.type == gtk.gdk._2BUTTON_PRESS and event.button == 1) \
+                        or ( event.type == gtk.gdk.KEY_PRESS and event.keyval == gtk.keysyms.Return) :
+                        self.on_pop_dialog(widget)
+
+	def save(self):
+		if not self.changed:
+			return
+		if len(self.drbd_list) == 0:
+                        manager.do_cmd("save_file_context\nfalse\nfalse\n%s\n%s"%(str(self.filename), str("")))
+                        if manager.failed_reason != "" :
+                                msgbox(top_window, manager.failed_reason)
+                                return
+
+		for drbd in self.drbd_list:
+			file_drbd = []
+			file_drbd.append("resource drbd0 {")
+			file_drbd.append("\ton %s {"%(drbd["name1"]))
+			file_drbd.append("\t\tdevice      /dev/drbd0;")
+			file_drbd.append("\t\tdisk        %s;"%(drbd["disk1"]))
+			file_drbd.append("\t\taddress     %s:7789;"%(drbd["ip1"]))
+			file_drbd.append("\t\tmeta-disk   internal;")
+			file_drbd.append("\t}")
+                        file_drbd.append("\ton %s {"%(drbd["name2"]))
+                        file_drbd.append("\t\tdevice      /dev/drbd0;")
+                        file_drbd.append("\t\tdisk        %s;"%(drbd["disk2"]))
+                        file_drbd.append("\t\taddress     %s:7789;"%(drbd["ip2"]))
+                        file_drbd.append("\t\tmeta-disk   internal;")
+                        file_drbd.append("\t}")
+			file_drbd.append("}")
+
+	                content_str = ""
+        	        for line in file_drbd:
+                	        content_str = content_str + line + "\n"
+
+	                manager.do_cmd("save_file_context\nfalse\nfalse\n%s\n%s"%(str(self.filename), str(content_str)))
+        	        if manager.failed_reason != "" :
+                	        msgbox(top_window, manager.failed_reason)
+				return
+
+		msgbox(top_window, _("The DRBD changes has saved.\n")+_("But the Configuration File must be synchronized to other nodes.\n")+_("And then please run command on both nodes:\n/usr/sbin/drbd_init\n"), image=gtk.STOCK_DIALOG_INFO)
+
+                file = [self.filename]
+                syncview(self.top_window, self.manager, file, _("Disk Mirroring Configuration"), manager.get_all_nodes())
+
+        def __init__(self):
+                global top_window
+                dialog = gtk.Dialog(_("Disk Mirroring Configuration"), top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+                glade = gtk.glade.XML(UI_FILE, "drbddlg", "haclient")
+
+                layout = glade.get_widget("drbddlg")
+                dialog.vbox.add(layout)
+
+		self.changed = False
+
+		self.widget_drbdview = glade.get_widget("drbdview")
+		renderer1 = gtk.CellRendererText() 
+                column1 = gtk.TreeViewColumn(_("Name1"), renderer1, text=0)
+                renderer2 = gtk.CellRendererText()
+                column2 = gtk.TreeViewColumn(_("IP1"), renderer2, text=1)
+                renderer3 = gtk.CellRendererText()
+                column3 = gtk.TreeViewColumn(_("Device1"), renderer3, text=2)
+                renderer4 = gtk.CellRendererText()
+                column4 = gtk.TreeViewColumn(_("Name2"), renderer4, text=3)
+                renderer5 = gtk.CellRendererText()
+                column5 = gtk.TreeViewColumn(_("IP2"), renderer5, text=4)
+                renderer6 = gtk.CellRendererText()
+                column6 = gtk.TreeViewColumn(_("Device2"), renderer6, text=5)
+                self.widget_drbdview.append_column(column1)
+                self.widget_drbdview.append_column(column2)
+                self.widget_drbdview.append_column(column3)
+                self.widget_drbdview.append_column(column4)
+                self.widget_drbdview.append_column(column5)
+                self.widget_drbdview.append_column(column6)
+		self.widget_drbdview.connect("event-after", self.on_click)
+
+		self.widget_adddrbd = glade.get_widget("add")
+		glade.get_widget("add").connect("clicked", self.on_pop_dialog)
+		glade.get_widget("edit").connect("clicked", self.on_pop_dialog)
+		glade.get_widget("del").connect("clicked", self.del_drbd)
+
+                self.data_init()
+                self.update()
+
+                save_top_window = top_window
+                top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                if self.changed :
+                                        ret = confirmbox(top_window, _("The data of current view have been changed.")+"\n"+_("Apply the changes?"),
+                                                (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                                gtk.STOCK_NO, gtk.RESPONSE_NO,
+                                                gtk.STOCK_YES, gtk.RESPONSE_YES))
+                                        if ret == gtk.RESPONSE_YES :
+                                                self.save()
+                                        if ret != gtk.RESPONSE_CANCEL :
+                                                top_window = save_top_window
+                                                dialog.destroy()
+                                                return None
+                                else:
+                                        top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+                        else:
+                        	self.save()
+                                top_window = save_top_window
+                                dialog.destroy()
+                                return None

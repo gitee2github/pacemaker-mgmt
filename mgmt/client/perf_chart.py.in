@@ -1,0 +1,114 @@
+#!/usr/bin/env python -tt
+# -*- coding: utf-8 -*-
+# Author: Liu Jiaming <jiaming.liu@cs2c.com.cn>
+#
+
+import platform
+import sys
+import gobject
+import sqlite3 as lite
+import gettext
+from nkha_constants import *
+t = gettext.translation(I18N_DOMAIN, "@HA_DATADIR@/locale", fallback = True)
+_ = t.lgettext
+
+try:
+    import gtk
+    from matplotlib.figure import Figure
+    import  matplotlib.ticker as Ticker
+    from matplotlib.backends.backend_gtk import FigureCanvasGTK
+except Exception, e:
+    print >> sys.stderr, _("Unable to import modules. Maybe you're "
+            "not running under X? ")
+    sys.exit(1)
+
+LOCAL_NODE=platform.node()
+ISDB_PATH = "/usr/lib/ocf/lib/heartbeat/db/"
+
+def retrieve_scores_from_node(manager, qnode):
+    """Retrieve performance scores in IS database from node designated by
+    qnode parameter. If NOT specified, local scores will be returned."""
+    if qnode == LOCAL_NODE:
+        conn = lite.connect(ISDB_PATH+qnode+".db")
+        with conn:
+            curs = conn.cursor()
+            curs.execute("SELECT score FROM IS_node_stat")
+            rows = curs.fetchall()
+            scores = [row[0] for row in rows]
+    else:
+        qaddr = manager.get_node_ip()[qnode][0]
+        query="SELECT score FROM IS_node_stat"
+        sql_cmd="sqlite3 %s%s.db \"%s\"" % (ISDB_PATH, qnode, query)
+        try:
+            ## Warning: \n is necessary although I don't know why ...
+            mgr_response = manager.do_cmd("ssh_node\n%s\n%s\n%s\n%s" \
+                %(qaddr,"HASql","qwert12345",sql_cmd))
+            ## As the list returned is something like this:
+            ## ['12.0', '22.0', '55.0', ..., '28.0', '']
+            scores = [ float(it) for it in mgr_response[:-1] ]
+        except (IndexError, TypeError):
+            scores=[]
+    return scores
+
+def  time_of_score_backwards(scores=[]):
+    length = len(scores)
+    if length == 0:
+        return []
+    else:
+        return [ x+1-length for x in xrange(length) ]
+
+class PerformanceChart:
+    """Real-time window to show performance trend based on system
+    load in the latest 60 minutes"""
+
+    def __init__(self, manager, querynode, parent=None,timeout=60):
+        self.manager = manager
+        self.scores = retrieve_scores_from_node(self.manager, querynode)
+        self.times = time_of_score_backwards(self.scores)
+        title = _("Performance Chart of Node: %s") % querynode
+        self.dialog = gtk.Dialog(title, parent,
+            gtk.DIALOG_DESTROY_WITH_PARENT|gtk.DIALOG_MODAL, None)
+        self.dialog.set_position(gtk.WIN_POS_CENTER_ALWAYS)
+        self.dialog.set_size_request(720, 480)
+        self.fig = Figure(facecolor='lightgrey')
+        self.perfplot = self.fig.add_subplot(111)#, axisbg='blue')
+        # Pay attention to the comma
+        self.line,  = self.perfplot.plot(self.times, self.scores,\
+                marker='.',color='blue', linestyle='-', lw=3)
+
+        self.perfplot.set_ylim((0,110))
+        self.perfplot.grid(True)
+
+        time_ticks = [ 10*x for x in xrange(-6,1) ]
+        self.perfplot.set_xticks(time_ticks)
+
+        time_tags = [str(-xt)+_(" mins ago") for xt in time_ticks ]
+        time_tags[0] = _("An hour ago")
+        time_tags[-1] = _("Now")
+        self.perfplot.set_xticklabels(time_tags)
+
+        self.perfplot.set_xlabel(_("Time"), weight='bold')
+        self.perfplot.set_ylabel(_("System Overload"), weight='bold')
+
+        fmt = Ticker.FormatStrFormatter('%1.0f%%')
+        self.perfplot.yaxis.set_major_formatter(fmt)
+        for xtl in self.perfplot.get_xticklabels():
+            xtl.set_color('blue')
+
+        canvas = FigureCanvasGTK(self.fig)
+        self.dialog.vbox.pack_start(canvas, True, True, 0)
+        self.dialog.show_all()
+        # periodic timer registeration
+        timer = gobject.timeout_add_seconds(timeout, self.update_perfplot, querynode)
+        self.dialog.run()
+        gobject.source_remove(timer)
+        self.dialog.destroy()
+
+    def update_perfplot(self, querynode):
+        self.scores = retrieve_scores_from_node(self.manager, querynode)
+        self.times = time_of_score_backwards(self.scores)
+        self.line.set_xdata(self.times)
+        self.line.set_ydata(self.scores)
+        # perf plot refresher
+        self.fig.canvas.draw()
+        return True

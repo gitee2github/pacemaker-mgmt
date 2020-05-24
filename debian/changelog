@@ -1,0 +1,253 @@
+pacemaker-mgmt (1.99.2-1) unstable; urgency=medium
+  * Update source tarball to revision: 0cc24125502d tip
+  * Statistics:
+      Changesets: 49
+      Diff:            13 files changed, 4164 insertions(+), 2759 deletions(-)
+
+  * Changes since pacemaker-mgmt-1.99.1
+  + Dev: haclient: Add "About"
+  + Dev: haclient: Add accelerators
+  + Dev: haclient: Add Japanese translation
+  + Dev: haclient: Improve thread synchronization
+  + Dev: haclient: Provide the progress pulse when generating the transition information
+  + Dev: haclient: Set default response for dialogs
+  + Dev: haclient: Show progress pulse when generating shadow diff
+  + Dev: haclient: Support viewing/editing/importing/exporting the whole cib xml or the configuration section
+  + Dev: mgmt: Improve the performance and the user interface of "Transition Information"
+  + Dev: mgmt: Provide more details of nodes
+  + Dev: po: Add the translation of the license
+  + Dev: po: Update pot and po
+  + High: lib: Fix huge memory leak due to the behavior of swig
+  + Low: Build: Add libgv-python dependency for Debian
+  + Low: haclient: Avoid an error if there's no pengine input exists
+  + Low: haclient: Avoid the possible key error of Manager.get_node_config()
+  + Low: haclient: Concatenate error messages with the proper type
+  + Low: haclient: Consider the possibility of IOError when creating temporary files
+  + Low: haclient: Determine labels's width and align the following widgets properly
+  + Low: haclient: Do not continue updating if the client is disconnected
+  + Low: haclient: Fill the limited number of transitions into the drop-down list
+  + Low: haclient: Make python-lxml optional
+  + Low: haclient: Make sure the variable is assigned before referenced
+  + Low: haclient: Make the marks of meta_attributes's default values consistent
+  + Low: haclient: Set the default focus on "password" entry in the login dialog
+  + Low: haclient: Set widgets's initial sizes to appropriate values for low resolutions
+  + Low: mgmt: Log version details
+  + Low: mgmt: Show its unclean resources if a node is uncleanly offline
+  + Low: mgmtd: (LF#2142) Avoid redefinitions
+  + Low: mgmtd: Add and adopt a new macro gen_msg_from_fstream()
+  + Low: mgmtd: Adopt append_str() macro in on_get_pe_inputs()
+  + Low: mgmtd: Can be compiled and work against pacemaker < 1.0.3
+  + Low: mgmtd: Optimize for tranferring schemas
+  + Low: mgmtd: Optimize message generating for transferring cluster reports
+  + Low: mgmtd: Optimize message generating for transferring crm DTD
+  + Low: mgmtd: Optimize message generating for transferring transition information
+  + Low: mgmtd: Use the variable instead of the macro directly
+  + Low: snmp_subagent: Allow specifying the cache timeout through the argument if not SUPPORT_HEARTBEAT
+  + Medium: haclient: Avoid hanging when getting or parsing CIB/schemas fail
+  + Medium: haclient: Do manager.update() via gobject timeout
+  + Medium: haclient: Increase the interval of gobject timeout to avoid consuming excessive CPU when update fails
+  + Medium: haclient: Remove the graph when it's no longer needed
+  + Medium: haclient: Set gobject timeout for manager.update() in the consistent way
+  + Medium: haclient: Update crm metadata via gobject timeout (Optimize connecting time)
+  + Medium: mgmt: Display the proper status of resources on the node which is uncleanly offline
+  + Medium: mgmtd: Destroy the crmd channel in the end of on_cleanup_rsc()
+  + Medium: mgmtd: Fix memory leaks
+
+ -- Yan Gao <ygao@novell.com>  Mon, 29 Jun 2009 14:05:12 +0800
+
+pacemaker-mgmt (1.99.1-1) unstable; urgency=medium
+  * Update source tarball to revision: pacemaker-mgmt-1.99.1 (484883b2efe8+ tip)
+  * Statistics:
+      Changesets: 27
+      Diff:            26 files changed, 10335 insertions(+), 1290 deletions(-)
+
+  * Changes since 1.99.0-3
+  + Build: (bnc#487697) Add copies of licenses
+  + Dev: haclient: Automatically generate meaningful unique IDs instead of UUIDs
+  + Dev: haclient: Automatically generate unique IDs for "op"s in "Simple Mode"
+  + Dev: haclient: Improved for i18n
+  + Dev: haclient: Make sure a generated ID is valid against schema
+  + Dev: haclient: Propose ID for objects for which users may not want to set ID themselves
+  + Dev: po: Maintain po in a separate directory.
+  + High: mgmt: The path that keeps PEngine outputs has been changed!
+  + High: mgmtd: Replace the adoptions of dirent->d_type which is not supported by some filesystems such as reiserfs
+  + Low: Build: Improve i18n support for compatibility
+  + Low: haclient: (bnc#484169) Add desktop file
+  + Low: haclient: Make sure a created intermediate object's ID is unique
+  + Low: haclient: Rename some terms
+  + Low: haclient: Support objects with unicode IDs
+  + Low: mgmtd: Try to stat the cluster report file directly
+  + Medium: haclient: (bnc#486866) Check whether a specified time is valid
+  + Medium: haclient: (bnc#488594) Additional prechecks for "primitive"
+  + Medium: haclient: Generate an UUID first (since there are objects for which we could not generate a meaningful ID)
+  + Medium: haclient: Set the focus back after dynamically tuning the layout
+  + Medium: mgmt: Optimize viewing transition information
+  + Medium: mgmtd: Avoid segmentation faults caused by missing the required user or group
+
+ -- Yan Gao <ygao@novell.com>  Mon, 27 Apr 2009 11:45:06 +0800
+
+pacemaker-mgmt (1.99.0-3) unstable; urgency=medium
+  * Update source tarball to revision: f07b59e49f79 tip
+  * Statistics:
+      Changesets:      9
+      Diff:            6 files changed, 929 insertions(+), 95 deletions(-)
+
+  * Changes since 1.99.0-2
+  + Dev: mgmt: Implement shadow configuration support
+  + Low: haclient: Change the layout of buttons for TransitionInfoDlg()
+  + Low: haclient: Do not set "target-role" in add wizard if working on a shadow CIB
+  + Low: haclient: Fix file filters for saving transition graph
+  + Medium: haclient: Get and cache CRM metadata in advance
+
+ -- Yan Gao <ygao@novell.com>  Fri, 20 Mar 2009 02:00:41 +0800
+
+pacemaker-mgmt (1.99.0-2) unstable; urgency=medium
+  * Update source tarball to revision: 19e662ce6447+ tip
+  * Statistics:
+      Changesets:      7
+      Diff:            4 files changed, 58 insertions(+), 6 deletions(-)
+
+  * Changes since pacemaker-mgmt-1.99.0
+  + Dev: haclient: Hide less used attributes of "op" in simple mode
+  + Low: Build: Improve debian/control file
+  + Low: haclient: Add "interleave" setting in wizard
+  + Low: haclient: Hide optional attributes for "rsc_order" in simple mode
+  + Medium: Build: Fix compilation
+
+ -- Yan Gao <ygao@novell.com>  Sat, 14 Mar 2009 10:05:12 +0800 
+
+pacemaker-mgmt (1.99.0-1) unstable; urgency=medium
+  * Update source tarball to pacemaker-mgmt-1.99.0 (revision: 286f917a201f+ tip)
+  * Statistics:
+      Changesets:      317
+      Diff:            57 files changed, 9929 insertions(+), 6936 deletions(-)
+
+  * Changes since pacemaker-pygui-1.4
+  + Complete rewrite
+
+ -- Yan Gao <ygao@novell.com>  Mon, 02 Mar 2009 16:10:14 +0800
+
+pygui (2.0-1) stable; urgency=medium
+  * Update source tarball to revision: 1485861613b7 tip
+  * Statistics:
+      Changesets:      119
+      Diff:            29 files changed, 4190 insertions(+), 700 deletions(-)
+
+  * Changes since pacemaker-pygui-1.4
+  + Complete rewrite
+
+ -- Andrew Beekhof <abeekhof@suse.de>  Mon, 13 Oct 2008 20:27:12 +0200
+
+pygui (1.4-1) stable; urgency=medium
+  * Update source tarball to revision: e25a1969548c tip
+  * Statistics:
+      Changesets:      21
+      Diff:            5 files changed, 8 insertions(+), 5 deletions(-)
+
+  * Changes since pygui-1.3.1
+  + configure.in: Check cluster stack before add extra warning options for gcc
+  + haclient: Consider the conditions of RESPONSE_DELETE_EVENT
+  + haclient: Consider the conflicts of file names before saving a cluster report
+  + haclient: Improve the message box
+  + haclient: Pop up a message box besides syslog if failed parsing the metadata of a RA (change my decision;-))
+  + haclient: Provide a confirm dialog before generate the cluster report
+  + haclient: Resolve a compatibility issue for pygtk < 2.6
+  + haclient: Support doing command asynchronously through threading; Provide a progress pulse when waiting for a session I/O
+  + High: Build: Add entries for the snmp on debian
+  + High: Dont increment uninitialized variables
+  + High: Only free data after we're done with it
+  + Implement editing the description.txt from the archive of a cluster report
+  + Medium: snmp: Fix building against Pacemaker 0.6.5
+  + mgmt: Compatible with openais-based cluster stack
+  + mgmt: Implement cluster reporting through hb_report
+  + mgmtd: Check arguments when getting metadata of crm for security
+  + mgmtd: Resolve an implicit declaration
+  + snmp_subagent: Retrieve LHANodeIndex value properly
+
+ -- Andrew Beekhof <abeekhof@suse.de>  Fri, 20 Jun 2008 08:32:47 +0200
+
+pygui (1.3.1-1) stable; urgency=medium
+  * Update source tarball to revision: 9ac514be51ff tip
+  * Statistics:
+      Changesets:       15
+      Diff:             6 files changed, 138 insertions(+), 169 deletions(-)
+
+  * Changes since pygui-1.3
+  + High: Build: Build snmp on debian too
+  + High: haclient: Use the correct XML wrapper functions to allow building with pacemaker 0.7
+
+ -- Andrew Beekhof <abeekhof@suse.de>  Wed, 14 May 2008 16:24:45 +0200
+
+pygui (1.3-1) stable; urgency=medium
+  * Update source tarball to revision: 46736ff1b944 tip
+  * Statistics:
+      Changesets:      26
+      Diff:            96 files changed, 7120 insertions(+), 299 deletions(-)
+
+  * Changes since pygui-1.2
+  + Added SNMP functionality from Heartbeat/Pacemaker
+  + Bug 1814 - SNMP Subagent fix for failure on ppc
+  + haclient: Fill all sub-resources into the list of combobox for selecting
+  + haclient: Get all resources recursively (previously get only resources in top two level)
+  + haclient: Provide options for cleaning up specified/all resource(s) on specified/all node(s)
+  + mgmt: Clean up the failcount when cleaning up a resource
+  + mgmt: Dynamic rendering fileds for tables according to DTD
+  + mgmt: Pop up a description tip when leaving the pointer over the label of crm parameter.
+  + mgmt: Remove hardcoded portions of instance_attributes, operations and rsc_location rule
+  + mgmt: Resolve a compatibility issue for pygtk before 2.6
+  + mgmt: Resolve the issue caused by inconsistent names between DTD and RA.
+  + mgmt: Resolve the problem while dynamic filling for an operation with role
+  + mgmt: Return the actual value returned from cib_conn (Novell Bug #356170)
+  + mgmt: Rewrite "instance_attributes", "operations" and "expression" based on the new model
+  + mgmt: Tune some translations
+
+ -- Andrew Beekhof <abeekhof@suse.de>  Wed, 23 Apr 2008 17:51:20 +0200
+
+pygui (1.2-1) unstable; urgency=low
+
+  * Update source tarball to revision: 37598aa21f3f tip
+  * Statistics:
+      Changesets:    6
+      Diff:          6 files changed, 164 insertions(+), 20 deletions(-)
+
+  * Changes since pygui-1.1
+  + mgmt: Implement migration and unmigration of resources
+  + pam: replace debian specific '@include' with standard(?) syntax
+
+ -- Andrew Beekhof <abeekhof@suse.de>  Thu, 24 January 2008 21:21:00 +0200
+
+pygui (1.1-1) unstable; urgency=low
+
+  * Update source tarball to revision: d0c7cdc27d29
+  * Statistics:
+      Changesets:    19
+      Diff:          26 files changed, 1102 insertions(+), 1839 deletions(-)
+
+  * Changes since pygui-1.0.0
+  + High: Build: Make sure all required variables are expanded (and set consistently with Heartbeat)
+  + mgmt: Exclude the resource with corrupted metadata from the list in adding resource dialog.
+  + mgmt: Implement common classes for adding and viewing kinds of objects.
+  + mgmt: Improve the commonality of the common model
+  + mgmt: Provide correct message about failed login.
+  + mgmt: Resolve a compatibility problem for old python
+  + mgmt: Resolve a compatibility problem for pygtk under 2.6
+  + mgmt: Resume tls sending in outer function
+  + mgmt: Tune the displaying of some text.
+
+ -- Andrew Beekhof <abeekhof@suse.de>  Mon, 21 January 2008 17:38:00 +0200
+
+pygui (1.0.0-1) unstable; urgency=low
+
+  * Initial package check-in
+  * Update source tarball to revision: 10a1481e946b
+  * Statistics:
+      Changesets:    41
+      Diff:          1593 files changed, 754 insertions(+), 349296 deletions(-)
+
+  * Changes since STABLE-2.1.3
+  + hbagent - corrected a minor typo from the change to squash certain errors during shutdown.  A "#" had crept in somehow..
+  + hbmgmtd: use /etc/pam.d/common-{auth,account} if available
+  + High: Build: Fix build after cleanup
+  + High: Build: Remove everything not specific to the gui/tsa_agent or CIM
+
+ -- Andrew Beekhof <abeekhof@suse.de>  Fri, 11 January 2008 11:37:00 +0200

@@ -1,0 +1,204 @@
+#!/usr/bin/env python -tt
+"""This module is responsible for license registeration"""
+from nkha_constants import *
+import os, sys
+import time
+import os.path
+import gettext
+
+t = gettext.translation(I18N_DOMAIN, "@HA_DATADIR@/locale", fallback = True)
+_ = t.lgettext
+
+try:
+    import gtk, pygtk
+except Exception, e:
+    print >> sys.stderr, _("Unable to import modules. "
+            "Maybe you're not running under X?")
+    sys.exit(1)
+
+pygtk.require('2.0')
+if gtk.pygtk_version < (2,4,0):
+    print >> sys.stderr, _("PyGtk version 2.4.0 or later required!")
+    sys.exit(1)
+
+from ctypes import *
+class HALicenseInfo(Structure):
+    """Equivalence of C Structure containing HALicense Information"""
+    _fields_ = [ ("version_id", c_int), ("register_time", c_ulong),
+        ("valid_period", c_int), ("feedback", c_char_p) ]
+
+haliclib = CDLL("@LIBDIR@/libhalicense.so")
+halicense_init = haliclib.ha_license_init
+halicense_init.restype  = POINTER(HALicenseInfo)
+halicense_get_fbcode = haliclib.ha_license_get_feedback
+halicense_get_fbcode.restype = c_char_p
+
+PADDINGS = 8*" "
+
+def product_info_format():
+    return _("<b>Product Info:\n</b>") + PADDINGS + _(PRODUCT_NAME)
+
+def version_type_format(version_type):
+    text = _("<b>Version Type:\n</b>")+PADDINGS
+    if  version_type not in VERSION_TYPES.keys():
+        return text + _("Unknown")
+    else:
+        return text + _(VERSION_TYPES[version_type])
+
+def date_format(dtype, epoch_time):
+    time_format = '%Y-%m-%d'  # eg. 2012-07-31
+    text = time.strftime(time_format, time.localtime(epoch_time))
+    if(dtype == "Expiration" and epoch_time <= time.time()):
+         text += _('<span foreground="red"><b>  (Expired)  </b></span>')
+    return "<b>" + _(dtype) + _(" Date:\n</b>") + PADDINGS + text
+
+def feedback_code_format(fbcode):
+    return _("<b>Feedback code:\n</b>") + PADDINGS + fbcode
+
+def make_label(markup_text):
+    label = gtk.Label()
+    label.set_markup(markup_text)
+    label.set_selectable(True)
+    label.set_alignment(0, 0.5)
+    return label
+
+class HALicenseManager:
+    def update_license_reg(self, widget, data=None):
+        ret = haliclib.halicense_install(self.license_datfile)
+        if ret != 0 :
+            messagedialog = gtk.MessageDialog(
+                self.dialog, 0, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK,
+                _("License registeration failed!\n\nPlease make sure"
+                " your license\nfile is valid and try again."))
+            messagedialog.run()
+            messagedialog.destroy()
+        else:
+            messagedialog = gtk.MessageDialog(
+                self.dialog, 0, gtk.MESSAGE_INFO, gtk.BUTTONS_OK,
+                _("License registeration succeeded."))
+            messagedialog.run()
+            messagedialog.destroy()
+            self.label_status.set_markup(_("<b>Updated License Status</b>"))
+            haliclib.halicense_get_info(self.license_info)
+            self.version_type  = self.license_info.contents.version_id
+            self.register_time = self.license_info.contents.register_time
+            self.valid_period  = self.license_info.contents.valid_period
+            self.label_vertype.set_markup(
+                                    version_type_format(self.version_type))
+            self.label_fbcode.set_markup(
+                                    feedback_code_format(self.feedback_code))
+            self.label_regdate.set_markup(
+                        date_format(N_("Registeration"), self.register_time))
+            # Enable or disable HAClient Manager IntellectSwitch component
+            self.parent.update_ui()
+            ## for trial version to show expiration date
+            if self.version_type == 0:
+                self.label_expdate.set_markup(
+                        date_format(N_("Expiration"), self.expire_date()))
+            else:
+                self.label_expdate.set_markup("")
+            # Request from Ziran Wei for nkbz#24620
+            os.system("corosync-cfgtool -x")
+        self.btn_register.set_sensitive(False)
+
+    def license_file_selected(self, widget, data=None):
+        self.license_datfile = widget.get_filename()
+        self.btn_register.set_sensitive(True)
+
+    def expire_date(self):
+        return self.register_time + self.valid_period * 24 * 3600
+
+    def __init__(self, parent=None):
+        self.parent = parent
+        # Retrieve current HALicense infomation
+        self.license_info = halicense_init()
+        haliclib.halicense_get_info(self.license_info)
+        self.version_type  = self.license_info.contents.version_id
+        self.register_time = self.license_info.contents.register_time
+        self.valid_period  = self.license_info.contents.valid_period
+        self.feedback_code = halicense_get_fbcode()
+
+        # Main window to perform license ops
+        self.dialog = gtk.Dialog(_("License Registeration"), self.parent.win_widget,
+            gtk.DIALOG_DESTROY_WITH_PARENT|gtk.DIALOG_MODAL,  (gtk.STOCK_CLOSE, gtk.RESPONSE_CANCEL))
+        if os.path.exists(PIXMAP_DIR+"ha.png"):
+            self.dialog.set_icon_from_file(PIXMAP_DIR+"ha.png")
+
+        # License operation area
+        label = make_label(_("<b>Select license file location:</b>"))
+        self.dialog.vbox.pack_start(label, False, False, 5)
+
+        hbox_in_upper = gtk.HBox(False, 5)
+        self.btn_filechooser = gtk.FileChooserButton(_('Select License File'))
+        self.btn_filechooser.connect("file-set", self.license_file_selected)
+        hbox_in_upper.pack_start(self.btn_filechooser, True, True, 5)
+
+        self.btn_register = gtk.Button(_("Register"))
+        self.btn_register.connect("clicked", self.update_license_reg)
+        self.btn_register.set_sensitive(False)
+        hbox_in_upper.pack_end(self.btn_register, False, False, 5)
+
+        self.dialog.vbox.pack_start(hbox_in_upper, False, False, 5)
+
+        separator = gtk.HSeparator()
+        self.dialog.vbox.pack_start(separator, False, False, 5)
+
+        # License status display area
+        vbox_in_mid = gtk.VBox(False, 5)
+
+        self.label_status = make_label(_("<b>Current License Status</b>"))
+        self.label_status.set_alignment(0.5, 0.5)
+        vbox_in_mid.pack_start(self.label_status, False, False, 5)
+        # product name
+        label = make_label(_(product_info_format()))
+        vbox_in_mid.pack_start(label, False, False, 5)
+        # version type
+        self.label_vertype = make_label(version_type_format(self.version_type))
+        vbox_in_mid.pack_start(self.label_vertype, False, False, 5)
+        # feedback code
+        self.label_fbcode = make_label(feedback_code_format(self.feedback_code))
+        vbox_in_mid.pack_start(self.label_fbcode,  False, False, 5)
+        # registeration date
+        self.label_regdate = make_label(
+                        date_format(N_("Registeration"), self.register_time))
+        vbox_in_mid.pack_start(self.label_regdate, False, False, 5)
+        # show expiration date in trial version
+        if self.version_type == 0 :
+            self.label_expdate = make_label(
+                        date_format(N_("Expiration"), self.expire_date()) )
+        else:
+            # as a laceholder to make room for license update to trial ...
+            self.label_expdate = make_label("")
+        vbox_in_mid.pack_start(self.label_expdate, False, False, 5)
+
+        self.dialog.vbox.pack_start(vbox_in_mid, True, True, 0)
+
+        # company logo in the right bottom
+        hbox_in_lower = gtk.HBox(False, 5)
+        image = gtk.Image()
+        if os.path.exists(PIXMAP_DIR+"cs2c-logo.png"):
+            pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
+                            PIXMAP_DIR+"cs2c-logo.png", 224, 60)
+            image.set_from_pixbuf(pixbuf)
+        hbox_in_lower.pack_end(image, False, True, 5)
+
+        self.dialog.vbox.pack_start(hbox_in_lower, True, True, 0)
+
+        self.dialog.show_all()
+        self.dialog.run()
+        self.dialog.destroy()
+
+def HALic_ctrl_IS_flag(manager):
+    version_msg = manager.query("lic_verid")
+    # Initialization/Cannot get license info
+    if manager.failed_reason != "" or version_msg == None or version_msg == [] :
+        return False
+    elif "trial" in version_msg:
+        return manager.check_ha_expired()
+    elif "advanced" in version_msg:
+        return True
+    else:       # "profess version"
+        return False
+
+#if __name__ == "__main__":
+#    HALicenseManager()

@@ -1,0 +1,305 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+class syncview:
+	def sync(self, filename, function):
+		if len(self.ip_widget.keys()) == 0:
+			ret = confirmbox(self.top_window, _("There is No node can be Synchronized!\n")+_("Do you want to quit ?"),
+				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+				_("NO Synchronization"))
+			if ret == gtk.RESPONSE_NO:
+				return 1
+			else:
+				return 0
+
+                for key in self.password_widget.keys():
+                        m = re.match('^.+$', self.password_widget[key].get_text())
+                        if m is None:
+                                msgbox(self.top_window, _("Please input the root password."))
+                                return 2
+
+		if self.not_online:
+			ret = confirmbox(self.top_window, _("Some nodes in the cluster is not online.")+_("Do you want continue to synchronize?")+_("\n")+_("The Configuration File of %s in the cluster is not the same.")%(function)+_("Please synchronize it manually!\n") + _("Configuration File need to be Synchronized:\n") + "\n".join(filename) ,
+				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+				_("Some nodes offline"))
+			if ret == gtk.RESPONSE_NO:
+				return 1
+
+		all_result = {}
+
+		#self.manager.do_cmd("system\n%s"%(str("echo '' > /root/.ssh/known_hosts")))
+		self.manager.do_cmd_twice("system\n%s"%(str("rm -f /root/.ssh/*")))
+                if self.manager.failed_reason != "" :
+                        msgbox(self.top_window, self.manager.failed_reason)
+
+		for key in self.ip_widget.keys():
+			result = {}
+			for file in filename:
+				cmd = "@HA_DATADIR@/heartbeat-gui/sync.sh " + file + " " + file + " " + self.ip_widget[key].get_text() + " " + self.password_widget[key].get_text()
+				#ret = self.manager.do_cmd("system\n%s"%(str(cmd)))
+	
+				detail_lines = self.window.do_cmd_with_pbar("system\n%s"%(str(cmd)), _("Synchronizing"), _("Synchronizing the configuration file may take a while..."), _("Failed to synchronize!"), False)
+				if detail_lines == None :
+					result[file] = ""
+					continue
+				detail_str = "\n".join(detail_lines)
+				if "100%" in detail_str:
+					result[file] = "Succeed"
+				elif "Permission denied" in detail_str:
+					result[file] = "Permission denied. IP or Password may be wrong."
+				elif "No route to host" in detail_str:
+					result[file] = "No route to host. IP may be wrong."
+				elif "No such file or directory" in detail_str:
+					result[file] = "No such file or directory."
+				elif "REMOTE HOST IDENTIFICATION HAS CHANGED" in detail_str :
+					result[file] = "Host key verification failed. Offending key in /root/.ssh/known_hosts"
+				else:
+					result[file] = "Maybe network failures or some other reasons."
+
+				'''if self.manager.failed_reason != "" :
+					msgbox(self.top_window, self.manager.failed_reason)
+					#return 1
+				result[file] = ""       #False
+				for r in ret:
+					result[file] += r
+					if "100%" in r:
+						result[file] = "Succeed"
+						break'''
+
+			all_result[key] = "Succeed"
+			for file in result.keys():
+				if result[file] != "Succeed" :
+					all_result[key] = result[file]
+					break
+
+		msg = ""
+		ret = 0
+		result =  all_result.keys()
+                if result != None:
+                        result.sort()
+                for key in result:
+			if all_result[key] == "Succeed" :
+				self.succeed_node.append(key)
+				msg += key + _(":Succeed\n") + "\n"
+			else:
+				if all_result[key] !='':
+                                        msg += key + _(":Synchronization Error\n") + _(all_result[key]) + "\n" +_("Please synchronize it manually!\n")
+                                else:
+					msg += key + _(":Synchronization Error\n") +_("Please synchronize it manually!\n")
+
+				msg += _("Configuration File need to be Synchronized:\n") + "\n".join(filename) + _("\n\n")
+				ret = 1
+
+		msgbox(self.top_window, msg, image=gtk.STOCK_DIALOG_INFO)
+
+		if self.not_online:
+			return 1
+		else:
+			return ret
+
+	def update(self, filename, function):
+		self.get_ip_addr()
+
+		self.not_online = False
+		self.ip_widget = {}
+		self.password_widget = {}
+		for child in self.vbox.get_children():
+			self.vbox.remove(child)
+
+		for node in self.sync_node:
+			if node in self.manager.get_local_node():
+				continue
+                        hbox = gtk.HBox()
+			name_label = gtk.Label(node+_(":"))
+			name_label.set_alignment(0, 0.5)
+			name_label.set_size_request(100, -1)
+                        hbox.pack_start(name_label, False, padding=10)
+
+			if node in self.succeed_node:
+				state_label = gtk.Label(_("Success"))
+				state_label.set_alignment(0,0.5)
+				hbox.pack_start(state_label, False, padding=2)
+			elif node in self.manager.get_active_nodes():
+				if self.node_ip[node] == None:
+					self.not_online = True
+                                	state_label = gtk.Label(_("Can not get the ipaddress of %s !")%(str(node)) + _("Or can not be connected!") + "\n" + _("Please make sure that the environment is configured correctly!")+_("Please synchronize it manually!\n") +  _("Configuration File need to be Synchronized:\n") + "\n".join(filename))
+					state_label.set_alignment(0, 0.5)
+					hbox.pack_start(state_label, False, padding=2)
+				else :
+					widget = gtk.Label(self.node_ip[node])
+					self.ip_widget[node] = widget
+					hbox.pack_start(widget, False, padding=2)
+
+					widget = gtk.Entry()
+					widget.set_visibility(False)
+					widget.set_property("invisible_char","*")
+					self.password_widget[node] = widget
+					hbox.pack_start(widget, False, padding=2)
+			else:
+				self.not_online = True
+				state_label = gtk.Label(_("The node is not online,")+_("Please synchronize it manually!\n") +  _("Configuration File need to be Synchronized:\n") + "\n".join(filename))
+				state_label.set_alignment(0, 0.5)
+				hbox.pack_start(state_label, False, padding=2)
+
+			self.vbox.pack_start(hbox, False, padding =2)
+		self.dialog.show_all()
+
+		for child in self.ip_widget.keys():
+			self.ip_widget[child].hide()
+		return True
+
+	def get_ip_addr(self):
+		self.node_ip = {}
+		for node in self.sync_node:
+			ip = self.manager.get_one_node_ip(node)
+			self.node_ip[node] = ip
+
+		'''cmd = "crm_node -l"
+                ret = self.manager.do_cmd_twice("system\n%s"%(str(cmd)))
+
+		while ret == None or ret == []:
+                	ret = self.manager.do_cmd_twice("system\n%s"%(str(cmd)))
+
+		self.node_ip = {}
+		for r in ret:
+			if r =='':
+                                break
+			ip_list=[]
+                        m = re.match("^\w*\s(.*)\s.*\s.*\sip\((.*)\)\s.*\sip\((.*)\)\s.*\sip\((.*)\)\s.*\sip\((.*)\)", r)
+			if m is not None:
+				ip_list.append(m.groups()[1])
+                                for item in m.groups()[2:]:
+                                        if item != '127.0.0.1' and item != ip_list[0]:
+                                                ip_list.append(item)
+                        else:
+                                m = re.match("^\w*\s(.*)\s.*\s.*\sip\((.*)\)\s.*\sip\((.*)\)\s.*\sip\((.*)\)", r)
+                                if m is not None:                                                                       
+                                        ip_list.append(m.groups()[1])
+                                        for item in m.groups()[2:]:
+                                                if item != '127.0.0.1' and item!= ip_list[0]:
+                                                        ip_list.append(item)
+
+				else:
+					m = re.match("^\w*\s(.*)\s.*\s.*\sip\((.*)\)\s.*\sip\((.*)\)", r)
+                                        if m is not None:
+                                        	ip_list.append(m.groups()[1])
+                                                if m.groups()[2] != '127.0.0.1' and m.groups()[2]!= ip_list[0]:
+                                                        ip_list.append(m.groups()[2])
+                                                
+                                        else:
+                                                m = re.match("^\w*\s(.*)\s.*\s.*\sip\((.*)\)", r)
+                                                if m is not None:
+                                                        ip_list = m.groups()[1:]
+                        if len(ip_list) ==1:
+                                self.node_ip[m.groups()[0]] = ip_list[0]
+
+			else:
+				cmd = "ping -c 1 " + ip_list[0]
+                                if "100% packet loss"  in str(self.manager.do_cmd_twice("system\n%s"%(str(cmd)))):
+                                        self.node_ip[m.groups()[0]] = ip_list[1]
+                                else:
+                                        self.node_ip[m.groups()[0]] = ip_list[0]
+                #       else:
+                #               m = re.match("^\w*\s(.*)\s.*\s.*\sip\((.*)\)", r)
+                #               if m is not None:
+                #                       self.node_ip[m.groups()[0]] = m.groups()[1]
+		'''
+
+
+	#def on_refresh(self, widget, filename, function):
+	#	self.update(filename, function)
+
+	def __init__(self, window, manager, filename, function, sync_node):
+
+		self.window = window
+		self.top_window = window.win_widget
+                self.manager = manager
+                self.dialog = gtk.Dialog(_("Synchronization"), self.top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_REFRESH, gtk.RESPONSE_ACCEPT, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                self.dialog.set_border_width(5)
+                self.dialog.set_default_response(gtk.RESPONSE_OK)
+		self.dialog.set_icon_from_file("@HA_DATADIR@/heartbeat-gui/ha.png")
+
+		hbox = gtk.HBox()
+		name_label = gtk.Label(_("The Configuration File of %s need to be\n synchronized to other nodes.\n")%(function))
+		name_label.set_alignment(0, 0.5)
+		hbox.pack_start(name_label, False, padding=2)
+		self.dialog.vbox.pack_start(hbox, False, padding=2)
+
+		hbox = gtk.HBox()
+		name_label = gtk.Label(_("Please enter root password for the following node:"))
+		name_label.set_alignment(0, 0.5)
+		hbox.pack_start(name_label, False, padding=2)
+		self.dialog.vbox.pack_start(hbox, False, padding=2)
+
+                nodes = self.manager.get_all_nodes()
+		if nodes == None:
+			return
+		else:
+			nodes.sort()
+		self.sync_node = []
+		for node in nodes:
+			if node in sync_node and node not in self.manager.get_local_node():
+				self.sync_node.append(node)
+
+		#self.get_ip_addr()
+		self.vbox = gtk.VBox()
+                self.dialog.vbox.pack_start(self.vbox, False, padding=2)
+                self.succeed_node = []
+                self.update(filename, function)
+
+                #button = gtk.Button(_("Refresh"))
+                #button.connect('clicked', self.on_refresh, filename, function)
+                #button.show()
+                #self.dialog.vbox.pack_start(button, False, padding=10)
+
+                save_top_window = self.top_window
+                self.top_window = self.dialog
+
+		while True:
+	                ret = self.dialog.run()
+        	        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+				#r = confirmbox(self.top_window, _("Do you want to quit ?"),
+	                        #        (gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES),
+        	                #        _("Not Sync"))
+				if confirmbox(self.top_window, _("Do you want to quit ?")+_("\n")+_("The Configuration File of %s in the cluster is not the same.")%(function)+_("Please synchronize it manually!\n") +  _("Configuration File need to be Synchronized:\n") + "\n".join(filename))  == gtk.RESPONSE_YES :
+                	        	self.top_window = save_top_window
+	                        	self.dialog.destroy()
+		                        return None
+			elif ret in [gtk.RESPONSE_ACCEPT]:
+				self.update(filename, function)
+			else:
+				ret = self.sync(filename, function)
+				if ret == 0:
+					self.top_window = save_top_window
+					self.dialog.destroy()
+					return None
+				elif ret == 1:
+					self.update(filename, function)
+

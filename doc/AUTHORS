@@ -1,0 +1,49 @@
+The management components that used to be part of Heartbeat (but isn't
+supposed to anymore since Heartbeat doesn't include the CRM aka. Pacemaker)
+
+The original sources can be found at:
+	 http://hg.clusterlabs.org/pacemaker/pygui/
+
+Upstream Authors:
+NOTE:	The work of everyone on this project is dearly appreciated. If you
+	are not listed here but should be, please notify us!
+
+	Yan Gao <ygao@novell.com>
+
+The following people have kindly helped with pacemaker-mgmt development by
+providing code, documentation or testing, or fixes:
+
+	Andrew Beekhof <abeekhof@suse.de>
+	Lars Marowsky-Brée <lmb@suse.de>
+	Xinwei Hu <xwhu@suse.de>
+
+The GUI was first developed in 2005 by:
+	Huang Zhen <zhenhltc@cn.ibm.com>
+
+The SNMP subagent was first developed in 2002 by:
+	Zou Yixiong (yixiong.zou@intel.com)
+
+	Keisuke MORI <kskmori@intellilink.co.jp>
+		SNMP subagent v2 support
+
+Contributors, ordered by last name:
+
+
+Code for the following pieces borrowed from code by:
+
+
+All binaries provided by this package are GNU GPL or GNU LGPL.
+Some source files are under the BSD licence or in the public domain,
+as annotated by those files. All source files without a specific
+licence statement are available licenced under the GNU GPL.
+
+A copy of the GNU GPL licence is available on Debian systems at
+/usr/share/common-licenses/GPL
+
+A copy of the GNU LGPL licence is available on Debian systems at
+/usr/share/common-licenses/LGPL
+
+A copy of the BSD licence is available on Debian systems at
+/usr/share/common-licenses/BSD
+
+

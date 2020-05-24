@@ -1,0 +1,462 @@
+#!/usr/bin/env python -tt
+# -*- coding: utf-8 -*-
+import gtk, pygtk
+import socket, gobject
+pygtk.require('2.0')
+
+from basefunc import confirmbox, msgbox
+
+import gettext
+from nkha_constants import *
+t = gettext.translation(I18N_DOMAIN, "@HA_DATADIR@/locale", fallback = True)
+_ = t.lgettext
+import haclient
+import time
+from perf_chart import PerformanceChart
+## 智能切换各列
+columns = [N_("No."), N_("Resource"), N_("Running Status"), N_("Last\nDetected"),
+           N_("Add to\nQueue"), N_("Target\nNode"), N_("Return\nPolicy"),
+           N_("Return\nTime"), N_("Perf\nChart")];
+## 资源回切策略
+policies=[_("Never"), _("Normal"), _("Scheduled")]
+## 资源回切时段
+intervals = ["%02d:00-%02d:00" %(i,i+2) for i in xrange(24) if i%2 == 0]
+
+class IS_Scrolled:
+    ## 重构资源信息以供显示
+    def all_resources_reshape(self, all_rsces, stopped_rsc_list):
+        for rsc in all_rsces:
+            all_rsces[rsc]['running_status']=_('running')
+            #tm = time.strptime(all_rsces[rsc]['monitor_time'],
+            #                    "%a %b %d %H:%M:%S %Y")
+            #all_rsces[rsc]['monitor_time']=time.strftime("%H:%M %x", tm)
+        for rsc in stopped_rsc_list:
+            all_rsces[rsc]['running_status']=_('stopped')
+        return all_rsces
+
+    ## Util functions ##
+    ## 生成带Image的Button
+    def make_image_button(self):
+        button = gtk.Button()
+        image  = gtk.Image()
+        pixbuf = gtk.gdk.pixbuf_new_from_file_at_size(
+            "@HA_DATADIR@/heartbeat-gui/perf.png", 50, 20)
+        image.set_from_pixbuf(pixbuf)
+        button.add(image)
+        return button
+
+    def make_label(self, text):
+        label = gtk.Label(text)
+        label.set_alignment(0.5, 0.5)
+        return label
+
+    ##  为ToggleButton设置颜色
+    def show_togbtn_with_color(self, widget, is_active):
+            colormap   = widget.get_colormap()
+            color_on  = colormap.alloc_color("green")
+            color_off = colormap.alloc_color("red")
+            if is_active:
+                widget.modify_bg(gtk.STATE_ACTIVE, color_on)
+                widget.set_active(True)
+            else:
+                widget.modify_bg(gtk.STATE_NORMAL, color_off)
+                widget.set_active(False)
+
+    ## 资源rsc上的诸如回切策略，回切时段等的配置项组合框
+    def make_combobox(self, entries):
+        combox = gtk.combo_box_new_text()
+        for entry in entries:
+            combox.append_text(entry)
+        return combox
+
+    def single_rsc_details(self, rsc):
+        return  self.all_resources[rsc]
+
+    # 在线节点列表
+    def online_nodes_list(self):
+        return self.running_rsc_dist.keys()
+
+    # 节点node上的所有资源列表
+    def resources_on_node(self, node):
+        return self.running_rsc_dist[node]
+
+    def cb_into_queue_toggled(self, widget, data=None):
+        is_active = widget.get_active()
+        widget.set_label((_("on"), _("off"))[not is_active])
+        self.show_togbtn_with_color(widget, is_active)
+        self.manager.update_database("update is_resources set flag='%s' where name='%s';"%(str(("on", "off")[not is_active]), data))
+
+    def get_policy(self, num):
+        if num == 0 :
+           return "notreturn"
+        elif num == 1 :
+           return "now"
+        if num == 2 :
+           return ""
+
+    def cb_return_policy(self, widget, data, schedule_combo):
+        policy = self.get_policy(widget.get_active())
+        if policy == "notreturn" or policy == "now" :
+            self.manager.update_database("update is_resources set policy='%s' where name='%s';"%(str(policy), data))
+            schedule_combo.set_active(-1)
+        else:
+            self.manager.update_database("update is_resources set policy='%s' where name='%s';"%(str("00:00-02:00"), data))
+            schedule_combo.set_active(0)
+
+    def cb_return_scheduled(self, widget, data=None):
+        policy = widget.get_active_text()
+        if policy==None:
+            return
+        self.manager.update_database("update is_resources set policy='%s' where name='%s';"%(str(policy), data))
+
+    def show_horizontal_separator(self):
+        separator = gtk.HSeparator()
+        self.table.attach(separator, 0, self.num_cols,
+                self.cursor, self.cursor+1, gtk.FILL|gtk.EXPAND, gtk.SHRINK)
+        self.update_cursor()
+
+    def show_single_rsc(self, rsc, rank):
+        label = self.make_label("%2d" % rank)
+        self.table.attach(label, 0, 1, self.cursor,
+                            self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+        label = self.make_label(rsc)
+        self.table.attach(label, 1, 2, self.cursor,
+                            self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+        label = self.make_label("%s" %
+            self.single_rsc_details(rsc)['running_status'])
+        self.table.attach(label, 2, 3, self.cursor,
+                            self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+        label = self.make_label("%s" %
+            self.single_rsc_details(rsc)['monitor_time'])
+        self.table.attach(label, 3, 4, self.cursor,
+                            self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+        in_queue_txt = self.single_rsc_details(rsc)['is_switch']
+        is_in_queue = (in_queue_txt == "on")
+        queue_button = gtk.ToggleButton((_("off"), _("on"))[is_in_queue])
+        self.show_togbtn_with_color(queue_button, is_in_queue)
+        queue_button.connect("toggled", self.cb_into_queue_toggled, rsc)
+        self.show_in_queue_sensitivity(queue_button)
+        self.table.attach(queue_button, 4, 5, self.cursor,
+                            self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+        label = self.make_label("%s" % self.single_rsc_details(rsc)['switch_node'])
+        self.table.attach(label, 5, 6, self.cursor,
+                            self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+
+        policy_combo = self.make_combobox(policies)
+        self.show_active_policy(policy_combo, rsc)
+        self.show_policy_combo_sensitivity(policy_combo, queue_button)
+        self.table.attach(policy_combo, 6, 7, self.cursor,
+                            self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+        schedule_combo = self.make_combobox(intervals)
+        self.show_active_schedule(schedule_combo, rsc)
+        self.show_schedule_combo_sensitivity(schedule_combo, queue_button,
+                                             policy_combo)
+        schedule_combo.connect("changed", self.cb_return_scheduled, rsc)
+        policy_combo.connect("changed", self.cb_return_policy, rsc, schedule_combo)
+        self.table.attach(schedule_combo, 7, 8, self.cursor,
+                            self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+        self.update_cursor()
+        # IS总阀控制每个资源是否加入队列，回切策略和回切时段的可用性
+        self.supervisor.connect_object("toggled",
+                                        self.show_in_queue_sensitivity,
+                                        queue_button)
+        self.supervisor.connect_object("toggled",
+                                        self.show_policy_combo_sensitivity,
+                                        policy_combo,
+                                        queue_button)
+        self.supervisor.connect_object("toggled",
+                                        self.show_schedule_combo_sensitivity,
+                                        schedule_combo,
+                                        queue_button,
+                                        policy_combo)
+        # 是否加入切换队列控制了回切策略和回切时段的可用性
+        queue_button.connect_object("toggled",
+                                    self.show_policy_combo_sensitivity,
+                                    policy_combo,
+                                    queue_button)
+        queue_button.connect_object("toggled",
+                                    self.show_schedule_combo_sensitivity,
+                                    schedule_combo,
+                                    queue_button,
+                                    policy_combo)
+        # 回切策略控制回切时段的可用性
+        policy_combo.connect_object("changed",
+                                    self.show_schedule_combo_sensitivity,
+                                    schedule_combo,
+                                    queue_button,
+                                    policy_combo)
+
+    def show_active_policy(self, policy_combo, rsc):
+        text = self.single_rsc_details(rsc)['back_time']
+        if (text == "notreturn"):
+            policy_combo.set_active(0)
+        elif (text == "now"):
+            policy_combo.set_active(1)
+        else:
+            policy_combo.set_active(2)
+
+    def show_active_schedule(self, schedule_combo, rsc):
+        text = self.single_rsc_details(rsc)['back_time']
+        # Resolves nkbz 25255, when IS_resource table is empty thus text returns "None"
+        if (text == "None" or text == "notreturn" or text == "now"):
+            schedule_combo.set_active(-1)
+        else:
+            schedule_combo.set_active(int(text[:2])/2)
+
+    def show_in_queue_sensitivity(self, queue_button):
+        # 当且仅当IS总阀开, 负责是否加入切换队列的queue_button才可用
+        queue_button.set_sensitive(self.supervisor.get_active())
+
+    def show_policy_combo_sensitivity(self, policy_combo, queue_button):
+        if(self.supervisor.get_active() and queue_button.get_active()):
+            policy_combo.set_sensitive(True)
+        else:
+            policy_combo.set_sensitive(False)
+
+    def show_schedule_combo_sensitivity(self, schedule_combo,
+                                        queue_button, policy_combo):
+        if (self.supervisor.get_active() and queue_button.get_active()\
+                and policy_combo.get_active() == 2):
+            schedule_combo.set_sensitive(True)
+        else:
+            schedule_combo.set_sensitive(False)
+
+
+    def show_resources_on_node(self, node):
+        rsc_list = self.resources_on_node(node) # 节点node上的资源
+        length = len(rsc_list)
+        for i in xrange(length):
+            self.show_single_rsc(rsc_list[i], i+1)
+
+    def show_stopped_rsc_list(self):
+        length = len(self.stopped_rsc_list)
+        for i in xrange(length):
+            self.show_single_rsc(self.stopped_rsc_list[i], i+1)
+
+    ## 显示节点node的性能趋势图
+    def show_perf_chart(self, widget, node):
+        PerformanceChart(self.manager, node, self.top_window)
+
+    def update_cursor(self):
+        self.cursor += 1
+
+    def cb_supervisor_toggled(self, widget, image):
+        IS_on_text=N_("The IS is on.\nYou can press the button\nto turn it off.")
+        IS_off_text=N_("The IS is off.\nYou can press the button\nto turn it on.")
+        is_button = ("off", "on")[widget.get_active()]
+        if is_button == "on":
+            image.set_from_stock(gtk.STOCK_YES, \
+                                    gtk.ICON_SIZE_BUTTON)
+            self.supervisor.set_tooltip_text(_(IS_on_text))
+        else:
+            image.set_from_stock(gtk.STOCK_NO, \
+                                    gtk.ICON_SIZE_BUTTON)
+            self.supervisor.set_tooltip_text(_(IS_off_text))
+        self.manager.update_database("update is_flag set flag='%s';"%(str(is_button)))
+        return True
+
+    def __init__(self, manager, upper_ctrl_btn, upper_image,
+                 upper_refresh, upper_frame, top_window, warn_button, warn_image):
+        self.top_window =  top_window
+        self.manager = manager
+        self.supervisor = upper_ctrl_btn
+        self.upper_frame = upper_frame
+        self.upper_image = upper_image
+        self.refresh_button = upper_refresh
+        self.warn_button = warn_button
+        self.warn_image = warn_image
+        self.get_database()
+        self.get_cib()
+        ## 全局：重构后的资源信息
+        self.running_rsc_dist = self.node_run_rsc
+        self.stopped_rsc_list = self.no_run_rsc
+        self.all_resources = self.all_resources_reshape(self.rsc_switch_list, self.stopped_rsc_list)
+
+        self.supervisor.connect('released',
+                     self.cb_supervisor_toggled, upper_image)
+        self.num_cols = len(columns)
+        self.timer = -1
+        self.update()
+        self.upper_frame.add(self.scrolled_window)
+        self.timer = gobject.timeout_add_seconds(180, self.refresh_rsces_switch)
+
+    def update(self):
+        self.cursor = 0 ## row cursor for table
+        self.scrolled_window = gtk.ScrolledWindow()
+        self.scrolled_window.set_shadow_type(gtk.SHADOW_IN)
+        self.scrolled_window.set_border_width(5)
+        self.scrolled_window.set_policy(gtk.POLICY_AUTOMATIC,
+                                        gtk.POLICY_ALWAYS)
+        self.table = gtk.Table(8, self.num_cols, False)#True)
+        self.table.set_row_spacings(10)
+        self.table.set_col_spacings(10)
+        for i in xrange(self.num_cols):  ## column headers
+            label = self.make_label(_(columns[i]))
+            self.table.attach(label, i, i+1,  0, 1, gtk.SHRINK, gtk.SHRINK)
+        self.update_cursor()
+        self.show_horizontal_separator()
+        for node in self.online_nodes_list():
+            node_summary = _("Total Protected Resources: %3d") % \
+                                len(self.resources_on_node(node))
+            label = self.make_label(node)
+            self.table.attach(label, 0, 1, self.cursor,
+                                self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+            label = self.make_label(node_summary)
+            self.table.attach(label, 1, 4, self.cursor,
+                                self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+            button = self.make_image_button()
+            button.set_tooltip_text(_("View performance chart of node %s") % node)
+            button.connect("clicked", self.show_perf_chart, node)
+            self.table.attach(button, self.num_cols-1, self.num_cols,
+                    self.cursor, self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+            self.update_cursor()
+            self.show_resources_on_node(node)
+            self.show_horizontal_separator()
+        label = self.make_label(_("NULL"))
+        self.table.attach(label, 0, 1, self.cursor,
+                            self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+        offline_summary = _("Total Offline Resources: %3d") % \
+                                len(self.stopped_rsc_list)
+        label = self.make_label(offline_summary)
+        self.table.attach(label, 1, 4, self.cursor, \
+                self.cursor+1, gtk.SHRINK, gtk.SHRINK)
+        self.update_cursor()
+        self.show_stopped_rsc_list()
+        self.show_horizontal_separator()
+
+        self.refresh_button.connect("clicked", lambda w: self.refresh_rsces_switch())
+        self.refresh_button.set_tooltip_text(_("refresh the state of the IS resources"))
+
+        self.scrolled_window.add_with_viewport(self.table)
+
+    def refresh_rsces_switch(self):
+        self.get_database()
+        if self.is_switch == "on":
+            self.supervisor.set_active(True)
+            self.upper_image.set_from_stock(gtk.STOCK_YES, \
+                                    gtk.ICON_SIZE_BUTTON)
+            self.supervisor.set_tooltip_text(_("The IS is on.\nYou can press the button\nto turn it off."))
+        else:
+            self.supervisor.set_active(False)
+            self.upper_image.set_from_stock(gtk.STOCK_NO, \
+                                    gtk.ICON_SIZE_BUTTON)
+            self.supervisor.set_tooltip_text(_("The IS is off.\nYou can press the button\nto turn it on."))
+
+        if self.is_warn == "on":
+            self.warn_button.set_active(True)
+            self.warn_image.set_from_stock(gtk.STOCK_YES, gtk.ICON_SIZE_BUTTON)
+            self.warn_button.set_tooltip_text(_("The IS is on.You can press the button to turn it off."))
+        else:
+            self.warn_button.set_active(False)
+            self.warn_image.set_from_stock(gtk.STOCK_NO, gtk.ICON_SIZE_BUTTON)
+            self.warn_button.set_tooltip_text(_("The IS is off.You can press the button to turn it on."))
+
+        self.get_cib()
+        self.running_rsc_dist = self.node_run_rsc
+        self.stopped_rsc_list = self.no_run_rsc
+        self.all_resources = self.all_resources_reshape(self.rsc_switch_list, self.stopped_rsc_list)
+        self.upper_frame.remove(self.scrolled_window)
+        self.update()
+        self.upper_frame.add(self.scrolled_window)
+        self.upper_frame.show_all()
+        return True
+
+    def get_database(self):
+        flag= self.manager.do_cmd_twice("get_sqldata\n%s\n%s"%("", str("SELECT flag,flag_mail from is_flag;")))
+        if self.manager.failed_reason == "" :
+            self.is_switch=flag[0].split('|')[0]
+            self.is_warn=flag[0].split('|')[1]
+        else:
+            self.is_switch="off"
+            self.is_warn="off"
+
+        resources= self.manager.do_cmd_twice("get_sqldata\n%s\n%s"%("", str("SELECT name,flag,plan_node,policy,with_res from is_resources;")))
+
+        self.rsc_switch_list={}
+        if self.manager.failed_reason == "" :
+            try:
+                for item in resources:
+                    rsc_switch={}
+                    rsc = item.split('|')
+                    name = rsc[0]
+                    rsc_switch['is_switch']=rsc[1]
+                    rsc_switch['switch_node']=rsc[2]
+                    rsc_switch['back_time']=rsc[3]
+                    rsc_switch['with_res']=rsc[4]
+                    self.rsc_switch_list[name]=rsc_switch
+            except:
+                pass
+        else:
+            haclient.msgbox(top_window, self.manager.failed_reason)
+            return False
+        return True
+
+    #获取rsc_id的上一次监测时间time，如果该资源为group则以组内第一个资源的监测时间为准
+    def get_monitor_time(self, rsc_id):
+        validate_type = self.manager.get_validate_type()
+
+        if validate_type == "dtd" :
+            last_rc_change_key = "last_rc_change"
+        else:
+            last_rc_change_key = "last-rc-change"
+
+        if self.manager.get_rsc_type(rsc_id) == "group":
+            sub_rscs = self.manager.get_sub_rsc(rsc_id)
+            if sub_rscs != None and sub_rscs != []:
+               rsc_id = sub_rscs[0]
+            else:
+               return ""
+
+        last_rc_change = 0
+        for lrm_node in self.manager.xml_nodes["cib"].getElementsByTagName("lrm") :
+            for lrm_resource_node in lrm_node.getElementsByTagName("lrm_resource") :
+                if lrm_resource_node.getAttribute("id") == rsc_id :
+                    for lrm_rsc_op in lrm_resource_node.getElementsByTagName("lrm_rsc_op") :
+                        change_key = lrm_rsc_op.getAttribute(last_rc_change_key)
+                        if change_key != "" and last_rc_change < change_key:
+                            last_rc_change = lrm_rsc_op.getAttribute(last_rc_change_key)
+
+        if last_rc_change != 0:
+            last_rc_change_time = time.strftime("%y/%m/%d %H:%M:%S", time.localtime(float(last_rc_change)))
+        else:
+            last_rc_change_time = ""
+
+        return last_rc_change_time
+
+    def get_cib(self):
+        self.node_run_rsc={}
+        self.no_run_rsc=[]
+        for node in self.manager.get_active_nodes():
+            self.node_run_rsc[node] = []
+
+        for rsc in self.manager.get_top_rsc():
+            rsc_type = self.manager.get_rsc_type(rsc)
+            if rsc_type in ["clone", "master"]:
+                continue
+            if rsc_type in ["group"] and rsc == "group-fs-ps" and "ms-drbd" in self.manager.get_top_rsc():
+		continue
+
+            if rsc_type in ["group"] and rsc == "group-plan":
+                continue
+
+            if rsc_type in ["group"] and rsc == "group-sync-update":
+                continue
+
+            nodes = self.manager.get_rsc_running_on(rsc)
+            if nodes != None and len(nodes)>0:
+                node = nodes[0]
+                self.node_run_rsc[node].append(rsc)
+            else:
+                self.no_run_rsc.append(rsc)
+            time = self.get_monitor_time(rsc)
+
+            if rsc not in self.rsc_switch_list.keys():
+                self.rsc_switch_list[rsc]={}
+                self.rsc_switch_list[rsc]['is_switch']="off"
+                self.rsc_switch_list[rsc]['switch_node']=""
+                self.rsc_switch_list[rsc]['back_time']="notreturn"
+                self.rsc_switch_list[rsc]['with_res']=""
+                self.manager.update_database("insert into IS_resources(name) values('%s');"%(str(rsc)))
+
+            self.rsc_switch_list[rsc]['monitor_time']=time
+        return

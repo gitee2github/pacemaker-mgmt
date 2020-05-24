@@ -1,0 +1,4992 @@
+# Chinese Simplified Translation for the pacemaker-mgmt-client package
+# Copyright (C) 2012 China Standard Software Co., Ltd
+# This file is distributed under the same license as the pacemaker-mgmt-client package.
+msgid ""
+msgstr ""
+"Project-Id-Version: 2.1.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-08-14 16:27+0800\n"
+"PO-Revision-Date: 2012-08-14 HO:MI+ZONE\n"
+"Last-Translator: Liu Jiaming <jiaming.liu@cs2c.com.cn>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "\tThis message can be disabled with -Q\n"
+msgstr ""
+
+msgid "\tThis will be the case even if"
+msgstr "即使"
+
+msgid "\tThis will prevent"
+msgstr "这将阻止"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3180
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3369
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19263
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19271
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19272
+msgid "\n"
+msgstr "\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:944
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3244
+msgid ""
+"\n"
+"\n"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12905
+msgid ""
+"\n"
+"Copyright CS2C\n"
+msgstr ""
+"\n"
+"中标软件有限公司版权所有\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13523
+msgid ""
+"\n"
+"HostID:\n"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13529
+msgid ""
+"\n"
+"SN:\n"
+msgstr ""
+"\n"
+"序列号：\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:125
+msgid "  <<  "
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:142
+msgid "  >>  "
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19263
+msgid " active."
+msgstr "设为活动状态。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16729
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17046
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17048
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19758
+msgid " can't be empty"
+msgstr "不能为空"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1550
+msgid " of run level to "
+msgstr "的运行级别为 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7527
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7897
+msgid " on "
+msgstr "于"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17672
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17676
+#, python-format
+msgid "\"%s\" is required"
+msgstr "“%s”是必填的"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6880
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14358
+msgid "\"."
+msgstr "”。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6889
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14367
+msgid "\"?"
+msgstr "”？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12358
+msgid "\"Indicate pending operations\" has been activated."
+msgstr "“显示进行中的操作” 已被激活。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14766
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7184
+msgid "%s Resources"
+msgstr "%s资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11842
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11844
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11846
+msgid "("
+msgstr "（"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19416
+msgid "(Master)"
+msgstr "（主）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19420
+msgid "(Master/Standby)"
+msgstr "（主/备用）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19419
+msgid "(Not Running)"
+msgstr "（未运行）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19421
+msgid "(Not Running/Standby)"
+msgstr "（未运行/备用）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19417
+msgid "(Running)"
+msgstr "（运行中）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19418
+msgid "(Standby)"
+msgstr "（备用）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17698
+msgid "(mark the resource as unmanaged)"
+msgstr "(将该资源视为失控)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11842
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11844
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11846
+msgid ")"
+msgstr "）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18322
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18338
+#, python-format
+msgid "* %s %s %s %s %s"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18392
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18406
+#, python-format
+msgid "* %s %s before %s %s"
+msgstr "* 先 %s %s， 然后 %s %s"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18494
+#, python-format
+msgid ""
+"* Combine this \"Score\" and corresponding location scores to decide where "
+"to place %s"
+msgstr "* 综合此“权重”以及相应的位置权重以决定资源“%s”的运行位置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18474
+msgid ""
+"* Combine this colocation score and the appropriate location scores to "
+"decide where to put the resources"
+msgstr "* 综合此协同权重以及相应的位置权重以决定资源运行位置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18448
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18504
+#, python-format
+msgid "* If %s cannot be %s on any node, %s won't be affected"
+msgstr "* 如果 %s 无法 %s 在任何节点上， %s 不受影响"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18445
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18455
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18502
+#, python-format
+msgid "* If %s cannot be %s on any node, then %s won't be %s anywhere"
+msgstr "* 如果 %s 无法 %s 在任何节点上， 则 %s 也不能 %s 在任何节点上"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18464
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18521
+#, python-format
+msgid ""
+"* If %s is %s on the only (or every) available node, %s won't be affected"
+msgstr "* 如果 %s 在唯一的（或每个）可用节点上 %s, %s 不受影响"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18461
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18471
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18519
+#, python-format
+msgid ""
+"* If %s is %s on the only (or every) available node, then %s won't be %s "
+"anywhere"
+msgstr "* 如果 %s 在唯一的（或每个）可用节点上 %s， 则 %s 不会 %s 在任何节点上"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18327
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18330
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18342
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18345
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18398
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18409
+#, python-format
+msgid "* If cannot %s %s, do not %s %s"
+msgstr "* 如果不能 %s %s, 则不 %s %s"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18442
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18452
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18499
+#, python-format
+msgid "* Make %s %s on the same node as %s %s  ( %s according to %s )"
+msgstr "* 让 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18317
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18435
+msgid "* Please set the required attributes"
+msgstr "* 请设置必填的属性"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18381
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18487
+msgid "* Please set the required attributes or add resource sets"
+msgstr "* 请设置必填属性或者添加资源集"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18530
+#, python-format
+msgid ""
+"* Please specify a valid \"Score\" to determine the location relationship "
+"between %s and %s"
+msgstr "* 请指定有效的“权重”以决定 %s 与 %s 之间的位置关系"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18507
+#, python-format
+msgid ""
+"* Prefer to make %s %s on the same node as %s %s  ( %s according to %s )"
+msgstr "* 倾向于让 %s %s 在 %s %s 的相同节点上（%s 参照 %s）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18524
+#, python-format
+msgid ""
+"* Prefer to prevent %s from being %s on the same node as %s %s  ( %s "
+"according to %s )"
+msgstr "* 倾向于避免 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18458
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18468
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18516
+#, python-format
+msgid ""
+"* Prevent %s from being %s on the same node as %s %s  ( %s according to %s )"
+msgstr "* 避免 %s %s 在 %s %s 的相同节点上 （%s 参照 %s）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18316
+msgid "* Specify dependencies between the actions on two resources"
+msgstr "* 指定两个资源其动作之间的依赖关系"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18380
+msgid "* Specify the order of actions on resources"
+msgstr "* 指定资源动作的顺序"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18434
+msgid "* Specify where a resource should run relative to another resource"
+msgstr "* 指定一个资源相对于另一资源的运行位置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18486
+msgid "* Specify where resources should run relative to other resources"
+msgstr "* 指定资源相对于其他资源的运行位置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17875
+msgid ", "
+msgstr "， "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8449
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8452
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11070
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17656
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17659
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17944
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17947
+msgid "."
+msgstr "。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17645
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17936
+msgid ".\n"
+msgstr "。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17645
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17936
+msgid ".  "
+msgstr "。 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:439
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3267
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6562
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6599
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6881
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6983
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7193
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8030
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8042
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9484
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9623
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10309
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10821
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10829
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10873
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11071
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11585
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11600
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11614
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11623
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11926
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11997
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12291
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12547
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14359
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14485
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14775
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16634
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16858
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16860
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16862
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16992
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17046
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17048
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18239
+msgid ":"
+msgstr "："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3814
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8455
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8603
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8988
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9033
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9039
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9060
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9068
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11127
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11224
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11230
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11392
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11403
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12259
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12263
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12450
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12514
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12520
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12727
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12739
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12755
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12758
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12766
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12785
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12792
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12808
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12824
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12828
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12848
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12852
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12865
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12870
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12884
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12893
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15446
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15452
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15482
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15489
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15497
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17036
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19504
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19510
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19515
+msgid ": "
+msgstr "："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:941
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3241
+msgid ":Succeed\n"
+msgstr "：成功\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:943
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3243
+msgid ":Synchronization Error\n"
+msgstr "同步错误\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2093
+msgid "<b>Conste Node</b>"
+msgstr "<b>位置限定节点</b>"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1958
+msgid "<b>Conste Resource</b>"
+msgstr "<b>位置限定资源</b>"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:635
+msgid "<b>Heartbeat</b>"
+msgstr "<b>心跳</b>"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3400
+msgid "<b>Local Nodes</b>"
+msgstr "<b>本地节点</b>"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4205
+msgid "<b>Main Node</b>"
+msgstr "<b>主节点</b>"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3145
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4035
+msgid "<b>Nodes</b>"
+msgstr "<b>节点</b>"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3484
+msgid "<b>Remote Nodes</b>"
+msgstr "<b>远程节点</b>"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12558
+msgid "A copy of the live CIB"
+msgstr "Live CIB 的拷贝"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3814
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11392
+msgid "A file with the same name already exists"
+msgstr "同名文件已经存在"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12562
+msgid "A new CIB with empty cluster configuration"
+msgstr "新的空配置的 CIB"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12620
+#, python-format
+msgid "A new shadow CIB \"%s\" has been successfully created."
+msgstr "成功创建新的 Shadow CIB “%s”。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12597
+#, python-format
+msgid "A shadow CIB \"%s\" already exists and it's currently active."
+msgstr "Shadow CIB “%s” 已经存在并且正在操作当中。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12600
+#, python-format
+msgid "A shadow CIB \"%s\" already exists."
+msgstr "Shadow CIB “%s” 已经存在。"
+
+msgid "API Authentication"
+msgstr "API 认证"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12908
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13258
+msgid "About"
+msgstr "关于"
+
+msgid "Action"
+msgstr "操作"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9587
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10250
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10655
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10758
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13821
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:418
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:499
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2635
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3093
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3363
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3447
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3986
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4141
+msgid "Add"
+msgstr "添加"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10692
+msgid "Add "
+msgstr "添加"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1989
+msgid "Add Conste Node "
+msgstr "添加位置限定节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1854
+msgid "Add Conste Resource "
+msgstr "添加位置限定资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4037
+msgid "Add DRBD"
+msgstr "添加DRBD"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18667
+msgid "Add Heartbeat"
+msgstr "添加心跳"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2199
+msgid "Add Level of Score "
+msgstr "添加级别，分数为 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13755
+msgid "Add Nodes"
+msgstr "添加节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19717
+msgid "Add Operation"
+msgstr "添加操作"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19715
+msgid "Add Parameter"
+msgstr "添加参数"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13262
+msgid "Add Resource"
+msgstr "添加资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1704
+msgid "Add a resource "
+msgstr "添加资源 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10381
+msgid "Add monitor operation"
+msgstr "添加监视操作"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13274
+msgid "Adding and Removing Cluster Nodes"
+msgstr "添加或删除集群节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13274
+msgid "Adding and Removing Cluster _Nodes"
+msgstr "添加或删除集群节点(_N)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:840
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18974
+msgid ""
+"After that please restart the NKHA on all nodes to make \n"
+"the changes become effective!\n"
+msgstr "同步完成后请在所有节点上重新启动 NKHA 使修改生效！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13271
+msgid "Ala_rm Configuration"
+msgstr "报警配置(_R)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:876
+msgid "Alarm"
+msgstr "报警"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13271
+msgid "Alarm Configuration"
+msgstr "报警配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3676
+msgid "Alarm Configure had Save Succeed!\n"
+msgstr "报警配置已修改！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12499
+msgid "All Files"
+msgstr "所有文件"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9009
+msgid "All files"
+msgstr "所有文件"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6883
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14361
+msgid "All of the sub-resources will inherit the attributes from their parent."
+msgstr "子资源将从其父资源继承此属性。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17703
+msgid ""
+"Allow resource migration for resources which support migrate_to/migrate_from "
+"actions"
+msgstr "允许迁移支持 migrate_to 和 migrate_from 操作的资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3410
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3416
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3422
+msgid "And make sure all the resources in the current cluster are stopped.\n"
+msgstr "同时请确认当前集群中的所有资源处于停止状态。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5039
+msgid "And the length must be less than 16.\n"
+msgstr "且长度必须小于16。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19263
+msgid "And then make the standby node "
+msgstr "然后将备用节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2243
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4224
+msgid ""
+"And then please run command on both nodes:\n"
+msgstr ""
+"同步完成后请在两节点上分别运行以下命令：\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:841
+msgid ""
+"And you can choose use the Heartbeat Configuration model to "
+"modify the configure file!\n"
+msgstr "您可以使用心跳配置模块来重新修改配置！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2859
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3099
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4276
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4847
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5957
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8357
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11856
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19061
+msgid "Apply the changes?"
+msgstr "您想应用修改吗？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5042
+msgid "Are you sure apply the changes?\n"
+msgstr "您想应用修改吗？\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5006
+msgid "Are you sure delete the Disk Heartbeat?\n"
+msgstr "是否确认要删除磁盘心跳？\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1726
+msgid "As Same Node Resource"
+msgstr " 为 同节点资源"
+
+msgid "At last make the standby node "
+msgstr "最后将备用节点"
+
+msgid "Attribute"
+msgstr "属性"
+
+msgid "Auto Failback"
+msgstr "自动回迁"
+
+msgid "Auto Join"
+msgstr "自动加入节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3505
+msgid "Backup Directory:"
+msgstr "备份目录："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3209
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3516
+msgid "Backup Interval:"
+msgstr "备份时间间隔："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3251
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3527
+msgid "Backup Start Time:"
+msgstr "备份起始时间："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10260
+msgid "Basic Settings"
+msgstr "基本设置"
+
+msgid "Baud Rate"
+msgstr "波特率"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1149
+msgid "Beep Alarm"
+msgstr "响铃报警"
+
+msgid "Stop Beep Now"
+msgstr "停止本次响铃"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19018
+msgid "Bindnetaddr"
+msgstr "绑定网段"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2319
+msgid "Bindnetaddr:"
+msgstr "绑定网段："
+
+msgid "Boolean Op"
+msgstr "布尔运算"
+
+msgid "Broadcast"
+msgstr "广播"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3467
+msgid "Browsing..."
+msgstr "浏览..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:839
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2243
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3885
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4224
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18974
+msgid "But the Configuration File must be synchronized to other nodes.\n"
+msgstr "但是需要将配置文件同步到其他节点。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11645
+msgid "By:"
+msgstr "源："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8063
+msgid "CIB"
+msgstr ""
+
+msgid "CRM Config"
+msgstr "CRM 配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8387
+msgid "CRM Daemon"
+msgstr "CRM 守护程序"
+
+msgid "Call ID"
+msgstr "调用标识码"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1473
+msgid "Callback"
+msgstr "回迁"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15081
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15087
+msgid "Can't connect to server "
+msgstr "无法连接到服务器 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15093
+msgid ""
+"Can't login to server.\n"
+" The protocols may be mismatched."
+msgstr "无法登录到服务器，可能是协议不匹配"
+
+msgid "Can't login to server.\n The license has expired."
+msgstr "无法登录到服务器。license已过期。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15075
+msgid "Can't resolve address of server "
+msgstr "无法解析服务器地址 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6903
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14382
+#, python-format
+msgid "Cannot %s %s: XML processing error"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15440
+msgid "Cannot expand the Relax-NG schema"
+msgstr "无法展开 Relax-NG Schema"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10997
+msgid "Cannot find any transition record"
+msgstr "无法获取任何集群操作记录"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6853
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14328
+#, python-format
+msgid "Cannot find the %s: %s"
+msgstr "无法找到 %s: %s"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12369
+msgid "Cannot get any shadow CIB"
+msgstr "无法获取任何 Shadow CIB"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11180
+msgid "Cannot save the graph for specified transition"
+msgstr "无法保存指定的集群操作图解"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11218
+msgid "Cannot save the information for specified transition"
+msgstr "无法保存指定的集群操作信息"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12508
+msgid "Cannot save the shadow diff"
+msgstr "无法保存 Shadow 差异"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8289
+msgid "Cannot update the crm configuration"
+msgstr "无法更新crm配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8282
+msgid "Cannot update the crm configuration: No \"crm_config\" in CIB"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6878
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14356
+msgid "Caused by your previous action, this attribute has been set to \""
+msgstr "您之前的操作将此属性设置为““"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1432
+msgid "Change Configure"
+msgstr "修改配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17720
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17739
+msgid ""
+"Changes the behavior of ordering constraints (between clones/masters) so "
+"that instances can start/stop as soon as their peer instance has (rather "
+"than waiting for every instance of the other clone has)."
+msgstr ""
+"改变顺序限制条件的操作方式(克隆／主从资源之间）， 这样实例能够在相关的实例启"
+"动或停止之后立刻启停（不必等待另一克隆资源的每个实例操作完成）。 缺省为 false"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1359
+msgid "Check Type"
+msgstr "类型检测"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13293
+msgid "Cl_ear Migrate Constraints"
+msgstr "清理迁移限制(_E)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17672
+msgid "Class"
+msgstr "类别"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6352
+msgid "Clea_r Migrate Constraints"
+msgstr "清理迁移限制(_R)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6934
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14414
+msgid "Cleanup Resource"
+msgstr "清理资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6349
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13290
+msgid "Cleanup resource"
+msgstr "清理资源"
+
+msgid "Clear All"
+msgstr "清除所有"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7139
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14721
+msgid "Clear Migrate Constraints"
+msgstr "清理迁移限制"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6353
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13294
+msgid "Clear constraints created by migrate"
+msgstr "清理迁移时所创建的限制条件"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6888
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14366
+#, python-format
+msgid "Clear the %s=\"%s\" attribute for sub-resource \""
+msgstr "保留对子资源的 %s=“%s”设置： “"
+
+msgid "Clone"
+msgstr "克隆资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7493
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7510
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8057
+msgid "Cluster"
+msgstr "集群"
+
+msgid "Cluster Property Set"
+msgstr "集群属性集"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13256
+msgid "Cluster Re_port"
+msgstr "集群报告(_P)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12692
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12702
+msgid "Cluster Report"
+msgstr "集群报告"
+
+msgid "Commit"
+msgstr "提交"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:675
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:714
+msgid "Communication IP:"
+msgstr "通信IP："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11600
+msgid "Component"
+msgstr "组件"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13260
+msgid "Con_figuration"
+msgstr "配置(_F)"
+
+msgid "Configuration"
+msgstr "配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:944
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3180
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3244
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3288
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3369
+msgid "Configuration File need to be Synchronized:\n"
+msgstr "要同步的配置文件：\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19568
+msgid "Confirm"
+msgstr "确认"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11838
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15098
+msgid "Connected to "
+msgstr "已连接至 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5920
+msgid "Conste Node"
+msgstr "位置限定节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5909
+msgid "Conste Resource"
+msgstr "位置限定资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13286
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13758
+msgid "Constraints"
+msgstr "限制条件"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10693
+msgid "Continue Adding "
+msgstr "继续添加"
+
+msgid "Could not send %s op to the crmd"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12535
+msgid "Create Shadow CIB"
+msgstr "创建 Shadow CIB"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13247
+msgid "Create a new shadow CIB"
+msgstr "创建新的 Shadow CIB"
+
+msgid "DRBD Syncing"
+msgstr "磁盘镜像正在数据同步"
+
+msgid "Please wait for a moment!\n"
+msgstr "请稍候!\n"
+
+msgid "DRBD is doing data synchronization now...\n"
+msgstr "磁盘镜像正在进行数据同步...\n"
+
+msgid "DRBD Fixing"
+msgstr "磁盘镜像正在修复"
+
+msgid "DRBD is being repaired now...\n"
+msgstr "磁盘镜像正在修复...\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19263
+msgid "DRBD Configuration Error"
+msgstr "DRBD配置错误"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19263
+msgid "DRBD communication nic can not be used for Virtual ip. Solution:\n"
+msgstr "DRBD网段不可用于虚拟IP。解决方案：\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19271
+msgid "DRBD Connect Error"
+msgstr "磁盘镜像连接错误"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19272
+msgid "Please check the disk mirroring heartbeat connections!\n"
+msgstr "请检查磁盘镜像的心跳连接!\n"
+
+msgid "Select Date"
+msgstr "日期选择"
+
+msgid "Date Expression"
+msgstr "日期表达式"
+
+msgid "Date Spec"
+msgstr "日期指定"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11643
+msgid "Date:"
+msgstr "日期："
+
+msgid "Time:"
+msgstr "时间："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2998
+msgid "Day"
+msgstr "日"
+
+msgid "Days"
+msgstr "日"
+
+msgid "Dead Ping"
+msgstr "认定 Ping 节点宕机时间"
+
+msgid "Dead Time"
+msgstr "认定宕机时间"
+
+msgid "Debug File"
+msgstr "调试文件"
+
+msgid "Debug Level"
+msgstr "调试级别"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8165
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8455
+msgid "Default"
+msgstr "缺省"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:364
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:529
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2665
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3108
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3376
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3460
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4001
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4157
+msgid "Delete"
+msgstr "删除"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13263
+msgid "Delete Resource"
+msgstr "删除资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13250
+msgid "Delete a shadow CIB"
+msgstr "删除 Shadow CIB"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13306
+msgid "Delete the node"
+msgstr "删除该节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10005
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13860
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14845
+msgid "Delete the selected object?"
+msgstr "删除选定的对象？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12392
+msgid "Delete the specified shadow CIB"
+msgstr "删除选定的 Shadow CIB"
+
+msgid "Description"
+msgstr "描述"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11572
+msgid "Description of Cluster Report"
+msgstr "集群报告描述"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10869
+msgid "Detail"
+msgstr "详细信息"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11623
+msgid "Detailed description"
+msgstr "详细描述"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7321
+msgid "Details"
+msgstr "详细信息"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2500
+msgid "Device Label:"
+msgstr "磁盘标签："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4247
+msgid "Device1"
+msgstr "设备1"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4253
+msgid "Device2"
+msgstr "设备2"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1219
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2489
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4060
+msgid "Device:"
+msgstr "设备："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13248
+msgid "Di_ff"
+msgstr "差异(_F)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9694
+msgid "Dialog"
+msgstr "对话"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12498
+msgid "Diff Files"
+msgstr "Diff 文件"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13248
+msgid "Differences between the live CIB and the shadow CIB"
+msgstr "Live CIB 与 Shadow CIB 之间的差异"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12450
+#, python-format
+msgid "Differences between the live CIB and the shadow CIB \"%s\""
+msgstr "Live CIB 与 Shadow CIB “%s” 之间的差异"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3184
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3811
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3893
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4073
+msgid "Directory:"
+msgstr "目录："
+
+msgid "Mount Directory:"
+msgstr "挂载目录："
+
+msgid "Disabled"
+msgstr "关闭"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13267
+msgid "Disk Heartbeat Configuration"
+msgstr "磁盘心跳配置"
+
+msgid "Disk Mirroring Configuration"
+msgstr "磁盘镜像配置"
+
+msgid "Disk _Mirroring Configuration"
+msgstr "磁盘镜像配置(_M)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:688
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:727
+msgid "Disk:"
+msgstr "磁盘："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19496
+msgid "Do not delete the root directory"
+msgstr "请不要删除根目录"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2451
+msgid "Do not use disk heartbeat"
+msgstr "取消使用磁盘心跳"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:842
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3180
+msgid "Do you want continue to synchronize?"
+msgstr "是否继续同步？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4910
+msgid "Do you want to delete GFS2?"
+msgstr "请确认是否要删除GFS2？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12344
+msgid "Do you want to logout ?"
+msgstr "您想要断开吗？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3816
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11394
+msgid "Do you want to overwrite it?"
+msgstr "您想要覆盖该文件吗？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3165
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3369
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12270
+msgid "Do you want to quit ?"
+msgstr "您想要退出吗？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3626
+msgid "Do you want to save the changes?"
+msgstr "是否确认进行修改？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14295
+msgid "Do you want to stop the resource?"
+msgstr "是否要停止该资源？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17716
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17735
+msgid "Does each copy of the clone perform a different function?"
+msgstr "克隆的每个实例执行不同的功能？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11187
+msgid "Dot File"
+msgstr "Dot 文件"
+
+msgid "Duration"
+msgstr "持续时间"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10760
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:514
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2650
+msgid "Edit"
+msgstr "编辑"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4044
+msgid "Edit DRBD"
+msgstr "编辑DRBD"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18672
+msgid "Edit Heartbeat"
+msgstr "编辑心跳"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8885
+msgid "Edit XML"
+msgstr "编辑 XML"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1132
+msgid "Email Alarm"
+msgstr "主机故障邮件报警"
+
+msgid "Intellect Alarm"
+msgstr "智能预警"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12259
+msgid "Empty information returned"
+msgstr "返回信息为空"
+
+msgid "Enabled"
+msgstr "激活"
+
+msgid "End"
+msgstr "截止"
+
+msgid "Error performing operation:"
+msgstr "执行操作时发生错误："
+
+msgid "Please input again"
+msgstr "请重新输入"
+
+msgid "Error signing on to the CIB service:"
+msgstr ""
+
+msgid "Error signing on to the CRMd service\n"
+msgstr ""
+
+msgid "Exec Time"
+msgstr "执行时间"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11844
+msgid "Expert Mode"
+msgstr "专家模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13546
+msgid "Expiration time:"
+msgstr "过期时间："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8902
+msgid "Export"
+msgstr "导出"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8903
+msgid "Export XML"
+msgstr "导出 XML"
+
+msgid "Expression"
+msgstr "表达式"
+
+msgid "Fail Count"
+msgstr "失败计数"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19398
+msgid "Failed"
+msgstr "失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15090
+msgid ""
+"Failed in the authentication.\n"
+" User Name or Password may be wrong.\n"
+" or the user doesn't belong to haclient group"
+msgstr "用户认证失败，可能是用户或密码不对，或该用户不属于 haclient 组"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12705
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12711
+msgid "Failed to generate the cluster report"
+msgstr "生成集群报告失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12470
+msgid "Failed to generate the shadow CIB differences"
+msgstr "生成 shadow CIB 差异失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11155
+msgid "Failed to generate the transition detail"
+msgstr "生成集群操作详细信息失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11140
+msgid "Failed to generate the transition graph"
+msgstr "生成集群操作图解失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11169
+msgid "Failed to generate the transition scores"
+msgstr "生成集群操作得分失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3410
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3416
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3422
+msgid "Failed to import!\n"
+msgstr "导入失败！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15446
+msgid "Failed to parse the CIB XML"
+msgstr "解析 CIB XML 失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15452
+msgid "Failed to parse the Relax-NG schema"
+msgstr "解析 Relax-NG Schema 失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8988
+msgid "Failed to parse the XML"
+msgstr "解析 XML 失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:920
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3199
+msgid "Failed to synchronize!"
+msgstr "同步失败！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2540
+msgid "Failures(TKO):"
+msgstr "失败次数(TKO)："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:887
+msgid "Fetion Alarm"
+msgstr "飞信报警"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:940
+msgid "Fetion Number:"
+msgstr "发送方手机号："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:953
+msgid "Fetion Password:"
+msgstr "发送方密码："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3826
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13574
+#, python-format
+msgid "File %s not exist!"
+msgstr "文件 %s 不存在！请确认！"
+
+msgid "First"
+msgstr "首先"
+
+msgid "First Action"
+msgstr "首先操作"
+
+msgid "Force"
+msgstr "强制"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11290
+msgid "From"
+msgstr "起始"
+
+msgid "From Role"
+msgstr "起始角色"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13269
+msgid "_GFS Configuration"
+msgstr "GFS配置(G)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11185
+msgid "GIF Image"
+msgstr "GIF 图像"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12703
+msgid "Generating the cluster report may take a while,"
+msgstr "生成集群报告需要一段时间，"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12469
+msgid "Generating the shadow CIB differences may take a while..."
+msgstr "生成 shadow CIB 差异需要一段时间..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11154
+msgid "Generating the transition detail may take a while..."
+msgstr "生成集群操作详细信息需要一段时间..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11139
+msgid "Generating the transition graph may take a while..."
+msgstr "生成集群操作图解需要一段时间..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11168
+msgid "Generating the transition scores may take a while..."
+msgstr "生成集群操作得分需要一段时间..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10209
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10218
+msgid ""
+"Globally Unique (Does each copy of the clone perform a different function? "
+"Defaults to false)"
+msgstr "全局唯一（克隆的每个实例执行不同的功能？ 缺省为 false）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10858
+msgid "Graph"
+msgstr "图解"
+
+msgid "Group"
+msgstr "资源组"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13885
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14031
+msgid "Group must retain at least a resource!"
+msgstr "组内至少应保留一个资源！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6370
+msgid "Group resources by node"
+msgstr "按节点分组资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1299
+msgid "HBA Card Protection"
+msgstr "HBA卡保护"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11846
+msgid "Hack Mode"
+msgstr "Hack 模式"
+
+msgid "Heartbeat Version"
+msgstr "Heartbeat 版本"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13280
+msgid "Heartbeats Configuration"
+msgstr "心跳配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10829
+msgid "History"
+msgstr "历史"
+
+msgid "Host key verification failed. Offending key in /root/.ssh/known_hosts"
+msgstr "主机密钥验证失败。/root/.ssh/known_hosts中的密钥错误"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2998
+msgid "Hour"
+msgstr "时"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17727
+msgid ""
+"How many copies of the resource can be promoted to master status on a single "
+"node."
+msgstr "单个节点上能够提升为主状态的最大资源实例个数。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17725
+msgid "How many copies of the resource can be promoted to master status."
+msgstr "能够提升为主状态的最大资源实例个数。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17710
+msgid "How many copies of the resource can be started on a single node."
+msgstr "单个节点上能够启动的最大资源实例个数。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17708
+msgid ""
+"How many copies of the resource to start. Defaults to the number of nodes in "
+"the cluster."
+msgstr "能够启动的最大资源实例个数。 缺省为集群的节点个数。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17697
+msgid ""
+"How many failures should occur for this resource on a node before making the "
+"node ineligible to host this resource. Default: \"none\""
+msgstr ""
+"允许该资源在一个节点上的失败次数， 之后禁止该资源在其上运行。缺省： 无限制"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17701
+msgid ""
+"How many seconds to wait before acting as if the failure had not occurred "
+"(and potentially allowing the resource back to the node on which it failed. "
+"Default: \"never\""
+msgstr ""
+"等待多少秒之后就视作失败从未发生过（意味允许资源回到之前失效过的节点）缺省： "
+"从不"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17695
+msgid ""
+"How much does the resource prefer to stay where it is? Defaults to the value "
+"of \"default-resource-stickiness\""
+msgstr ""
+"资源有多大程度倾向于停留在当前节点？缺省为“default-resource-stickiness”的值"
+
+msgid "Hrs"
+msgstr "时"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9033
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9039
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11127
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12727
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12755
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12785
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12792
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12808
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12824
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12848
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12865
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15482
+msgid "I/O error"
+msgstr "输入输出错误"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6241
+msgid "ID"
+msgstr "标识符"
+
+msgid "ID Ref"
+msgstr "标识符引用"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8969
+msgid "INS"
+msgstr "插入"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4245
+msgid "IP1"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4251
+msgid "IP2"
+msgstr ""
+
+msgid "IP:"
+msgstr "IP："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17686
+msgid ""
+"If not all resources can be active, the cluster will stop lower priority "
+"resources in order to keep higher priority ones active."
+msgstr ""
+"如果资源无法全部工作， 集群会停止低优先级的资源， 以便让高优先级的资源工作。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8900
+msgid "Import"
+msgstr "导入"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8901
+msgid "Import XML"
+msgstr "导入 XML"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3447
+msgid ""
+"Imported successfully! Please adjust the resources, constraints and constes "
+"attributes to adapt current cluster!"
+msgstr "导入成功！请调整资源，限制条件及位置限定的相关配置以适应当前集群！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7496
+msgid "Inactive resources"
+msgstr "停止的资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12721
+msgid "Incomplete data"
+msgstr "不完整的数据"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6374
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13319
+msgid "Indicate pending(starting/stopping) operations"
+msgstr "显示进行中的（启动中／停止中）的操作"
+
+msgid "Initial Dead Time"
+msgstr "启动时认定宕机时间"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10196
+msgid "Initial state of resource"
+msgstr "资源的初始状态"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13558
+msgid "Input SN:"
+msgstr "输入序列号："
+
+msgid "Instance Attributes"
+msgstr "实例属性"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10211
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10220
+msgid ""
+"Interleave (Changes the behavior of ordering constraints (between clones/"
+"masters) so that instances can start/stop as soon as their peer instance has "
+"(rather than waiting for every instance of the other clone has). Defaults to "
+"false)"
+msgstr ""
+"交错（改变顺序限制条件的操作方式(克隆／主从资源之间）， 这样实例能够在相关的"
+"实例启动或停止之后立刻启停（不必等待另一克隆资源的每个实例操作完成）。 缺省"
+"为 false）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11238
+msgid ""
+"Interpreting the graph:\n"
+"* Arrows indicate ordering dependancies\n"
+"* Dashed-arrows indicate dependancies that are not present in the transition "
+"graph\n"
+"* Actions with a dashed border of any color do not form part of the "
+"transition graph\n"
+"* Actions with a green border form part of the transition graph\n"
+"* Actions with a red border are ones the cluster would like to execute but "
+"are unrunnable\n"
+"* Actions with a blue border are ones the cluster does not feel need to be "
+"executed\n"
+"* Actions with orange text are pseudo/pretend actions that the cluster uses "
+"to simplify the graph\n"
+"* Actions with black text are sent to the LRM\n"
+"* Resource actions have text of the form {rsc}_{action}_{interval} {node}\n"
+"* Any action depending on an action with a red border will not be able to "
+"execute.\n"
+"* Loops are really bad. Please report them to the development team."
+msgstr ""
+"图解说明：\n"
+"* 箭头表示顺序依赖关系\n"
+"* 虚线箭头表示没有出现在该集群操作中的依赖关系\n"
+"* 任何颜色虚线边框的动作不是该集群操作的组成部分\n"
+"* 绿色边框的动作是该集群操作的组成部分\n"
+"* 红色边框的动作是指集群想要但不能执行的动作\n"
+"* 蓝色边框的动作是指集群认为不需要执行的动作\n"
+"* 橙色文本的动作是集群用以简化图解的伪动作\n"
+"* 黑色文本的动作是发送给 LRM 的动作\n"
+"* 资源动作的文本格式为 {资源}_{动作}_{间隔} {节点}\n"
+"* 任何动作如果依赖于红色边框的动作，则不能执行\n"
+"* 如果遇到环路情况，请报告给开发团队。"
+
+msgid "Interval"
+msgstr "间隔"
+
+msgid "Interval Origin"
+msgstr "间隔 Origin"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2513
+msgid "Interval(seconds):"
+msgstr "间隔(秒)："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18239
+#, python-format
+msgid "Invalid \"%s\""
+msgstr "无效的“%s”"
+
+msgid "Invalid date specified:"
+msgstr "指定的日期无效："
+
+msgid "Invalid duration specified:"
+msgstr "指定的持续时间无效："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17036
+#, python-format
+msgid "Invalid identifier \"%s\""
+msgstr "无效的标识符 “%s”"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17690
+msgid "Is the cluster allowed to start and stop the resource?"
+msgstr "是否让集群负责启动和停止资源？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12359
+msgid "It could affect the performance."
+msgstr "这会影响集群性能。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11184
+msgid "JPEG Image"
+msgstr "JPEG 图像"
+
+msgid "Keep Alive"
+msgstr "心跳间隔"
+
+msgid "Last Return Code Change"
+msgstr "上次返回码改变"
+
+msgid "Last Run"
+msgstr "上次运行"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5878
+msgid "Level"
+msgstr "级别"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13540
+msgid "License Expired!"
+msgstr "序列号已过期！"
+
+msgid "Lifetime"
+msgstr "生效期限"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13535
+msgid "Lincense Failed!"
+msgstr "注册有误！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8594
+msgid "List Mode"
+msgstr "列表模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10825
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12662
+msgid "Live"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8972
+#, python-format
+msgid "Ln %d, Col %d\t%s"
+msgstr "行 %d, 列 %d\t%s"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:420
+msgid "Local Node add"
+msgstr "添加本地节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3141
+msgid "Local Update"
+msgstr "光盘升级"
+
+msgid "Log Facility"
+msgstr "日志机制"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13242
+msgid "Log_in"
+msgstr "登录(_I)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13243
+msgid "Log_out"
+msgstr "断开(_O)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12279
+msgid "Login"
+msgstr "登录"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3508
+msgid "Mail Server"
+msgstr "邮件服务器"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3681
+msgid "Main Node Device:"
+msgstr "主节点设备："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3669
+msgid "Main Node IP:"
+msgstr "主节点IP："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3659
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3868
+msgid "Main Node:"
+msgstr "主节点:"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2539
+msgid "Node1 Name:"
+msgstr "节点1："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2540
+msgid "Node1 IP:"
+msgstr "节点1IP："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2541
+msgid "Node1 Device:"
+msgstr "节点1设备："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2542
+msgid "Node2 Name:"
+msgstr "节点2："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2543
+msgid "Node2 IP:"
+msgstr "节点2IP："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2544
+msgid "Node2 Device:"
+msgstr "节点2设备："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3166
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3606
+msgid "Main node:"
+msgstr "主节点："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7244
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7252
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14824
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14832
+msgid "Make"
+msgstr "让"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6366
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13305
+msgid "Make the node active"
+msgstr "让节点活动"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6365
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13304
+msgid "Make the node standby"
+msgstr "让节点备用"
+
+msgid "Master"
+msgstr "主从资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5192
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5238
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5254
+msgid "Master Node"
+msgstr "主节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10201
+msgid ""
+"Maximum number of copies (Defaults to the number of nodes in the cluster)"
+msgstr "最大实例个数（缺省为集群的节点个数）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10203
+msgid "Maximum number of copies on a single node (Defaults to 1)"
+msgstr "单个节点上的最大实例个数（缺省为 1）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10226
+msgid "Maximum number of master copies (Defaults to 1)"
+msgstr "最大主实例个数 （缺省为 1）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10228
+msgid "Maximum number of master copies on a single node (Defaults to 1)"
+msgstr "单个节点上的最大主实例个数 （缺省为 1）"
+
+msgid "Maybe network failures or some other reasons."
+msgstr "或许网络出现故障或其他原因。"
+
+msgid "Mcastaddr"
+msgstr "多播地址"
+
+msgid "Mcastport:"
+msgstr "多播端口："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:887
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19548
+msgid "Message"
+msgstr "消息"
+
+msgid "Message Format"
+msgstr "消息格式"
+
+msgid "Meta Attributes"
+msgstr "元属性"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6350
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13291
+msgid "Migra_te Resource"
+msgstr "迁移资源(_T)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14468
+msgid "Migrate Resource"
+msgstr "迁移资源"
+
+msgid "Migrate Time"
+msgstr "迁移时间"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6350
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13291
+msgid "Migrate a resource to specified node"
+msgstr "迁移资源到指定节点"
+
+msgid "Migration Threshold"
+msgstr "迁移阈值"
+
+msgid "Migration will take effect at:"
+msgstr "迁移将在如下时间发生："
+
+msgid "Migration will take effect until:"
+msgstr "迁移已生效，生效期至："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2998
+msgid "Min"
+msgstr "分钟"
+
+msgid "Mins"
+msgstr "分"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13268
+msgid "Real time _Mirror and Schedule Backup Configuration"
+msgstr "实时镜像与计划备份(M)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1488
+msgid "Monitor"
+msgstr "监控"
+
+msgid "Month"
+msgstr "月"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13265
+msgid "Move Do_wn Resource"
+msgstr "资源下移(_W)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13265
+msgid "Move Down Resource"
+msgstr "资源下移"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14045
+msgid "Move To"
+msgstr "移至"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13273
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14044
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14050
+msgid "Move To Group"
+msgstr "移动至组"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13273
+msgid "Move To _Group"
+msgstr "移动至组(_G)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13264
+msgid "Move Up Resource"
+msgstr "上移资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13264
+msgid "Move _Up Resource"
+msgstr "上移资源(_U)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14047
+msgid ""
+"Move into or out of group will restart the resource or resources \n"
+"in the group which running!\n"
+"\n"
+msgstr ""
+"组内外移动可能会重新启动资源或组内其它正在运行的资源！\n"
+"\n"
+
+msgid "Mths"
+msgstr "月"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8275
+msgid "Multiple \"Cluster Property Set\" in \"CRM Config\"."
+msgstr "“CRM 配置”中存在多个“集群属性集”。"
+
+msgid "Must supply a resource id with -r\n"
+msgstr "必须使用 -r 指定资源 id \n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3167
+msgid "NO Synchronization"
+msgstr "无法同步"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7319
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7627
+msgid "Name"
+msgstr "名称"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4243
+msgid "Name1"
+msgstr "名称1"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4249
+msgid "Name2"
+msgstr "名称2"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12902
+msgid "NeoKylin HA Cluster Software (NKHA) V7.0"
+msgstr "中标麒麟高可用集群软件 NKHA V7.0"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12904
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12975
+msgid "NeoKylin HA Management Client"
+msgstr "中标麒麟高可用集群软件图形用户管理界面"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3736
+msgid "Alarm Configure"
+msgstr "报警配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4807
+msgid "GFS Configuration"
+msgstr "GFS 配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18977
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19004
+msgid "Heartbeat Configuration"
+msgstr "心跳配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18910
+msgid "Heartbeat can not use mcast and broadcast at the same time!"
+msgstr "心跳不可同时使用广播和多播!"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3453
+msgid "Rapid Deployment"
+msgstr "快速部署导入"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:7
+#: ../mgmt/client/license_register.py.in:136
+msgid "Register"
+msgstr "注册"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5856
+#, python-format
+msgid "Resource %s Location Configuration"
+msgstr "资源 %s 定位配置管理"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3888
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3894
+msgid "Script Generator"
+msgstr "脚本生成器"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19118
+msgid "Shared Disk File EXclusiveness"
+msgstr "共享磁盘锁配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3322
+msgid "Synchronization"
+msgstr "配置文件同步"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3134
+msgid "Update"
+msgstr "升级"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2937
+msgid "Real time Mirror and Schedule Backup"
+msgstr "实时镜像与计划备份"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1284
+msgid "Network Card Protection"
+msgstr "网卡保护"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3142
+msgid "Network Update"
+msgstr "在线升级"
+
+msgid "Nice Failback"
+msgstr "回迁"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5241
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5257
+msgid "No Run Node"
+msgstr "不运行"
+
+msgid "No route to host. IP may be wrong."
+msgstr "连接主机出错。可能IP地址错误。"
+
+msgid "No such file or directory."
+msgstr "同步文件或目录不存在。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2703
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2780
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2975
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3027
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3041
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5876
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6936
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14416
+msgid "Node"
+msgstr "节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:779
+msgid "Node 1"
+msgstr "节点1"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:701
+msgid "Node 2"
+msgstr "节点2"
+
+msgid "Node Attribute"
+msgstr "节点属性"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13306
+msgid "Node D_elete"
+msgstr "删除节点(_E)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:662
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:834
+msgid "Node Name:"
+msgstr "节点名："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3044
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3949
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4131
+msgid "Node:"
+msgstr "节点："
+
+msgid "Nodes"
+msgstr "节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13427
+msgid "Not Connected"
+msgstr "未连接"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19396
+msgid "Not Running"
+msgstr "未运行"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11840
+msgid "Not connected"
+msgstr "未连接"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2800
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2820
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2827
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2965
+msgid "Note:"
+msgstr "备注："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3928
+msgid "Note: DRBD can only be run in two-node cluster!"
+msgstr "请注意：DRBD只能进行在双机集群上！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2813
+msgid "Notes: In the Process Monitoring box, each Line represents a process."
+msgstr "备注：在监控进程列表框中，每一行代表一个进程。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:278
+msgid "Note："
+msgstr "备注："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12263
+msgid "Nothing returned"
+msgstr "无返回"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10207
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10216
+msgid ""
+"Notify all the other copies before stopping or starting a copy and when the "
+"action was successful (Defaults to false)"
+msgstr ""
+"在启动或停止一个实例之前, 并且在成功完成之时，通知所有其它实例（缺省为 "
+"false）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1205
+msgid "NumLocks:"
+msgstr "锁个数："
+
+msgid "Nvpair"
+msgstr "名称/值对"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14042
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14045
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14054
+msgid "OUTGROUP"
+msgstr "组外"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8967
+msgid "OVR"
+msgstr "覆盖"
+
+msgid "On Fail"
+msgstr "失败时"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9000
+msgid "Open File"
+msgstr "打开文件"
+
+msgid "Operation"
+msgstr "操作"
+
+msgid "Operation Defaults"
+msgstr "操作缺省设置"
+
+msgid "Operations"
+msgstr "操作"
+
+msgid "Optional"
+msgstr "选填"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10282
+msgid "Options"
+msgstr "选项"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12640
+msgid "Or you don't have the permission."
+msgstr "或者您无此权限。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9623
+msgid "Other"
+msgstr "其它"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11183
+msgid "PNG Image"
+msgstr "PNG 图像"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15314
+msgid "Pacemaker GUI requires pyxml package to process DTD"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2706
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2978
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3030
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3044
+msgid "Password"
+msgstr "口令"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1072
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3069
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3961
+msgid "Password:"
+msgstr "密码："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11388
+msgid "Permission denied"
+msgstr "权限不够"
+
+msgid "Permission denied. IP or Password may be wrong."
+msgstr "权限错误。可能IP地址或密码错误。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3410
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3416
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3422
+msgid "Please check the file to import! It must can be cib.xml!\n"
+msgstr "请检查要导入的文件！该文件必须是cib.xml文件！\n"
+
+#, python-format
+msgid "Please check the ip address of %s"
+msgstr "请检查%s的IP地址"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:507
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:544
+msgid "Please check the netmask"
+msgstr "请检查子网掩码"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1128
+msgid "Password error! Please input it again!\n"
+msgstr "密码错误!　请重新输入!\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2175
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2180
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4166
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4171
+#, python-format
+msgid "Please confirm the IP address of %s!\n"
+msgstr "请确认节点%s的IP地址！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2184
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4175
+msgid "Please confirm the IP addresses! They must be different!\n"
+msgstr "请确认IP地址，两节点地址必须不同！\n"
+
+msgid "Please confirm the address which the NKHA executive should bind.\n"
+msgstr "请重新输入 NSHAES 绑定的地址。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18839
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18886
+msgid ""
+"Please confirm the address which the NKHA executive should bind. This "
+"address should be different with others!\n"
+msgstr "请重新输入 NSHAES 绑定的地址。该地址应与其它心跳的地址不同！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18757
+msgid ""
+"Please confirm the address which the NKHA executive should bind. This is a "
+"IP address, and should always end in zero!\n"
+msgstr ""
+"请重新输入 NKHA 绑定的地址。该地址应为合法的IP地址，且必须以0结尾！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19113
+msgid ""
+"Please confirm the configure!\n"
+"The device initializion had failed!"
+msgstr ""
+"设备初始化失败！\n"
+"请重新确认配置！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3578
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3589
+msgid "Please confirm the email to receive warning!"
+msgstr "请确认接收方邮件地址！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3613
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3623
+msgid "Please confirm the fetion number to receive warning!"
+msgstr "请确认接收方飞信号码！"
+
+msgid "And please note that the Intellect Alarm will be also changed to on!"
+msgstr "请注意智能切换的预警功能将开启！"
+
+msgid "And please note that the Intellect Alarm will be also changed to off!"
+msgstr "请注意智能切换的预警功能将关闭！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2166
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4157
+msgid "Please confirm the two nodes, they must be different!\n"
+msgstr "请重新输入两个不同的节点！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3506
+msgid "Please confirm whether the mail server within the network?"
+msgstr "请确认网络内是否有邮件服务器？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10000
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14840
+msgid "Please do not delete the DC node!"
+msgstr "请不要删除DC节点！"
+
+msgid "Please edit this template and describe the issue/problem you"
+msgstr "请修改此模板，描述您遇到的问题。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3334
+msgid "Please enter root password for the following node:"
+msgstr "请输入各节点的root密码："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3459
+msgid "Please enter the file path to import:"
+msgstr "请输入要导入的文件："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1344
+msgid "Please input IP address"
+msgstr "请输入IP地址"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5039
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5056
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5069
+msgid "Please input it again!\n"
+msgstr "请重新输入！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2591
+msgid "Please input node and password!"
+msgstr "请输入节点及密码！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:620
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:624
+msgid "Please input the start time of backup!"
+msgstr "请输入备份起始时间！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2206
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4179
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5034
+msgid "Please input the device you want!\n"
+msgstr "请输入设备名！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19098
+msgid "Please input the device, for example: /dev/hda"
+msgstr "请输入设备，如：/dev/hda"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1509
+msgid "Please input the backup directories!"
+msgstr "请输入备份目录!"
+
+msgid "And different directories should be separated by a semicolon!"
+msgstr "不同目录间以分号进行分隔！"
+
+msgid "Please check the mount directory!"
+msgstr "请检查挂载目录！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3559
+msgid ""
+"Please input the email to send warning\n"
+"for example: test@cs2c.com.cn"
+msgstr "请输入正确的发送方邮件地址，如test@cs2c.com.cn"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3600
+msgid ""
+"Please input the fetion password\n"
+"for example: qwe123"
+msgstr "请输入飞信密码，如：qwe123"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18772
+msgid ""
+"Please input the multicast address used by NKHA executive. This address "
+"should be class D multicast address 225.0.0.0 - 239.255.255.255!\n"
+msgstr ""
+"请输入 NSHAES 使用的多播地址。该地址应为D类多播地址，范围为 225.0.0.0 - "
+"239.255.255.255!\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3797
+msgid "Please input the name of the script!\n"
+msgstr "请输入脚本名称！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2733
+msgid "Please input the node"
+msgstr "请输入节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19103
+msgid "Please input the numlocks, for example: 20"
+msgstr "请输入锁个数，如：20"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3566
+msgid ""
+"Please input the password of email sender\n"
+"for example: qwe123"
+msgstr "请输入发送方邮箱密码，如：qwe123"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1142
+msgid "Please input the password!"
+msgstr "请输入密码！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3801
+msgid "Please input the path of the script start!\n"
+msgstr "请输入脚本启动路径！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3805
+msgid "Please input the path of the script stop!\n"
+msgstr "请输入脚本停止路径！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3554
+msgid ""
+"Please input the port to send email\n"
+"for example: 25"
+msgstr "请输入正确的端口号，如：25"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3809
+msgid "Please input the processes the script should monitor!\n"
+msgstr "请输入保护脚本要监控的进程！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3176
+msgid "Please input the root password."
+msgstr "请输入root密码。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3595
+msgid "Please input the sender of fetion number!"
+msgstr "请输入飞信发送方号码！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3549
+msgid ""
+"Please input the smtp server\n"
+"for example: mail.cs2c.com.cn"
+msgstr ""
+"请输入smtp服务器\n"
+"如：mail.cs2c.com.cn"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:608
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1249
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1289
+msgid "Please input the time interval of backup!\n"
+msgstr "请输入备份时间间隔!\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2531
+msgid "Please make sure you have configured the drbd file!"
+msgstr "请确认您已配置了DRBD文件！"
+
+msgid ""
+"Please refer to http://en.wikipedia.org/wiki/ISO_8601#Duration for examples "
+"of valid durations"
+msgstr ""
+"请参考页面 http://en.wikipedia.org/wiki/ISO_8601#Duration 查看有效的持续时间"
+"的例子"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4969
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4973
+msgid "Please restart NKHA on all nodes in the cluster: "
+msgstr "请在集群中的所有节点上重新启动NKHA："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:881
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5025
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5106
+msgid ""
+"Please restart the NKHA on all nodes in the cluster to make \n"
+"the changes become effective!\n"
+msgstr "请在集群中的所有节点上重新启动 NKHA 使修改生效！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1573
+msgid ""
+"Please run command on both nodes:\n"
+msgstr ""
+"请在两节点上分别运行以下命令：\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2170
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4161
+msgid "Please select nodes!\n"
+msgstr "请选择节点！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:599
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1240
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1982
+msgid "Please select the main node"
+msgstr "请选择主节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:520
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1135
+msgid "Please select the node that to be added!"
+msgstr "请选择要添加的节点!"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2873
+msgid "Please select the number of nodes in the mirror"
+msgstr "请选择实时镜像节点数"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2919
+msgid "Please select the type of the mirror"
+msgstr "请选择镜像模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18808
+msgid ""
+"Please specifies mcastport number. This should be a UDP port number between "
+"1025 and 65535!\n"
+msgstr "请指定多播端口号。该端口号应为 1025 至 65535 之间的 UDP 端口号！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12591
+msgid "Please specify a name for the shadow CIB."
+msgstr "请指定 Shadow CIB 的名称"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11070
+msgid "Please specify a proper identity of a transition"
+msgstr "请指定集群操作的正确标识"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12594
+msgid "Please specify another name for avoiding confusion."
+msgstr "请指定其它的名称以防混淆。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9649
+msgid "Please specify the type of object you want to add"
+msgstr "请指定添加对象的类型"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13489
+msgid "Please stop NKHA first: "
+msgstr "请先停止NKHA："
+
+msgid "Please supply a hostname with -H"
+msgstr "请使用 -H 指定一个主机名"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:943
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3180
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3243
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3288
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3369
+msgid "Please synchronize it manually!\n"
+msgstr "请手动同步！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:742
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:835
+msgid ""
+"Please use the Heartbeat Configuration model to modify the "
+"configure file!\n"
+msgstr "请使用心跳配置模块修改配置文件！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8375
+msgid "Policy Engine"
+msgstr "策略引擎"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1046
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2369
+msgid "Port:"
+msgstr "端口号："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13278
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13761
+msgid "Preferences"
+msgstr "首选项"
+
+msgid "Prereq"
+msgstr "依赖"
+
+msgid "Primitive"
+msgstr "普通资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2779
+msgid "Process Monitoring:"
+msgstr "监控进程："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13517
+msgid "ProductInfo:\n"
+msgstr "产品信息：\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17676
+msgid "Provider"
+msgstr "提供者"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6357
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13298
+msgid "Put a resource into managed mode"
+msgstr "将资源置为管理模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6355
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13296
+msgid "Put a resource into unmanaged mode"
+msgstr "将资源置为非管理模式"
+
+msgid "Queue Time"
+msgstr "排队时间"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13244
+msgid "Quit the Program"
+msgstr "退出客户端"
+
+msgid "Quorum Server"
+msgstr "Quorum 服务器"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3459
+msgid ""
+"Rapid Deployment will replace the existing resources,\n"
+"constraints and constes with new cib file.\n"
+msgstr ""
+"快速部署导入将替换现有的资源，限制条件以及\n"
+"位置限定等信息。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6359
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13300
+msgid "Re_fresh Resources"
+msgstr "刷新资源(_F)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13284
+msgid "Re_name Resource"
+msgstr "资源重命名(_N)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6361
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13302
+msgid "Re_probe Resources"
+msgstr "重新检查资源(_P)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13268
+msgid "Real Time Mirror, Scheduled Backup and Remote Disaster Recovery"
+msgstr "实时镜像，计划备份及远程容灾"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2998
+msgid "Real time Mirror"
+msgstr "实时镜像"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:927
+msgid "Receiver Number:"
+msgstr "接收方手机号："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1121
+msgid "Receiver:"
+msgstr "收信人："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6881
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14359
+msgid "Recommended"
+msgstr "建议"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15236
+msgid "Reconnecting..."
+msgstr "重新连接中..."
+
+msgid "Record Pending"
+msgstr "记录进行中的操作"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13249
+msgid "Recreate a shadow CIB from the live CIB"
+msgstr "从 Live CIB 重新创建 Shadow CIB"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12390
+msgid "Recreate the specified shadow CIB from the live CIB"
+msgstr "重新从 Live CIB 创建指定的 Shadow CIB"
+
+msgid "Refresh"
+msgstr "刷新"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6359
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13300
+msgid "Refresh CIB from the LRM status"
+msgstr "从 LRM 状态刷新 CIB"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3638
+msgid "Remote Disaster Recovery"
+msgstr "远程容灾"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:424
+msgid "Remote Node add"
+msgstr "添加远程节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14186
+#, python-format
+msgid "Rename %s As"
+msgstr "将 %s 重命名为 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13284
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14185
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14208
+msgid "Rename Resource"
+msgstr "资源重命名"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14205
+msgid ""
+"Rename will restart the resource or resources in the group which running!\n"
+"\n"
+msgstr "重命名将重新启动资源或组内正在运行的其它资源！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3819
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11397
+msgid "Replace it?"
+msgstr "替换？"
+
+msgid "Reprobe"
+msgstr "重新检查"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6361
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13302
+msgid "Reprobe for resources started outside of the CRM"
+msgstr "重新检查在 CRM 之外启动的资源"
+
+msgid "Required"
+msgstr "必填"
+
+msgid "Requires"
+msgstr "依赖"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8167
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8886
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10764
+msgid "Reset"
+msgstr "重置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10804
+msgid "Reset the configurations?"
+msgstr "重置设置？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5898
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6935
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7140
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14415
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14722
+#: ../mgmt/client/IS_Scrolled.py.in:14
+msgid "Resource"
+msgstr "资源"
+
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13282
+msgid "Resource Attri_butes"
+msgstr "资源属性(_B)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13282
+msgid "Resource Attributes"
+msgstr "资源属性"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1822
+msgid "Resource Colocation"
+msgstr "资源协同"
+
+msgid "Resource Defaults"
+msgstr "资源缺省设置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13276
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1686
+msgid "Resource Location"
+msgstr "资源位置"
+
+msgid "Resource Order"
+msgstr "资源顺序"
+
+msgid "Resource Ref"
+msgstr "资源引用"
+
+msgid "Resource Role"
+msgstr "资源角色"
+
+msgid "Resource Set"
+msgstr "资源集"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13276
+msgid "Resource _Location"
+msgstr "资源位置(_L)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7513
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7844
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16860
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17046
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19169
+msgid "Resources"
+msgstr "资源"
+
+msgid "Return Code"
+msgstr "返回码"
+
+msgid "Role"
+msgstr "角色"
+
+msgid "Rule"
+msgstr "规则"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1503
+msgid "Run Level Set"
+msgstr "运行级别设置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19395
+msgid "Running"
+msgstr "运行中"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1033
+msgid "SMTP Server:"
+msgstr "SMTP 服务器："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3628
+msgid "Save Changes"
+msgstr "保存修改"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11358
+msgid "Save as ..."
+msgstr "保存为..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3299
+msgid "Scheduled Backup"
+msgstr "计划备份"
+
+msgid "Score"
+msgstr "权重"
+
+msgid "Score Attribute"
+msgstr "权重属性"
+
+msgid "Score Attribute Mangle"
+msgstr "权重属性 Mangle"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10900
+msgid "Scores"
+msgstr "得分"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2702
+msgid "Script Name:"
+msgstr "脚本名称："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10995
+msgid "Searching the transitions may take a while,"
+msgstr "搜索集群操作需要一段时间，"
+
+msgid "Secs"
+msgstr "秒"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6882
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14360
+msgid ""
+"Select \"Clear All\" to remove the attributes for all of the sub-resources."
+msgstr "选择“清除”删除此设置。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:195
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:211
+msgid "Select All"
+msgstr "全选"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1059
+msgid "Sender:"
+msgstr "发信人："
+
+msgid "Sequential"
+msgstr "顺序"
+
+msgid "Server(:Port)"
+msgstr "服务器(：端口号)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1529
+msgid "Set the node "
+msgstr "设置节点 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11585
+msgid "Severity"
+msgstr "严重性"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12388
+msgid "Shadow CIB"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12443
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12468
+msgid "Shadow CIB Diff"
+msgstr "Shadow CIB 差异"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12397
+msgid "Shadow Name"
+msgstr "Shadow 名称"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13272
+msgid "Shared Disk _File EXclusiveness"
+msgstr "共享磁盘锁配置(_F)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17718
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17737
+msgid "Should the copies be started in series (instead of in parallel)"
+msgstr "串行地启动实例（而非并行地）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8603
+msgid "Show"
+msgstr "显示"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13255
+msgid "Show Transition Information"
+msgstr "查看集群操作信息"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11842
+msgid "Simple Mode"
+msgstr "简单模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5260
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5263
+msgid "Slave "
+msgstr "备机 "
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5194
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5248
+#, python-format
+msgid "Slave %d"
+msgstr "备机 %d"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3717
+msgid "Slave Node Device:"
+msgstr "备节点设备："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3705
+msgid "Slave Node IP:"
+msgstr "备节点IP："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3693
+msgid "Slave Node:"
+msgstr "备节点："
+
+msgid "So you must make sure the IP address is correct by yourself!"
+msgstr "因此您必须确认IP地址的正确性！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:553
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1149
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2598
+msgid "So you must make sure the password is correct by yourself!"
+msgstr "因此您必须确认密码的正确性！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:741
+msgid "Some nodes are not on line, and can't get the IP address.\n"
+msgstr "某些节点处于不在线的状态，因此无法获取IP地址。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3180
+msgid "Some nodes in the cluster is not online."
+msgstr "集群中的某些节点处于离线状态。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3182
+msgid "Some nodes offline"
+msgstr "某些节点离线"
+
+msgid "Special Time"
+msgstr "指定时间"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5039
+msgid "Special characters can not appear in Disk Label!\n"
+msgstr "磁盘标签中不能包含特殊字符！\n"
+
+msgid "Special characters can not appear in Disk Name!\n"
+msgstr "磁盘名称中不能包含特殊字符！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12601
+msgid "Specify another name, or select \"Force\" if you want to override it."
+msgstr "请指定其它的名称， 或者选择“强制”将其覆盖。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6346
+msgid "St_art"
+msgstr "启动(_A)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13289
+msgid "St_op"
+msgstr "停止(_O)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13288
+msgid "Sta_rt"
+msgstr "启动(_R)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1393
+msgid "Start Card Protection"
+msgstr "启动卡保护"
+
+msgid "Start Delay"
+msgstr "启动延时"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6346
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13288
+msgid "Start resource"
+msgstr "启动资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2725
+msgid "Startup Script Command:"
+msgstr "启动脚本命令："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7320
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7632
+msgid "Status"
+msgstr "状态"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1412
+msgid "Stop Card Protection"
+msgstr "停止卡保护"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19399
+msgid "Stop Failed"
+msgstr "停止失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2738
+msgid "Stop Script Command:"
+msgstr "停止脚本命令："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6347
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13289
+msgid "Stop resource"
+msgstr "停止资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10690
+msgid "Sub-resource"
+msgstr "子资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10688
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13821
+#, python-format
+msgid "Sub-resource For \"%s\""
+msgstr "“%s”的子资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11614
+msgid "Subject"
+msgstr "主题"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3273
+msgid "Success"
+msgstr "成功"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11071
+msgid "Such as"
+msgstr "例如"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10669
+msgid "Summary"
+msgstr "概要"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10667
+#, python-format
+msgid "Summary Of \"%s\""
+msgstr "“%s” 概要"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13334
+msgid "Switch to expert mode"
+msgstr "切换到专家模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13335
+msgid "Switch to hack mode"
+msgstr "切换到 Hack 模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12621
+msgid "Switch to it now?"
+msgstr "转到此 CIB？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6372
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13317
+msgid "Switch to maintenance mode"
+msgstr "切换到维护模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13333
+msgid "Switch to simple mode"
+msgstr "切换到简单模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12421
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12423
+msgid "Switch to the live CIB?"
+msgstr "转到 Live CIB？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12623
+#, python-format
+msgid "Switch to the new created shadow CIB \"%s\"?"
+msgstr "转到新创建的 Shadow CIB “%s”？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13252
+msgid "Switch working CIB"
+msgstr "切换要操作的 CIB"
+
+msgid "Symmetrical"
+msgstr "对称"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:843
+msgid "Synchronize to other nodes"
+msgstr "同步到其他节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:920
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3199
+msgid "Synchronizing"
+msgstr "正在同步"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:920
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3199
+msgid "Synchronizing the configuration file may take a while..."
+msgstr "同步配置文件需要一段时间..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:22
+msgid "SysInfo"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9060
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9068
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11224
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11230
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11403
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12514
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12520
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12739
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12884
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12893
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15489
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15497
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19504
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19510
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19515
+msgid "System error"
+msgstr "系统错误"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11186
+msgid "TIFF Image"
+msgstr "TIFF 图像"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12758
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12766
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12828
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12852
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12870
+msgid "Tar error"
+msgstr "归档错误"
+
+msgid "Thank you."
+msgstr "谢谢。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9202
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9351
+#, python-format
+msgid "The \"%s\" has a \"%s\"."
+msgstr "“%s”中存在“%s”。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9181
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9331
+#, python-format
+msgid "The \"%s\" has multiple \"%s\" sets."
+msgstr "“%s”存在多个“%s”集。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11316
+msgid "The \"From\" time should before the \"To\" one"
+msgstr "\"起始\"时间应早于\"截止\"时间"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3180
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3369
+#, python-format
+msgid "The Configuration File of %s in the cluster is not the same."
+msgstr "集群中%s的配置文件不同。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3328
+#, python-format
+msgid ""
+"The Configuration File of %s need to be\n"
+" synchronized to other nodes.\n"
+msgstr ""
+"%s功能需要将配置文件同步到\n"
+"集群中的其他节点。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8082
+msgid "The Configuration Section"
+msgstr "配置段"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2243
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4224
+msgid "The DRBD changes has saved.\n"
+msgstr "DRBD修改已成功。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5023
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5104
+msgid "The Disk Heartbeat changes has saved.\n"
+msgstr "磁盘心跳修改已成功。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:553
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1149
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2598
+#, python-format
+msgid "The Node %s is not on line.\n"
+msgstr "节点 %s 不在线。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:115
+msgid "The Resources Monitored"
+msgstr "正在监控的资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:182
+msgid "The Resources Not Monitored"
+msgstr "停止监控的资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3885
+msgid "The Script has saved.\n"
+msgstr "脚本已保存。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8080
+msgid "The Whole CIB"
+msgstr "完整的CIB"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4276
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4847
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5957
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11856
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19061
+msgid "The data of current view have been changed."
+msgstr "当前视图中的数据已更改。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19109
+msgid "The device had initialized!"
+msgstr "设备已成功初始化！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:839
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18974
+msgid "The heartbeat changes has saved.\n"
+msgstr "心跳修改已成功。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14201
+msgid "The name is not right, please input it again!"
+msgstr "名称错误，请重新输入！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3288
+msgid "The node is not online,"
+msgstr "节点处于离线状态，"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8109
+#, python-format
+msgid "The object \"%s\" doesn't exist"
+msgstr "对象“%s”不存在"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8876
+msgid "The object doesn't exist"
+msgstr "对象不存在"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17030
+msgid "The resource drbd can only be run in two-node cluster!"
+msgstr "DRBD资源只能运行在双机集群上！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12420
+#, python-format
+msgid "The shadow CIB \"%s\"has been successfully commited."
+msgstr "成功提交 Shadow CIB “%s”"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19610
+msgid "The specified time should be numeric prefixed."
+msgstr "指定的时间应为数字开头。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19621
+msgid "The specified time should default with second unit, "
+msgstr "指定的时间应该缺省单位为秒，"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11039
+msgid "The specified transition doesn't exist"
+msgstr "指定的集群操作不存在"
+
+msgid "Then"
+msgstr "然后"
+
+msgid "Then Action"
+msgstr "然后操作"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2859
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3099
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8357
+msgid "There are unsaved changes in current page."
+msgstr "在当前页中有未保存的修改。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3165
+msgid "There is No node can be Synchronized!\n"
+msgstr "没有可同步的节点！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5069
+msgid "There is Qdisk Initialization Error!\n"
+msgstr "Qdisk 初始化失败！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2833
+msgid "There is Shared Storage?"
+msgstr "是否使用共享存储？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5056
+msgid "There is another Qdisk with same label!\n"
+msgstr "已存在一个同标签名的Qdisk！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1236
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1978
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2054
+msgid "There must be two nodes in the nodelist at least!"
+msgstr "节点列表中至少应包括两个节点!"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:648
+msgid "There must be one node in the local nodelist at least!"
+msgstr "本地节点列表中至少应包括两个节点!"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:657
+msgid "There must be one node in the remote nodelist at least!"
+msgstr "远程节点列表中至少应包括两个节点!"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5701
+msgid ""
+"There should have no conste resources or two conste resources at least!\n"
+msgstr "位置限定资源可以为空，或者至少有两个位置限定资源！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5377
+msgid ""
+"This is Non-symmetric Cluster. The resources can not run on other nodes are "
+"not configured:"
+msgstr "这是非对称集群。其它未设置的节点不能运行资源："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:5375
+msgid ""
+"This is Symmetric Cluster. The resources can also run on other nodes are not "
+"configured:"
+msgstr "这是对称集群。其它未配置的节点也可以运行资源："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13544
+msgid "This is the Official Serial Number\n"
+msgstr "该序列号为正式序列号\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13546
+msgid "This is the Provisional Serial Number\n"
+msgstr "该序列号为试用序列号\n"
+
+msgid ""
+"This program is free software; you can redistribute it and/or\n"
+"modify it under the terms of the GNU General Public License\n"
+"as published by the Free Software Foundation; either version 2\n"
+"of the License, or (at your option) any later version.\n"
+"\n"
+"This program is distributed in the hope that it will be useful,\n"
+"but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"GNU General Public License for more details.\n"
+"\n"
+"You should have received a copy of the GNU General Public License\n"
+"along with this program; if not, write to the Free Software\n"
+"Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA."
+msgstr ""
+"此程序是自由软件；您可以遵照自由软件基金会所发表的 GNU GPL 协议重新\n"
+"发布或修改它；GPL 协议应采用第二版或您所愿意选择的更新的版本。\n"
+"\n"
+"此程序发布的目的是希望它能够在一定程度上对您有所帮助，但我们并不为它\n"
+"提供任何形式的担保；对于以任何特定用途使用它所造成的任何直接或间接后\n"
+"果都不承担任何责任。请参看 GNU GPL 协议中的更多细节。\n"
+"\n"
+"您应该在收到此程序的同时收到了 GNU GPL 协议的副本；如果您没有收到的\n"
+"话，请给自由软件基金会写信，地址是\n"
+"51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10003
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13857
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14843
+#, python-format
+msgid "This will delete the %s \"%s\""
+msgstr "这会删除%s “%s”"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14048
+#, python-format
+msgid "This will move the resource %s to %s"
+msgstr "将移动资源 %s 至 %s"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14206
+#, python-format
+msgid "This will rename the %s: %s to %s"
+msgstr "将重命名 %s: %s 为 %s"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:3398
+msgid ""
+"This will replace the existing resources,\n"
+"constraints and constes with new cib file.\n"
+"\n"
+" Do you want to continue?"
+msgstr ""
+"将替换现有的资源，限制条件以及位置限定\n"
+"等信息。\n"
+"\n"
+"是否继续？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10802
+msgid ""
+"This will reset the current object attributes and all sub-objects to the "
+"initial configurations."
+msgstr "这会重置当前对象属性以及所有子对象为初始设置。"
+
+msgid "Timeout"
+msgstr "超时"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11291
+msgid "To"
+msgstr "目标"
+
+msgid "To Action"
+msgstr "目标操作"
+
+msgid "To Node"
+msgstr "目标节点"
+
+msgid "To Role"
+msgstr "目标角色"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10821
+msgid "Transition"
+msgstr "集群操作"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11153
+msgid "Transition Detail"
+msgstr "集群操作详细信息"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11138
+msgid "Transition Graph"
+msgstr "集群操作图解"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10814
+msgid "Transition Information"
+msgstr "集群操作信息"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11167
+msgid "Transition Scores"
+msgstr "集群操作得分"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11073
+msgid "Transition type: \"error\", \"warn\" or \"input\""
+msgstr "集群操作类型：“error”，“warn”或者“input”"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10961
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10994
+msgid "Transitions"
+msgstr "集群操作"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8595
+msgid "Tree Mode"
+msgstr "树形模式"
+
+msgid "Try using -f\n"
+msgstr "尝试使用 -f \n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12360
+msgid "Turn it off ?"
+msgstr "将其关闭吗？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6083
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6240
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7318
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16858
+msgid "Type"
+msgstr "类型"
+
+msgid "UDP Port"
+msgstr "UDP 端口"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2342
+msgid "Ucast IP list:"
+msgstr "单播 IP 列表："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19397
+msgid "Umanaged"
+msgstr "未管理"
+
+msgid "Uname"
+msgstr "节点名"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:309
+msgid "Uname:"
+msgstr ""
+
+msgid "Unknown command:"
+msgstr "未知命令："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13493
+msgid "Update Failed"
+msgstr "更新失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13509
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13513
+msgid "Update Success"
+msgstr "更新成功"
+
+msgid "Update does not conform to the configured schema/DTD"
+msgstr "更新cib出错，可能标识符ID重复或其他错误，请重新操作"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:35
+msgid "UpdateInfo"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15106
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:15243
+msgid "Updating data from server..."
+msgstr "正在从服务器更新数据..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13312
+msgid "Upgrade"
+msgstr "升级"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13251
+msgid "Upload a shadow CIB to the cluster"
+msgstr "加载 Shadow CIB 到集群"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12394
+msgid "Upload the specified shadow CIB to the cluster"
+msgstr "加载指定的 Shadow CIB 到集群"
+
+msgid "Use Logd"
+msgstr "使用 Logd"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2466
+msgid "Use disk heartbeat"
+msgstr "使用磁盘心跳"
+
+msgid "User Name"
+msgstr "用户名"
+
+msgid "Utilization"
+msgstr "负载"
+
+msgid "Value"
+msgstr "值"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10873
+msgid "Verbosity"
+msgstr "详细程度"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8073
+msgid "View XML"
+msgstr "查看 XML"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14687
+#, python-format
+msgid ""
+"WARNING: Creating rsc_location constraint '%s' with a score of -INFINITY for "
+"resource %s on %s."
+msgstr "警告：创建资源位置限制条件%s, 资源%s 运行在%s上的分值为-INFINITY。"
+
+msgid "Warning Time"
+msgstr "警报时间"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4969
+msgid "Warning: You have not start qdisk.\n"
+msgstr "警告：您尚未启动qdisk。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4973
+msgid "Warning: You have not stop qdisk.\n"
+msgstr "警告：您尚未停止qdisk。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19263
+msgid "Way 1. Change the nic of Virtual IP (Recommend);\n"
+msgstr "方法1. 修改虚拟IP网段（推荐）；\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19263
+msgid ""
+"Way 2. or you can set drbd_allow_virtualIP's value to 'true'(Not Safe).\n"
+msgstr ""
+"方法2. 将drbd_allow_virtualIP的值设置为'true'(此方法不安全，不推荐使用)。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8276
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9183
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9205
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9333
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9354
+msgid "We are switching to \"Hack Mode\" to view them properly."
+msgstr "现在自动切换至“Hack 模式”以便正确显示。"
+
+msgid "We can only process primitive resources, not"
+msgstr "我们只能处理primitive资源，而不是"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17699
+msgid ""
+"What should the cluster do if it ever finds the resource active on more than "
+"one node."
+msgstr "如果发现资源在多个节点上运行，集群如何处理？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17688
+msgid "What state should the cluster attempt to keep this resource in?"
+msgstr "集群试图让该资源保持的状态。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17714
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17733
+msgid ""
+"When stopping or starting a copy of the clone, tell all the other copies "
+"beforehand and when the action was successful."
+msgstr "在启动或停止一个实例之前, 并且在成功完成之时，通知所有其它实例"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3313
+msgid "Whether use Remote disaster recovery"
+msgstr "是否使用远程容灾"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:3011
+msgid "Whether use Scheduled backup"
+msgstr "是否使用计划备份"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2858
+msgid "Whether use real time mirror"
+msgstr "是否使用实时镜像"
+
+msgid "With Resource"
+msgstr "与资源"
+
+msgid "With Resource Role"
+msgstr "与资源角色"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9691
+msgid "Wizard"
+msgstr "向导"
+
+msgid "Wks"
+msgstr "周"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6348
+msgid "Work as default"
+msgstr "缺省运行"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8596
+msgid "XML Mode"
+msgstr "XML 模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:9014
+msgid "XML files"
+msgstr "XML 文件"
+
+msgid "Year"
+msgstr "年"
+
+msgid "You need to specify a resource type with -t"
+msgstr "须使用 -t 指定资源类型"
+
+msgid "You need to supply a value with the -v option\n"
+msgstr "须使用-v选项指定值\n"
+
+msgid "Yrs"
+msgstr "年"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10202
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10206
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10208
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10210
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10215
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10217
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10219
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10225
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10227
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10246
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17687
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17689
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17698
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17702
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17709
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17713
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17715
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17717
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17719
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17724
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17726
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17732
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17734
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17736
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17738
+msgid "[ default ]"
+msgstr "［ 缺省 ］"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10983
+#, python-format
+msgid "[Omitted %d transitions...]"
+msgstr "［省略 %d 个集群操作...］"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13258
+msgid "_About"
+msgstr "关于(_A)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6366
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13305
+msgid "_Active"
+msgstr "活动(_A)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13262
+msgid "_Add Resource"
+msgstr "添加资源(_A)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6349
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13290
+msgid "_Cleanup Resource"
+msgstr "清理资源(_C)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13251
+msgid "_Commit"
+msgstr "提交(_C)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13241
+msgid "_Connection"
+msgstr "连接(_C)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13286
+msgid "_Constraints"
+msgstr "限制条件(_C)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6348
+msgid "_Default"
+msgstr "缺省(_D)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13250
+msgid "_Delete"
+msgstr "删除(_D)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13263
+msgid "_Delete Resource"
+msgstr "删除资源(_D)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13267
+msgid "_Disk Heartbeat Configuration"
+msgstr "磁盘心跳配置(_D)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13334
+msgid "_Expert Mode"
+msgstr "专家模式(_E)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6370
+msgid "_Group By Node"
+msgstr "按节点分组资源(_G)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13335
+msgid "_Hack Mode"
+msgstr "Hack 模式(_H)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13280
+msgid "_Heartbeats Configuration"
+msgstr "心跳配置(_H)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13257
+msgid "_Help"
+msgstr "帮助(_H)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6373
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13318
+msgid "_Indicate Pending Operations"
+msgstr "显示进行中的操作(_I)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6371
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13316
+msgid "_Maintenance Mode"
+msgstr "维护模式(_M)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6357
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13298
+msgid "_Manage Resource"
+msgstr "管理资源(_M)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13307
+msgid "_Manual"
+msgstr "手册(_M)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13247
+msgid "_New"
+msgstr "新建(_N)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13278
+msgid "_Preferences"
+msgstr "首选项(_P)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13244
+msgid "_Quit"
+msgstr "退出(_Q)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13309
+msgid "_Rapid Deployment Import"
+msgstr "快速部署导入(_R)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13308
+msgid "_Register"
+msgstr "注册(_R)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13249
+msgid "_Reset"
+msgstr "重置(_R)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13261
+msgid "_Resource"
+msgstr "资源(_R)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13310
+msgid "_Script Generator"
+msgstr "脚本生成器(_S)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13246
+msgid "_Shadow"
+msgstr "Shadow 配置(_S)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13333
+msgid "_Simple Mode"
+msgstr "简单模式(_S)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6365
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13304
+msgid "_Standby"
+msgstr "备用(_S)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6347
+msgid "_Stop"
+msgstr "停止(_S)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13252
+msgid "_Switch"
+msgstr "转到(_S)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13253
+msgid "_Tools"
+msgstr "工具(_T)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13254
+msgid "_Transition Information"
+msgstr "集群操作信息(_T)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6355
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13296
+msgid "_Unmanage Resource"
+msgstr "不管理资源(_U)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13311
+msgid "_Upgrade"
+msgstr "升级(_U)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13245
+msgid "_View"
+msgstr "查看(_V)"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7252
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14832
+msgid "active"
+msgstr "活动"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2426
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2946
+msgid "active and active"
+msgstr "主主模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2425
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2930
+msgid "active and standby"
+msgstr "主备模式"
+
+msgid "active on multiple nodes\n"
+msgstr "该资源运行在多个节点上\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4233
+msgid "add"
+msgstr "添加"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2433
+msgid "all active"
+msgstr "全主模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7130
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14712
+msgid "all migrated resources"
+msgstr "所有被迁移的资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6932
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6936
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6954
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14412
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14416
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14434
+msgid "all nodes"
+msgstr "所有节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6926
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6940
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14406
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14420
+msgid "all resources"
+msgstr "所有资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13858
+msgid "and related constraints.\n"
+msgstr "以及相关的限制条件。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:592
+msgid "backup"
+msgstr "备份"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2258
+msgid "bcast"
+msgstr "广播"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7754
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11743
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11784
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11793
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11797
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12206
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13838
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14315
+msgid "clone"
+msgstr "克隆资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11785
+msgid "colocation"
+msgstr "协同"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7756
+msgid "colocations"
+msgstr "协同"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2116
+msgid "conste"
+msgstr "位置限定"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7578
+msgid "dc"
+msgstr "主控节点"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8472
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8529
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:8533
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16665
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:16684
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17062
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17849
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17853
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17917
+msgid "default"
+msgstr "缺省"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4264
+msgid "delete"
+msgstr "删除"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:10996
+msgid "depending on the number of transitions..."
+msgstr "取决于集群操作的数量..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12704
+msgid "depending on the size of logs..."
+msgstr "取决于日志的大小..."
+
+msgid "Please check the directory %s, and do not repeat input!"
+msgstr "请查看目录%s，请勿重复输入！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1513
+msgid "Please confirm the directory %s is exist!"
+msgstr "请确认目录%s存在！"
+
+msgid "Please confirm the directory %s is exist on the main node!"
+msgstr "请确认目录%s在主节点上存在！"
+
+msgid "Please confirm the directory %s is not in the mirror backup directories!"
+msgstr "请确认目录%s在实时镜像的备份目录中不存在！"
+
+msgid "Please confirm the directory %s is not in the scheduled backup directories!"
+msgstr "请确认目录%s在计划备份的备份目录中不存在！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4304
+msgid "directory:"
+msgstr "挂载目录："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4294
+msgid "diskpath:"
+msgstr "共享磁盘路径："
+
+msgid "encountered. Then, post to"
+msgstr "然后发送到"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7742
+msgid "fail"
+msgstr "失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7381
+msgid "failed"
+msgstr "失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17677
+msgid "for an OCF primitive"
+msgstr "对于一个 OCF 的普通资源"
+
+msgid "from running on"
+msgstr "运行在"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13256
+msgid "generate a cluster report"
+msgstr "生成集群报告"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7754
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11743
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11784
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11793
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11797
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12204
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13836
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14313
+msgid "group"
+msgstr "资源组"
+
+msgid "has no class!  Aborting..."
+msgstr "没有类别，异常终止..."
+
+msgid "has no type!  Aborting..."
+msgstr "没有类型，异常终止..."
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7480
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7839
+msgid "have quorum"
+msgstr "节点个数有效"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1269
+msgid "hbaping"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:292
+msgid "hostname in the file /etc/host"
+msgstr "文件/etc/host中的主机名"
+
+msgid "is active on more than one node, returning the default value for"
+msgstr "运行在多于一个节点上，默认返回值"
+
+msgid "is already active on"
+msgstr "已运行在"
+
+msgid "is not a known node\n"
+msgstr "是一个未知节点\n"
+
+msgid "is the last node in the cluster"
+msgstr "是集群中的最后一个节点。"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6650
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11975
+#, python-format
+msgid "last failure at \"%s\""
+msgstr "上次失败于“%s”"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11785
+msgid "location"
+msgstr "位置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7756
+msgid "locations"
+msgstr "位置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13242
+msgid "login to cluster"
+msgstr "登录到集群"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13243
+msgid "logout from cluster"
+msgstr "从集群中断开"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7754
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11743
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11785
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11793
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11797
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12208
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13840
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14317
+msgid "master"
+msgstr "主从资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2273
+msgid "mcast"
+msgstr "多播"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2414
+msgid "mcast:"
+msgstr "多播:"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19022
+msgid "mcastaddr"
+msgstr "多播地址"
+
+msgid "Address type"
+msgstr "地址类型"
+
+msgid "Port"
+msgstr "端口号"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19026
+msgid "mcastport"
+msgstr "多播端口号"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:4248
+msgid "modify"
+msgstr "修改"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2900
+msgid "multi-nodes"
+msgstr "多机"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6795
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6800
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7560
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11747
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11752
+msgid "never started"
+msgstr "未曾启动"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7482
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7841
+msgid "no quorum"
+msgstr "节点个数无效"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14843
+msgid "node"
+msgstr "节点"
+
+msgid "not found"
+msgstr "未找到"
+
+msgid "not moved: "
+msgstr "未移动："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7387
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7738
+msgid "not running"
+msgstr "未运行"
+
+msgid "not-active and no preferred location specified.\n"
+msgstr "该资源不处于运行状态且没有指定首选位置。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7572
+msgid "offline"
+msgstr "离线"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7582
+msgid "on-fail"
+msgstr "失败"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2432
+msgid "one active"
+msgstr "单主模式"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7397
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7568
+msgid "online"
+msgstr "在线"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19622
+#, python-format
+msgid ""
+"or should be suffixed with one of the following units:\n"
+" %s"
+msgstr ""
+"或者应该以如下任一单位结尾：\n"
+" %s"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11785
+msgid "order"
+msgstr "顺序"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7756
+msgid "orders"
+msgstr "顺序"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7570
+msgid "pending"
+msgstr "操作中"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1254
+msgid "ping"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7395
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7562
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7748
+msgid "ping node"
+msgstr "ping 节点"
+
+msgid "please input ucast address"
+msgstr "请输入单播地址"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7603
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7737
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7892
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11743
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11784
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11793
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11797
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11798
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11873
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:12202
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:13834
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14189
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14216
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14311
+msgid "primitive"
+msgstr "普通资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17872
+msgid "required"
+msgstr "必需"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7754
+msgid "resources"
+msgstr "资源"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7389
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7740
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7750
+#: ../mgmt/client/IS_Scrolled.py.in:26
+msgid "running"
+msgstr "运行"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19400
+msgid "running (Master)"
+msgstr "运行中（主）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:19401
+msgid "running (Slave)"
+msgstr "运行中（从）"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:607
+msgid "serialonly"
+msgstr "纯串口"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6794
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:6799
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7244
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7582
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7584
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11746
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:11751
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14824
+msgid "standby"
+msgstr "备用"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7383
+msgid "starting"
+msgstr "启动中"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1379
+msgid "status"
+msgstr "状态"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7385
+msgid "stopping"
+msgstr "停止中"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14196
+msgid "the Group Name is exists"
+msgstr "组名已存在"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:14191
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17668
+msgid "the ID already exists"
+msgstr "ID 已存在"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18781
+msgid "please input address and the number must greater than 1\n"
+msgstr "必须填写地址并且个数大于1\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:247
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1004
+msgid "Make sure to match the local node and password!"
+msgstr "请确认本地节点及密码相匹配！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:547
+#, python-format
+msgid "the netaddr must be same with bindaddr %s"
+msgstr "网段必须与绑定地址%s相同"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2661
+msgid "Please Make sure to match the node and password!"
+msgstr "请确认节点及密码相匹配！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:265
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1019
+msgid "Please Make sure to match the remote node and password!"
+msgstr "请确认远程节点及密码相匹配！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2884
+msgid "two nodes"
+msgstr "双机"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2289
+msgid "ucast"
+msgstr "单播"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18793
+msgid "ucast ip must in the same netaddr!"
+msgstr "单播地址必须在同一网段！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18760
+msgid "net address error!\n"
+msgstr "网段地址错误！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18813
+msgid "The port is already existed!,please input again!\n"
+msgstr "输入的端口已经存在，请重新输入！\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18767
+msgid "The mcastaddr is already existed! please input again!\n"
+msgstr "输入的多播地址已经存在，请重新输入\n"
+
+msgid "IP address must use Enter to split\n"
+msgstr "多播地址之间必须以换行分割\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18789
+msgid ""
+"Please confirm the address list which the NKHA executive should bind.\n"
+msgstr "IP地址列表错误,请检查IP地址列表格式，地址之间以换行分割\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7378
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7575
+msgid "unclean"
+msgstr "未知"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:17876
+msgid "unique"
+msgstr "唯一"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7556
+msgid "unknown"
+msgstr "情况不明"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7564
+msgid "unknown type"
+msgstr "未知类型"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7377
+msgid "unmanaged"
+msgstr "未管理"
+
+msgid "until the constraint is removed by \"Clear Migrate Constraints\""
+msgstr "上，直到使用‘清理迁移’清除限制条件，"
+
+msgid ""
+"until the constraint is removed using the 'crm_resource -U' command or "
+"manually with cibadmin\n"
+msgstr "，直到使用'crm_resource -U'命令或使用cibadmin手动删除限制条件\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:555
+msgid "useserial"
+msgstr "使用串口"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:582
+msgid "usetype:"
+msgstr "启用类型:"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:454
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:652
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1167
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1244
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:1452
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2134
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2246
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2433
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2604
+#: pacemaker-mgmt.new/mgmt/client/haclient.glade:2689
+msgid "window1"
+msgstr ""
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:616
+msgid "Please input the start date of backup!"
+msgstr "请选择备份起始日期！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:675
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1285
+msgid "Please select the time interval unit!"
+msgstr "请选择时间间隔单位！"
+
+msgid "Netmask"
+msgstr "子网掩码"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:590
+msgid ""
+"Cancel the Remote Disaster Recovery will delete the following resources:\n"
+msgstr "取消使用远程容灾将删除如下资源：\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:591
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1190
+msgid "Do you want to continue?"
+msgstr "是否确认继续？"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1189
+msgid "Cancel the Scheduled Backup will delete the following resources:\n"
+msgstr "取消计划备份将删除如下资源：\n"
+
+msgid "This will delete the following resource, or there may be some mistakes.\n"
+msgstr "建议最好删除如下资源，否则可能会产生错误。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2800
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2820
+msgid ""
+"Make sure the mirrored partition and \ndirectory are properly configured in "
+"\nthe cluster nodes.\n"
+msgstr "使用前请确认集群节点的镜像分区及\n挂载目录均已正确配置。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2827
+msgid ""
+"Make sure there is a shared storage devices, and can be mounted by the "
+"mirror node correctly.\n"
+msgstr "请确认集群中存在共享存储设备,并且镜像节点可以正确挂载共享存储设备。\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:497
+#, python-format
+msgid "Node %s must be Local Node!"
+msgstr "节点%s必须为本地节点！"
+
+msgid "Local Heartbeat Configuration"
+msgstr "本地心跳配置"
+
+msgid "Remote Heartbeat Configuration"
+msgstr "远程心跳配置"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:7379
+msgid "failure ignored"
+msgstr ""
+
+msgid "The address number must greater than 1"
+msgstr "地址个数必须大于１"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:893
+#, python-format
+msgid "Please input the root password of node %s:"
+msgstr "请输入节点%s的root密码："
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:721
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:1332
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:2048
+#, python-format
+msgid ""
+"First, please run the following command on the main node %s to synchronize "
+"the data to other nodes, and then start the resources :\n"
+msgstr ""
+"请先在主节点%s上运行如下命令将主节点上的数据同步到其他节点，然后再启动资"
+"源：\n"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:757
+#, python-format
+msgid "can't get the file of %s"
+msgstr "无法获取文件%s"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18853
+msgid "can not delete all heartbeats when not use serial"
+msgstr "没有启用串口的情况下不能删除所有的心跳"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18856
+msgid "can not delete all heartbeats when serial type is passive"
+msgstr "串口为备用单情况下不能删除所有的心跳"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:18801
+msgid "ip address duplicate!"
+msgstr "地址列表存在重复IP!"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4866
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4885
+msgid "please input diskpath"
+msgstr "请输入共享磁盘路径！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4869
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4888
+msgid "please input directory!"
+msgstr "请输入文件目录！"
+
+msgid "format disk failed!"
+msgstr "磁盘格式化错误!"
+
+msgid "Max number of GFS nodes:"
+msgstr "最大GFS节点数："
+
+msgid "gfs num must little than the number of cluster nodes"
+msgstr "GFS数目必须小于集群节点数"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4874
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4899
+msgid ""
+"Are you sure you have format the shared disk to gfs?,please execute gfs-"
+"format.sh in /usr/sbin first"
+msgstr "共享磁盘已经被格式化成gfs格式了吗？如果没有请先执行/usr/sbin目录下的gfs-format.sh进行格式化！"
+
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4872
+#: pacemaker-mgmt.new/mgmt/client/haclient.py.in:4891
+msgid "directory error!"
+msgstr "输入目录错误！"
+
+msgid "Please run the following command to format the device, and then start the resources:\n"
+msgstr "请先运行如下命令格式化磁盘，然后再启动资源：\n"
+
+msgid "Password error! Or the node %s is not on line, you must make sure the password correctly by yourself!"
+msgstr "密码有误，或节点%s不在线，请自行确认密码的正确性！"
+
+msgid "And change the heartbeat to ucast!\n"
+msgstr "同时将心跳配置为ucast模式!\n"
+
+msgid "Do you want switch to Heartbeat Configuration model?"
+msgstr "是否要转移到心跳配置模块？"
+
+msgid "Note: Before useing remote disaster recovery, you should confirm the current cluster using ucast heartbeat configuration."
+msgstr "备注：使用远程容灾前，应确认当前集群使用ucast心跳配置。"
+
+msgid "mcast address error!\n"
+msgstr "多播地址错误！\n"
+
+msgid "two heartbeat must be the same type"
+msgstr "两条心跳类型必须相同！"
+
+msgid "And the minimum of time interval is 5 minutes!"
+msgstr "请注意最小时间间隔为5分钟！"
+
+#: haclient.py.in:4292
+msgid ""
+"And then please run command on both nodes:\n"
+"/usr/sbin/drbd_init\n"
+msgstr "请在两节点上分别运行如下命令：\n"
+"/usr/sbin/drbd_init\n"
+
+#: haclient.py.in:4987 haclient.py.in:5016
+msgid ""
+"Are you sure you have format the shared disk to gfs?,please execute gfs_init."
+"sh in /usr/sbin first"
+msgstr "是否确认将共享磁盘格式化为gfs？如果是请运行/usr/sbin/gfs_init.sh命令"
+
+#: haclient.py.in:17840
+#, python-format
+msgid "\"%s\" or \"%s\" is required"
+msgstr "需要\"%s\" 或者 \"%s\""
+
+#: haclient.py.in:17840
+msgid "Template"
+msgstr ""
+
+#: nkha_constants.py.in:6
+msgid "NeoKylin High Availability Cluster Software V7.0"
+msgstr "中标麒麟高可用集群软件 NKHA V7.0"
+
+#: nkha_constants.py.in:7
+msgid "Trial"
+msgstr "试用版"
+
+#: nkha_constants.py.in:7
+msgid "Professional"
+msgstr "专业版"
+
+#: nkha_constants.py.in:7
+msgid "Advanced"
+msgstr "高级版"
+
+#: haclient.glade:2374
+msgid "Do not use quorum disk"
+msgstr "取消使用仲裁磁盘"
+
+#: haclient.glade:2389
+msgid "Use quorum disk"
+msgstr "使用仲裁磁盘"
+
+#: haclient.glade:4333
+msgid "Do not use serial heartbeat"
+msgstr "取消使用串口心跳"
+
+#: haclient.glade:4349
+msgid "Use serial heartbeat"
+msgstr "使用串口心跳"
+
+#: haclient.glade:4383
+msgid "Speed(B):"
+msgstr "波特率"
+
+#: haclient.glade:4396
+msgid "Hbinterval(second):"
+msgstr "心跳间隔(秒)"
+
+#: haclient.py.in:5126
+msgid "Do you confirm not using the Quorum Disk?\n"
+msgstr "您确认取消使用仲裁磁盘？\n"
+
+#: haclient.py.in:5143 haclient.py.in:5224
+msgid "The Quorum Disk changes have been saved.\n"
+msgstr "仲裁磁盘修改已成功。\n"
+
+#: haclient.py.in:5232
+msgid "Quorum Disk Configuration"
+msgstr "仲裁磁盘配置"
+
+#: haclient.py.in:13411
+msgid "_Qudisk Configuration"
+msgstr "仲裁磁盘配置(_Q)"
+
+#: haclient.py.in:13425
+msgid "Networ_kheartbeats Configuration"
+msgstr "网络心跳配置(_k)"
+
+#: haclient.py.in:13425
+msgid "Network Heartbeats Configuration"
+msgstr "网络心跳配置"
+
+#: haclient.py.in:13427
+msgid "_Serial Heartbeat Configuration"
+msgstr "串口心跳配置(_S)"
+
+#: haclient.py.in:13427
+msgid "Serial Heartbeat Configuration"
+msgstr "串口心跳配置"
+
+#: haclient.py.in:19121
+msgid "can not delete all network heartbeats! "
+msgstr "您不能删除所有的网络心跳！"
+
+#: haclient.py.in:19591
+msgid "Please choose the serial device, for example: /dev/ttyS0"
+msgstr "请选择串口，例如：/dev/ttyS0"
+
+#: haclient.py.in:19595
+msgid "Please choose the serial heartbeat speed, for example: 9600"
+msgstr "请选择串口心跳速率，例如：9600"
+
+#: haclient.py.in:19693
+msgid "The serial heartbeat changes has saved.\n"
+msgstr "串口心跳修改已成功。\n"
+
+#: haclient.py.in:19789
+#, python-format
+msgid "The \"%s\"lost,please choose the disk device again!"
+msgstr "%s 不存在，请选择磁盘心跳使用的设备！"
+
+#: haclient.py.in:19925
+msgid "Warning: You don't have a suitable device!\n"
+msgstr "警告：不存在适合磁盘心跳使用的设备！\n"
+
+#: haclient.py.in:19925
+msgid ""
+"If you still want to use disk heartbeat,please set up a suitable device!"
+msgstr "如果您仍然使用磁盘心跳，请建立一个合适的设备！"
+
+#: haclient.py.in:19951
+msgid "Please choose the disk device, for example: /dev/sdb"
+msgstr "请选择使用磁盘心跳的设备，例如：/dev/sdb"
+
+#: haclient.py.in:19956
+msgid "Please input the disk Label, for example: abcd"
+msgstr "请输入磁盘标签，例如：abcd"
+
+#: haclient.py.in:19958
+#, python-format
+msgid "Do you confirm using \"%s\"?"
+msgstr "是否使用 %s ？"
+
+#: haclient.py.in:19958
+msgid "If you use it, the date of this device may be deleted!"
+msgstr "如果您使用此设备，其中的数据有丢失的风险！"
+
+#: haclient.py.in:19987
+#, python-format
+msgid "The initialization of \"%s\" failed!\n"
+msgstr "%s 初始化失败！\n"
+
+#: haclient.py.in:19987
+msgid "Please choose another device."
+msgstr "请选择其他的设备。"
+
+#: haclient.py.in:19992
+#, python-format
+msgid "The initialization of \"%s\" succeed!"
+msgstr "%s 初始化成功！"
+
+#: haclient.py.in:20078
+msgid "The disk heartbeat changes has saved.\n"
+msgstr "磁盘心跳修改已成功。\n"
+
+#: haclient.py.in:20086
+msgid "Disk  Heartbeat Configuration"
+msgstr "磁盘心跳配置"
+
+#: haclient.py.in:20136
+msgid ""
+"The device you used has lost,and you don't have another suiable device.So "
+"the configuration  of current disk heartbeat in the file  is wrong."
+msgstr "您先前使用的设备不存在，而且现在没有可用的设备。因此，现在保存的文件中的磁盘心跳配置是错误的。"
+
+#: haclient.py.in:20136
+msgid "Dele the configuration?"
+msgstr "删除已有的配置？"
+
+
+#: haclient.py.in:177
+#, python-format
+msgid "page num %d"
+msgstr "第 %d 页"
+
+#: haclient.py.in:200
+msgid "If you want to use intellect alarm,please configure the mail alarm!"
+msgstr "使用智能预警前，请您必须配置邮件报警功能！"
+
+#: haclient.py.in:200
+msgid "Configure it now?"
+msgstr "是否配置邮件报警？"
+
+#: haclient.py.in:219
+#, python-format
+msgid "page sum %d"
+msgstr "共 %d 页"
+
+#: haclient.py.in:281
+msgid "Intellect Switch&Alarm Configuration"
+msgstr "智能切换配置"
+
+#: haclient.py.in:307
+msgid "time"
+msgstr "发送时间"
+
+#: haclient.py.in:311
+msgid "stat"
+msgstr "发送状态"
+
+msgid "type"
+msgstr "报告类型"
+
+#: haclient.py.in:313
+msgid "recv"
+msgstr "接收人"
+
+#: haclient.py.in:315
+msgid "data"
+msgstr "报告内容"
+
+#: haclient.py.in:13711
+msgid "_Intellect Switch"
+msgstr "智能切换(_I)"
+
+#: haclient.py.in:20110
+#, python-format
+msgid ""
+"The \"%s\" you used has lost,so the configuration of current disk heartbeat "
+"in the file is wrong."
+msgstr "您先前使用的 %s 不存在，因此现在保存的文件中的磁盘心跳配置是错误的。"
+
+#: haclient.py.in:20110
+msgid "Dele the configuration and choose the disk device again?"
+msgstr "删除已有的配置，重新选择磁盘心跳使用的设备？"
+
+#: haclient.py.in:20289
+msgid "The device is wrong,please input the device you want again!\n"
+msgstr "您输入的设备名不正确，请再次输入设备名！\n"
+
+#: haclient.glade:4742
+msgid "<b>Intellect Switch</b>"
+msgstr "<b>智能应用实时监测</b>"
+
+#: haclient.glade:4767
+msgid "use intellect switch"
+msgstr "资源切换"
+
+#: haclient.glade:4798
+msgid "intellect switch"
+msgstr "智能切换"
+
+#: haclient.glade:5011
+msgid "use intellect alarm"
+msgstr "预警"
+
+#: haclient.glade:5042
+msgid "report | alarm"
+msgstr "报告 | 预警"
+
+#: haclient.py.in:416
+msgid "The alarm is on.You can press the button to turn it off."
+msgstr "预警已启用，点击按钮可关闭此功能"
+
+#: haclient.py.in:417
+msgid "The alarm is off.You can press the button to turn it on."
+msgstr "预警已关闭，点击按钮可启用此功能"
+
+#: haclient.py.in:295
+msgid "The IS is on.You can press the button to turn it off."
+msgstr "资源切换已启用,点击按钮可关闭此功能"
+
+#: haclient.py.in:296
+msgid "The IS is off.You can press the button to turn it on."
+msgstr "资源切换已关闭,点击按钮可启用此功能"
+
+#: haclient.py.in:13730
+msgid "Intellect Switch and Warning"
+msgstr "智能切换配置"
+
+#: haclient.py.in:19383
+msgid ""
+"The num of addresses which the NKHA executive should bind should not be more "
+"than 16.\n"
+msgstr "NSHAES 绑定的IP 地址数目不应超过16个！\n"
+
+#: haclient.py.in:20348
+msgid "The length of Disk Name must be less than 128.\n"
+msgstr "磁盘名称长度应小于128.\n"
+
+#: haclient.glade:4811
+msgid "<b>Report Mails View</b>"
+msgstr "<b>智能切换邮件清单</b>"
+
+#: haclient.py:399
+msgid "previous page"
+msgstr "上一页"
+
+#: haclient.py:401
+msgid "next page"
+msgstr "下一页"
+
+#: haclient.py:404
+msgid "to the first page"
+msgstr "首页"
+
+#: haclient.py:406
+msgid "to the last page"
+msgstr "末页"
+
+#: haclient.py:408
+msgid "refresh the IS alarm mail list"
+msgstr "刷新智能切换邮件清单"
+
+#: ../mgmt/client/license_register.py.in:15
+#: ../mgmt/client/perf_chart.py.in:21
+msgid "Unable to import modules. Maybe you're not running under X?"
+msgstr "一些模块无法导入。或许是您的X窗口系统未启动？"
+
+#: ../mgmt/client/license_register.py.in:21
+msgid "PyGtk version 2.4.0 or later required!"
+msgstr "PyGtk的版本要求为2.4.0及以上！"
+
+#: ../mgmt/client/license_register.py.in:39
+msgid ""
+"<b>Product Info:\n"
+"</b>"
+msgstr "<b>产品信息:\n</b>"
+
+#: ../mgmt/client/license_register.py.in:42
+msgid ""
+"<b>Version Type:\n"
+"</b>"
+msgstr "<b>版本类型：\n</b>"
+
+#: ../mgmt/client/license_register.py.in:44
+msgid "Unknown"
+msgstr "不明"
+
+#: ../mgmt/client/license_register.py.in:52
+msgid "<span foreground=\"red\"><b>  (Expired)  </b></span>"
+msgstr "<span foreground=\"red\"><b>  （已过期）  </b></span>"
+
+#: ../mgmt/client/license_register.py.in:53
+msgid ""
+" Date:\n"
+"</b>"
+msgstr "日期:\n</b>"
+
+#: ../mgmt/client/license_register.py.in:56
+msgid ""
+"<b>Feedback code:\n"
+"</b>"
+msgstr "<b>反馈码:\n</b>"
+
+#: ../mgmt/client/license_register.py.in:71
+msgid ""
+"License registeration failed!\n"
+"\n"
+"Please make sure your license\n"
+"file is valid and try again."
+msgstr "注册失败！\n\n请确认您的注册文件有效并重试。"
+
+#: ../mgmt/client/license_register.py.in:78
+msgid "License registeration succeeded."
+msgstr "注册成功。"
+
+#: ../mgmt/client/license_register.py.in:81
+msgid "<b>Updated License Status</b>"
+msgstr "注册信息（已更新）"
+
+#: ../mgmt/client/license_register.py.in:91
+#: ../mgmt/client/license_register.py.in:163
+msgid "Registeration"
+msgstr "注册"
+
+#: ../mgmt/client/license_register.py.in:97
+#: ../mgmt/client/license_register.py.in:168
+msgid "Expiration"
+msgstr "过期"
+
+#: ../mgmt/client/license_register.py.in:122
+msgid "License Registeration"
+msgstr "产品注册"
+
+#: ../mgmt/client/license_register.py.in:128
+msgid "<b>Select license file location:</b>"
+msgstr "<b>请选取您的注册文件：</b>"
+
+#: ../mgmt/client/license_register.py.in:132
+msgid "Select License File"
+msgstr "选择注册文件"
+
+
+#: ../mgmt/client/license_register.py.in:149
+msgid "<b>Current License Status</b>"
+msgstr "<b>当前注册信息</b>"
+
+#: ../mgmt/client/perf_chart.py.in:68
+#, python-format
+msgid "Performance Chart of Node: %s"
+msgstr "节点 %s 的性能趋势图"
+
+#: ../mgmt/client/perf_chart.py.in:85
+msgid " mins ago"
+msgstr "分钟前"
+
+#: ../mgmt/client/perf_chart.py.in:86
+msgid "An hour ago"
+msgstr "一小时前"
+
+#: ../mgmt/client/perf_chart.py.in:87
+msgid "Now"
+msgstr "现在"
+
+#: ../mgmt/client/perf_chart.py.in:90
+msgid "Time"
+msgstr "时间"
+
+#: ../mgmt/client/perf_chart.py.in:91
+msgid "System Overload"
+msgstr "系统负载"
+
+#: ../mgmt/client/IS_Scrolled.py.in:14
+msgid "No."
+msgstr "序号"
+
+#: ../mgmt/client/IS_Scrolled.py.in:14
+msgid "Running Status"
+msgstr "运行状态"
+
+#: ../mgmt/client/IS_Scrolled.py.in:14
+msgid ""
+"Last\n"
+"Detected"
+msgstr "上次检测时间"
+
+#: ../mgmt/client/IS_Scrolled.py.in:15
+msgid ""
+"Add to\n"
+"Queue"
+msgstr "加入切换队列"
+
+#: ../mgmt/client/IS_Scrolled.py.in:15
+msgid ""
+"Target\n"
+"Node"
+msgstr "预切换到主机"
+
+#: ../mgmt/client/IS_Scrolled.py.in:15
+msgid ""
+"Return\n"
+"Policy"
+msgstr "回切策略"
+
+#: ../mgmt/client/IS_Scrolled.py.in:16
+msgid ""
+"Return\n"
+"Time"
+msgstr "计划回切时段"
+
+#: ../mgmt/client/IS_Scrolled.py.in:16
+msgid ""
+"Perf\n"
+"Chart"
+msgstr "性能趋势图"
+
+#: ../mgmt/client/IS_Scrolled.py.in:18
+msgid "Never"
+msgstr "不回切"
+
+#: ../mgmt/client/IS_Scrolled.py.in:18
+msgid "Normal"
+msgstr "回切"
+
+#: ../mgmt/client/IS_Scrolled.py.in:18
+msgid "Scheduled"
+msgstr "计划回切"
+
+#: ../mgmt/client/IS_Scrolled.py.in:31
+msgid "stopped"
+msgstr "已停"
+
+#: ../mgmt/client/IS_Scrolled.py.in:82 ../mgmt/client/IS_Scrolled.py.in:130
+msgid "on"
+msgstr "是"
+
+#: ../mgmt/client/IS_Scrolled.py.in:82 ../mgmt/client/IS_Scrolled.py.in:130
+msgid "off"
+msgstr "否"
+
+#: ../mgmt/client/IS_Scrolled.py.in:239
+msgid ""
+"The IS is on.\n"
+"You can press the button\n"
+"to turn it off."
+msgstr "资源切换已启用,点击按钮可关闭此功能"
+
+#: ../mgmt/client/IS_Scrolled.py.in:240
+msgid ""
+"The IS is off.\n"
+"You can press the button\n"
+"to turn it on."
+msgstr "资源切换已关闭,点击按钮可启用此功能"
+
+#: ../mgmt/client/IS_Scrolled.py.in:293
+#, python-format
+msgid "Total Protected Resources: %3d"
+msgstr "保护资源总数: %3d"
+
+#: ../mgmt/client/IS_Scrolled.py.in:302
+#, python-format
+msgid "View performance chart of node %s"
+msgstr "查看节点 %s 的性能趋势图"
+
+#: ../mgmt/client/IS_Scrolled.py.in:309
+msgid "NULL"
+msgstr "空"
+
+#: ../mgmt/client/IS_Scrolled.py.in:312
+#, python-format
+msgid "Total Offline Resources: %3d"
+msgstr "离线资源总数：%3d"
+
+#: ../mgmt/client/IS_Scrolled.py.in:323
+msgid "refresh the state of the IS resources"
+msgstr "刷新智能切换资源状态"
+
+msgid "Can not get the ipaddress of main node!"
+msgstr "无法获取主节点的IP地址！"
+
+msgid "Can not get the ipaddress of dc!"
+msgstr "无法获取DC节点的IP地址！"
+
+msgid "Can not get the ipaddress of %s !"
+msgstr "无法获取节点 %s 的IP地址！"
+
+msgid "Or can not be connected!"
+msgstr "或者该地址无法连接！"
+
+msgid "Please make sure that the environment is configured correctly!"
+msgstr "请确认环境配置是否正确！"
+
+msgid "Please refresh and retry!\n"
+msgstr "请刷新界面并重新配置！\n"
+
+#: haclient.py:15509
+msgid "Locate Device hb Used"
+msgstr "磁盘心跳配置"
+
+#: haclient.py:15509
+msgid "Locate the device hb used may take a while..."
+msgstr "查找磁盘心跳使用的设备需要一段时间..."
+
+#: haclient.py:15509
+msgid "Failed to locate!"
+msgstr "查找磁盘心跳使用的设备失败！"
+
+#: haclient.py:20441
+#, python-format
+msgid ""
+"The \"%s\" you used has changed into \"%s\",so the configuration of current "
+"disk heartbeat in the file is wrong.Replace it?"
+msgstr "磁盘心跳使用的“%s”名称变更为“%s”,导致现存配置文件中的磁盘心跳配置有误,更改为正确的设备？"
+
+#: netby.py:378
+msgid "Please confirm the address which the ring uses. This is a IP address!\n"
+msgstr "请输入心跳IP地址。该地址应为合法的IP地址！\n"
+
+#: netby.py:764
+msgid "Edit Nodelist IP"
+msgstr "编辑节点列表IP"
+
+#: netby.py:858
+msgid "Node Ip1"
+msgstr "节点IP1"
+
+#: netby.py:861
+msgid "Node Ip2"
+msgstr "节点IP2"
+
+#: netby.py:855
+msgid "Node Id"
+msgstr "节点ID"
+
+msgid "<b>Heartbeat IP</b>"
+msgstr "<b>节点心跳IP</b>"
+
+msgid "NodeId:"
+msgstr "节点ID:"
+
+msgid "ring0 addr:"
+msgstr "节点IP1:"
+
+msgid "ring1 addr:"
+msgstr "节点IP2:"

@@ -1,0 +1,246 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+class qudiskview:
+	def data_init(self):
+		self.interval = "1"
+		self.tko = "10"
+		self.device = ""
+		self.label = ""
+		self.has_configured = False
+
+		self.xml_qdisk = self.manager.xml_nodes["cib"].getElementsByTagName("qdisk")
+		if self.xml_qdisk == None or self.xml_qdisk == []:
+			return
+
+		self.has_configured = True
+		self.interval = self.xml_qdisk[0].getAttribute('interval')
+		self.tko = self.xml_qdisk[0].getAttribute('tko')
+		self.device = self.xml_qdisk[0].getAttribute('device')
+		self.label = self.xml_qdisk[0].getAttribute('label')
+
+		return
+
+	def update(self):
+		self.is_qdisk_start = self.manager.do_cmd("system\n%s"%(str("/bin/ps -C qdiskd |grep qdiskd |wc -l")))
+		if self.has_configured:
+			if "0" in self.is_qdisk_start :#not start
+				self.widget_warn.set_text(_("Warning: You have not start qdisk.\n")+_("Please restart NKHA on all nodes in the cluster: ")+"service neokylinha restart")
+			self.widget_use_hb.set_active(True)
+		else:
+			if "1" in self.is_qdisk_start :#not stop
+				self.widget_warn.set_text(_("Warning: You have not stop qdisk.\n")+_("Please restart NKHA on all nodes in the cluster: ")+"service neokylinha restart")
+			self.widget_not_use_hb.set_active(True)
+		self.callback(self.widget_use_hb)
+
+		self.widget_device.child.set_text(self.device)
+		self.widget_label.child.set_text(self.label)
+		self.widget_interval.set_text(self.interval)
+		self.widget_tko.set_text(self.tko)
+		return
+
+	def callback(self, widget):
+		if self.widget_use_hb.get_active():
+			self.widget_device_label.set_sensitive(True)
+			self.widget_device.set_sensitive(True)
+			self.widget_label_label.set_sensitive(True)
+			self.widget_label.set_sensitive(True)
+			self.widget_interval_label.set_sensitive(True)
+			self.widget_interval.set_sensitive(False)
+			self.widget_tko_label.set_sensitive(True)
+			self.widget_tko.set_sensitive(False)
+		else:
+			self.widget_device_label.set_sensitive(False)
+			self.widget_device.set_sensitive(False)
+			self.widget_label_label.set_sensitive(False)
+			self.widget_label.set_sensitive(False)
+			self.widget_interval_label.set_sensitive(False)
+			self.widget_interval.set_sensitive(False)
+			self.widget_tko_label.set_sensitive(False)
+			self.widget_tko.set_sensitive(False)
+
+	def save(self):
+                if self.widget_not_use_hb.get_active() :
+                        #delete disk heartbeat
+			ret = confirmbox(top_window, _("Do you confirm not using the Quorum Disk?\n"),
+                        	        (gtk.STOCK_NO, gtk.RESPONSE_NO,
+                                	gtk.STOCK_YES, gtk.RESPONSE_YES))
+			if ret != gtk.RESPONSE_YES :
+				return 1
+
+			self.xml_qdiskd = self.manager.xml_nodes["cib"].getElementsByTagName("qdiskd")[0]
+                        for child in self.xml_qdiskd.childNodes:
+                                if child.nodeType != xml.dom.Node.ELEMENT_NODE :
+                                        continue
+                                self.xml_qdiskd.removeChild(child)
+                        xml_str = self.xml_qdiskd.toxml().replace("\n", "")
+                        self.manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("qdiskd"), str(xml_str)))
+
+                        if self.manager.failed_reason != "" :
+                                msgbox(top_window, self.manager.failed_reason)
+                                return 1
+			ret_str = _("The Quorum Disk changes have been saved.\n")
+			if "1" in self.is_qdisk_start : #qdisk start
+				ret_str += _("Please restart the NKHA on all nodes in the cluster to make \nthe changes become effective!\n")+ "service neokylinha restart\n"
+                        msgbox(top_window, ret_str, image=gtk.STOCK_DIALOG_INFO)
+                        return 0
+
+
+		label = self.widget_label.child.get_text()
+		device = self.widget_device.child.get_text()
+
+                if not self.manager.check_device(device):
+                        msgbox(top_window, _("Please input the device you want!\n"))
+                        return 1
+
+		m = re.match('^[\w\d]+$', label)
+		if m is None or label == "" or len(label)>16:
+			msgbox(top_window, _("Special characters can not appear in Disk Label!\n")+_("And the length must be less than 16.\n")+_("Please input it again!\n"))
+			return 1
+
+		ret = confirmbox(top_window, _("Are you sure apply the changes?\n"),
+                       	        (gtk.STOCK_NO, gtk.RESPONSE_NO,
+                               	gtk.STOCK_YES, gtk.RESPONSE_YES))
+		if ret != gtk.RESPONSE_YES :
+			return 1
+
+		cmd = "/usr/sbin/initqdisk -f %s | grep Label"%(label)
+		ret = self.manager.do_cmd("system\n%s"%(str(cmd)))
+
+                if self.manager.failed_reason != "" :
+                        msgbox(top_window, self.manager.failed_reason)
+			return 1
+		else:
+			if ret != None and ret != [] :
+				msgbox(top_window, _("There is another Qdisk with same label!\n")+_("Please input it again!\n"))
+				return 1
+
+
+		cmd = "echo y | /usr/sbin/initqdisk -c %s -l %s"%(device, label)
+		ret = self.manager.do_cmd("system\n%s"%(str(cmd)))
+
+                if self.manager.failed_reason != "" :
+                        msgbox(top_window, self.manager.failed_reason)
+			return 1
+		else:
+			for r in ret:
+				if "ERROR" in r:
+					msgbox(top_window, _("There is Qdisk Initialization Error!\n")+_("Please input it again!\n"))
+					return 1
+
+		self.xml_qdiskd = self.manager.xml_nodes["cib"].getElementsByTagName("qdiskd")[0]
+                for child in self.xml_qdiskd.childNodes:
+			if child.nodeType != xml.dom.Node.ELEMENT_NODE :
+                        	continue
+                        self.xml_qdiskd.removeChild(child)
+
+		if self.widget_not_use_hb.get_active():
+			self.xml_qdisk[0].setAttribute("label", label)
+			self.xml_qdisk[0].setAttribute("device", device)
+		else:
+			impl = getDOMImplementation()
+			newdoc = impl.createDocument(None, "qdisk", None)
+                        qdisk = newdoc.documentElement
+			qdisk.setAttribute("interval","1")
+			qdisk.setAttribute("tko","10")
+			qdisk.setAttribute("device", device)
+			qdisk.setAttribute("label", label)
+			self.xml_qdiskd.appendChild(qdisk)
+                        newdoc = impl.createDocument(None, "heuristic", None)
+                        heuristic = newdoc.documentElement
+                        heuristic.setAttribute('program', "ls")
+                        heuristic.setAttribute('score', "1")
+                        heuristic.setAttribute('interval', "2")
+                        self.xml_qdiskd.appendChild(heuristic)
+
+		xml_str = self.xml_qdiskd.toxml().replace("\n", "")
+                self.manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("qdiskd"), str(xml_str)))
+
+                if self.manager.failed_reason != "" :
+                        msgbox(top_window, self.manager.failed_reason)
+			return 1
+
+		ret_str = _("The Quorum Disk changes have been saved.\n")
+		if "0" in self.is_qdisk_start : # qdisk not start
+			ret_str += _("Please restart the NKHA on all nodes in the cluster to make \nthe changes become effective!\n") + "service neokylinha restart\n"
+		msgbox(top_window, ret_str, image=gtk.STOCK_DIALOG_INFO)
+		return 0
+
+        def __init__(self, top_window, manager):
+                self.manager = manager
+                dialog = gtk.Dialog(_("Quorum Disk Configuration"), top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+                glade = gtk.glade.XML(UI_FILE, "qudiskdlg", "haclient")
+
+                layout = glade.get_widget("qudiskdlg")
+                dialog.vbox.add(layout)
+
+		self.widget_warn = glade.get_widget("qdisk_warn")
+		#self.widget_is_configure = glade.get_widget("is_configure")
+		#self.widget_is_configure.connect('toggled', self.on_check_changed)
+		#self.widget_configured_label = glade.get_widget("configured_label")
+		self.widget_use_hb = glade.get_widget("use_hb")
+		self.widget_not_use_hb = glade.get_widget("not_use_hb")
+		self.widget_use_hb.connect("toggled", self.callback)
+		self.widget_not_use_hb.connect("toggled", self.callback)
+		self.widget_device_label = glade.get_widget("device_label")
+		self.widget_device = glade.get_widget("device")
+		self.widget_label_label = glade.get_widget("label_label")
+		self.widget_label = glade.get_widget("label")
+		self.widget_interval_label = glade.get_widget("interval_label")
+		self.widget_interval = glade.get_widget("interval")
+		self.widget_interval.set_sensitive(False)
+		self.widget_tko_label = glade.get_widget("tko_label")
+		self.widget_tko = glade.get_widget("tko")
+		self.widget_tko.set_sensitive(False)
+
+                self.data_init()
+                self.update()
+
+                save_top_window = top_window
+                top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                        top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+                        else:
+				if (self.has_configured==self.widget_use_hb.get_active() and not self.has_configured) or \
+					(self.has_configured==self.widget_use_hb.get_active() and self.has_configured and self.widget_device.child.get_text()==self.device and self.widget_label.child.get_text()==self.label):
+					top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+
+	                        if self.save()==0:
+	        	                        top_window = save_top_window
+        	        	                dialog.destroy()
+                	        	        return None
+

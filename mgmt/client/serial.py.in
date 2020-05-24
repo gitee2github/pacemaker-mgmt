@@ -1,0 +1,402 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+from sync import syncview
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+class addserialhbview :
+        filename = "/etc/corosync/corosync.conf" 
+        
+        def update(self):
+		nodes = self.manager.get_all_nodes()
+                if len(nodes)!= 2:
+                        self.widget_use_serialhb.set_sensitive(False)
+                        self.widget_not_use_serialhb.set_sensitive(False)
+                        self.widget_serial_label.set_sensitive(False)
+                        self.widget_serial.set_sensitive(False)
+                        self.widget_speed_label.set_sensitive(False)
+                        self.widget_speed.set_sensitive(False)
+                        self.widget_hbsinterval_label.set_sensitive(False)
+                        self.widget_hbsinterval.set_sensitive(False)
+                        return
+
+                if self.sehbconfigured: 
+                        self.widget_use_serialhb.set_active(True)
+                else: 
+                        self.widget_not_use_serialhb.set_active(True)
+                self.callback(self.widget_use_serialhb)
+                self.widget_serial.child.set_text(self.serial)
+                self.widget_speed.child.set_text(self.speed)
+                self.widget_hbsinterval.child.set_text(self.hbsinterval)
+                return
+              
+        def data_init(self):
+                self.serial = ""
+                self.speed = ""
+                self.hbsinterval = ""
+                self.rrp_mode = None
+                self.sehbconfigured = False
+
+		f = self.manager.do_cmd("get_file_context\n"+addserialhbview.filename)
+                self.file_corosync_org = []
+                self.interface_list = []
+		if f == None or f == []:
+			return
+
+		index = 0
+                while index < len(f):
+			self.file_corosync_org.append(f[index])
+                        if "#" in f[index]:
+                                strline = f[index].split("#")[0]
+                        else:
+                                strline = f[index]
+
+                        strline = strline.strip()
+			top = 0
+
+			m = re.match('^rrp_mode:(.+)$', strline)
+                        if m is not None:
+                                self.rrp_mode = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                        m = re.match('^(interface).*$', strline)
+                        if m is not None:
+				interface = {}
+				index = index + 1
+                          	if "#" in f[index]:
+                                	strline = f[index].split("#")[0]
+       	                        else:
+               	                        strline = f[index]
+                               	strline = strline.strip()
+				ncount = 0
+
+                                #while '}' not in strline:
+                                while top != -1:
+                                        if '{' in strline:
+                                                top += 1
+                                        if '}' in strline:
+                                                top -= 1
+                                        m = re.match('^bindnetaddr:(.+)$', strline)
+                                        if m is not None:
+                                                interface["bindnetaddr"] = m.groups()[0].strip()
+                                        m = re.match('^mcastaddr:(.+)$', strline)
+                                        if m is not None:
+                                                interface["mcastaddr"] = m.groups()[0].strip()
+                                        m = re.match('^broadcast:(.+)$', strline)
+                                        if m is not None and m.groups()[0].strip() == "yes":
+                                                interface["mcastaddr"] = str("broadcast")
+                                        m = re.match('^mcastport:(.+)$', strline)
+                                        if m is not None:
+                                                interface["mcastport"] = m.groups()[0].strip()
+                                        m = re.match('^memberaddr:(.+)$',strline)
+                                        if m is not None:
+                                                ncount += 1
+                                                if ncount>1:
+                                                        interface["mcastaddr"] += ","
+                                                        interface["mcastaddr"] += m.groups()[0].strip()
+                                                else:
+                                                        interface["mcastaddr"] = m.groups()[0].strip()
+                                        m = re.match('^disk:(.+)$', strline)
+                                        if m is not None:
+                                                interface["diskdevice"] = m.groups()[0].strip()
+                                        m = re.match('^label:(.+)$', strline)
+                                        if m is not None:
+                                                interface["disklabel"] = m.groups()[0].strip()
+                                        m = re.match('^serial:(.+)$', strline)
+                                        if m is not None:
+                                        	interface["serial"] = m.groups()[0].strip()
+                                        m = re.match('^speed:(.+)$', strline)
+                                        if m is not None: 
+                                                interface["speed"] = m.groups()[0].strip()
+
+                                        if top != -1:
+                                                index = index + 1
+                                        if "#" in f[index]:
+       	                                        strline = f[index].split("#")[0]
+               	                        else:
+                       	                        strline = f[index]
+                               	        strline = strline.strip()
+				if len(interface) > 0:
+					self.interface_list.append(interface)
+	
+                        m = re.match('^token:(.+)$', strline)
+			if m is not None:
+                                self.interval = {}
+				self.interval["token"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                                self.hbinterval = int(self.interval["token"])/1000
+			m = re.match('^token_retransmit:(.+)$', strline)
+			if m is not None:
+				self.interval["token_retransmit"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+		        m = re.match('^hold:(.+)$', strline)
+		        if m is not None:
+				self.interval["hold"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+	         	m = re.match('^join:(.+)$', strline)
+			if m is not None:
+			        self.interval["join"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+			m = re.match('^consensus:(.+)$', strline)
+			if m is not None:
+				self.interval["consensus"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+			m = re.match('^merge:(.+)$', strline)
+		        if m is not None:
+				self.interval["merge"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                        index = index + 1 
+                self.hbsinterval = str(self.hbinterval)
+                for interface in self.interface_list:
+                	if  'serial' and 'speed'  in interface: 
+               			self.sehbconfigured = True
+                		self.serial = interface["serial"]
+                		self.speed = interface["speed"]
+                return 
+       
+        def callback(self, widget):
+                if self.widget_use_serialhb.get_active():
+                        self.widget_serial_label.set_sensitive(True)
+                        self.widget_serial.set_sensitive(True)
+                        self.widget_speed_label.set_sensitive(True)
+                        self.widget_speed.set_sensitive(True)
+                        self.widget_hbsinterval_label.set_sensitive(True)
+                        self.widget_hbsinterval.set_sensitive(True)
+                else:
+                        self.widget_serial_label.set_sensitive(False)
+                        self.widget_serial.set_sensitive(False)
+                        self.widget_speed_label.set_sensitive(False)
+                        self.widget_speed.set_sensitive(False)
+                        self.widget_hbsinterval_label.set_sensitive(False)
+                        self.widget_hbsinterval.set_sensitive(False)
+                return
+        
+        def save(self):
+                if self.widget_not_use_serialhb.get_active() :
+                        #delete serial heartbeat
+                     #   ret = confirmbox(top_window, _("Do you confirm not using the Serial Heartbeat?\n"),
+                      #                  (gtk.STOCK_NO, gtk.RESPONSE_NO,
+                       #                 gtk.STOCK_YES, gtk.RESPONSE_YES))
+                        #if ret == gtk.RESPONSE_NO:
+                         #       self.widget_use_serialhb.get_active()
+                          #      self.callback(self.widget_use_serialhb)
+                           #     return 1                        	
+                        #if ret != gtk.RESPONSE_YES :
+                         #       return 1
+                        for interface in self.interface_list:
+                        	if  'serial' and 'speed'  in interface:
+                        		self.interface_list.remove(interface)
+               
+			self.interval["token"] = '1000'
+                        self.interval["token_retransmit"] = '238'
+                        self.interval["hold"] = '180'
+                        self.interval["join"] = '50'
+                        self.interval["consensus"] = '1200'
+                        self.interval["merge"] = '200'
+
+                if self.widget_use_serialhb.get_active() :
+                	m = re.match('^.+$', self.widget_serial.child.get_text())
+                	if m is None:
+                        	msgbox(self.top_window, _("Please choose the serial device, for example: /dev/ttyS0"))
+                        	return 1
+                	m = re.match('^.+$', self.widget_speed.child.get_text())
+                	if m is None:
+                        	msgbox(self.top_window, _("Please choose the serial heartbeat speed, for example: 9600"))
+                        	return 1
+                         
+                	sinclude = False          
+                	for interface in self.interface_list:	
+                		if 'serial' and 'speed' in interface:
+                                    
+                        		interface["serial"] =  self.widget_serial.child.get_text()       
+                			interface["speed"] =  self.widget_speed.child.get_text()       
+                                	sinclude = True
+                        if not sinclude:
+                        	interface = {}
+                        	interface["serial"] =  self.widget_serial.child.get_text()       
+                		interface["speed"] =  self.widget_speed.child.get_text()       
+                                self.interface_list.append(interface) 
+                	hbsinterval = self.widget_hbsinterval.child.get_text()
+                	if hbsinterval != self.hbsinterval:
+                        	self.interval["token"] = str(int(hbsinterval)*1000)
+                        	self.interval["token_retransmit"] = str(int(hbsinterval)*238)
+                        	self.interval["hold"] = str(int(hbsinterval)*180)
+                        	self.interval["join"] = str(int(hbsinterval)*50)
+                        	self.interval["consensus"] = str(int(hbsinterval)*1200)
+                        	self.interval["merge"] = str(int(hbsinterval)*200)
+                file_corosync = []
+                added_interface = False
+     
+		for line in self.file_corosync_org:
+                        if "#" in line:
+                                strline = line.split("#")[0]
+                       	else:
+                                strline = line
+                        strline = strline.strip()
+                        m = re.match('^(interface).*$', strline)
+                        if m is not None :
+                        	if added_interface:
+                                	continue
+                        	if len(self.interface_list)>1:
+                                        if self.rrp_mode != None and self.rrp_mode != "none":
+                                        	file_corosync.append("\trrp_mode: %s"%(self.rrp_mode))
+                                        else:
+                                                file_corosync.append("\trrp_mode: passive")
+                	        ringnumber = -1
+                        	heart_type = -1
+                                for interface in self.interface_list:
+                                        ringnumber = ringnumber + 1
+                                        file_corosync.append("\tinterface {")
+                                        file_corosync.append("\t\tringnumber: %d"%(ringnumber))
+                                        if 'bindnetaddr' in interface:
+                                        	file_corosync.append("\t\tbindnetaddr: %s"%(interface["bindnetaddr"]))
+                                        	if interface["mcastaddr"] == "broadcast":
+                                                	heart_type = 0
+                                                	file_corosync.append("\t\tbroadcast: yes")
+                                        	elif interface["mcastaddr"].find(',') != -1:#process ucast
+                                                	heart_type = 1
+                                                	iplist = interface['mcastaddr'].split(',')
+                                                	for ipvalue in iplist:
+                                                        	file_corosync.append("\t\tmember{")
+                                                        	file_corosync.append("\t\t\tmemberaddr: %s"%(ipvalue))
+                                                        	file_corosync.append("\t\t}")
+                                        	else:
+                                                	heart_type = 2
+                                                	file_corosync.append("\t\tmcastaddr: %s"%(interface["mcastaddr"]))
+                                        	file_corosync.append("\t\tmcastport: %s"%(interface["mcastport"]))
+                                        	file_corosync.append("\t}")
+                                                continue
+                                        if  'serial' and 'speed'  in interface:
+                                        	file_corosync.append("\t\tserial: %s"%(interface["serial"]))
+                                        	file_corosync.append("\t\tspeed: %s"%(interface["speed"]))
+                                                file_corosync.append("\t\t}")
+                                                continue
+                                        if 'diskdevice' and 'disklabel' in interface:
+                                        	file_corosync.append("\t\tdisk: %s"%(interface["diskdevice"]))
+                                        	file_corosync.append("\t\tlabel: %s"%(interface["disklabel"]))
+                                                file_corosync.append("\t\t}")
+                                file_corosync.append("\ttoken:  %s"%(self.interval["token"]))
+                                file_corosync.append("\ttoken_retransmit:  %s"%(self.interval["token_retransmit"]))
+                                file_corosync.append("\thold:  %s"%(self.interval["hold"]))
+                                file_corosync.append("\tjoin:  %s"%(self.interval["join"]))
+                                file_corosync.append("\tconsensus:  %s"%(self.interval["consensus"]))
+                                file_corosync.append("\tmerge:  %s"%(self.interval["merge"]))
+                                added_interface = True
+                                if heart_type == 1:                                                                                                                              
+                                	file_corosync.append("\ttransport: udpu")
+                        else:
+                        	m = re.match('^(transport).*$',strline)
+                                if m is not None:
+                                        continue
+                   		file_corosync.append(line)
+
+                content_str = ""
+                for line in file_corosync:
+                        content_str = content_str + line + "\n"
+
+                self.manager.do_cmd("save_file_context\nfalse\nfalse\n%s\n%s"%(str(self.filename), str(content_str)))
+                if self.manager.failed_reason != "" :
+                        msgbox(self.top_window, self.manager.failed_reason)
+                        return 1
+                else:
+                        msgbox(self.top_window, _("The serial heartbeat changes has saved.\n")+_("But the Configuration File must be synchronized to other nodes.\n")+_("After that please restart the NKHA on all nodes to make \nthe changes become effective!\n"), image=gtk.STOCK_DIALOG_INFO)
+
+                        file = [str(self.filename)]
+                        syncview(self.window, self.manager, file, _("Serial Heartbeat Configuration"), self.manager.get_all_nodes())
+                return 0
+
+        def __init__(self, window, manager): 
+                self.window = window
+                self.top_window = window.win_widget
+                self.manager = manager
+                dialog = gtk.Dialog(_("Serial Heartbeat Configuration"), self.top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+                glade = gtk.glade.XML(UI_FILE, "serialhbdlg", "haclient")
+
+                layout = glade.get_widget("serialhbdlg")
+                dialog.vbox.add(layout)
+
+                #self.changed = False
+                #self.widget_warn = glade.get_widget("qdisk_warn")
+                #self.widget_is_configure = glade.get_widget("is_configure")
+                #self.widget_is_configure.connect('toggled', self.on_check_changed)
+                #self.widget_configured_label = glade.get_widget("configured_label")
+                self.widget_use_serialhb = glade.get_widget("use_serialhb")
+                self.widget_not_use_serialhb = glade.get_widget("not_use_serialhb")
+                self.widget_use_serialhb.connect("toggled", self.callback)
+                self.widget_not_use_serialhb.connect("toggled", self.callback)
+                self.widget_serial_label = glade.get_widget("serial_label")
+                self.widget_serial = glade.get_widget("serial")
+                self.widget_serial.append_text("/dev/ttyS0")
+                self.widget_serial.child.set_editable(False)
+                self.widget_speed_label = glade.get_widget("speed_label")
+                self.widget_speed = glade.get_widget("speed")
+                self.widget_speed.append_text("115200")
+                self.widget_speed.child.set_editable(False)
+                self.widget_hbsinterval_label = glade.get_widget("hbsinterval_label")
+                self.widget_hbsinterval = glade.get_widget("hbsinterval")
+                self.widget_hbsinterval.append_text("1")
+                self.widget_hbsinterval.append_text("2")
+                self.widget_hbsinterval.append_text("3")
+                self.widget_hbsinterval.append_text("4")
+                self.widget_hbsinterval.child.set_editable(False)
+                self.data_init()
+                self.update()
+
+                save_top_window = self.top_window
+                self.top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                if  self.sehbconfigured==self.widget_use_serialhb.get_active() and self.sehbconfigured and (self.widget_serial.child.get_text()!=self.serial or self.widget_speed.child.get_text()!=self.speed or self.widget_hbsinterval.child.get_text()!=self.hbsinterval):
+					ret_save = 0
+			                ret = confirmbox(self.top_window, _("The data of current view have been changed.")+"\n"+_("Apply the changes?"),
+                        			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+			                        gtk.STOCK_NO, gtk.RESPONSE_NO,
+                        			gtk.STOCK_YES, gtk.RESPONSE_YES))
+			                if ret == gtk.RESPONSE_YES :
+                        			ret_save = self.save()
+			                if ret != gtk.RESPONSE_CANCEL :
+						if ret_save == 0 :
+                                			self.top_window = save_top_window
+		                                	dialog.destroy()
+                		                	return None
+				else:
+					self.top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+                        else:
+                                if (self.sehbconfigured==self.widget_use_serialhb.get_active() and not self.sehbconfigured) or \
+                                        (self.sehbconfigured==self.widget_use_serialhb.get_active() and self.sehbconfigured and self.widget_serial.child.get_text()==self.serial and self.widget_speed.child.get_text()==self.speed and self.widget_hbsinterval.child.get_text()==self.hbsinterval):
+                                        self.top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+                              
+                                if self.save()==0:
+                                        self.top_window = save_top_window
+                                        dialog.destroy()
+                                        return None

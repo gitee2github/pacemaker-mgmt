@@ -1,0 +1,69 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+class upgradeview:
+	def update(self):
+		if self.widget_local.get_active():
+			#cmd = "/usr/sbin/pup -c @HA_DATADIR@/heartbeat-gui/upgrade/local/yum.conf &"
+			cmd = "/usr/bin/localinstaller &"
+		else:
+			cmd = "/usr/sbin/system-cdinstall-helper -r ftp://nsupdate:nsupdate@ftp.cs2c.com.cn/ha/6.0/@ARCH@ &"
+			#cmd = "/usr/sbin/pup -c @HA_DATADIR@/heartbeat-gui/upgrade/network/yum.conf &"
+		os.popen(cmd)
+		#manager.do_cmd("system\n"+cmd)
+		return 1
+
+	def __init__(self, top_window):
+		dialog = gtk.Dialog(_("Update"), top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_border_width(5)
+		dialog.set_default_response(gtk.RESPONSE_OK)
+
+		box = gtk.VBox(False, 10)
+		box.set_border_width(10)
+		self.widget_local = gtk.RadioButton(None, _("Local Update"))
+		self.widget_network = gtk.RadioButton(self.widget_local, _("Network Update"))
+		dialog.vbox.pack_start(self.widget_local, False, padding=2)
+		dialog.vbox.pack_start(self.widget_network, False, padding=2)
+
+		save_top_window = top_window
+		top_window = dialog
+		dialog.show_all()
+
+		while True:
+			ret = dialog.run()
+			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT]:
+				top_window = save_top_window
+				dialog.destroy()
+				return None
+			else:
+				if self.update() == 1 :
+					top_window = save_top_window
+					dialog.destroy()
+					return None
+

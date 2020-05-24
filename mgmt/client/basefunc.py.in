@@ -1,0 +1,288 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+
+#add by xinjie.zhang
+#gfs global function
+def edit_filesystem_clone(manager, diskpath, directory, gfs_num):
+	xmlresources = manager.xml_nodes["cib"].getElementsByTagName("resources")[0]
+	for xmlnode in xmlresources.getElementsByTagName("nvpair"):
+		if xmlnode.getAttribute("id") == "gfs-instance_attributes-device":
+			xmlnode.setAttribute("value",diskpath)
+		if xmlnode.getAttribute("id") == "gfs-instance_attributes-directory":
+			xmlnode.setAttribute("value",directory)
+		if xmlnode.getAttribute("id") == "clone-gfs-meta_attributes-clone-max":
+			xmlnode.setAttribute("value",gfs_num)
+	cmdxml = xmlresources.toxml().replace("\n","")
+	manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("resources"),str(cmdxml)))
+        if manager.failed_reason != "" :
+		msgbox(top_window, manager.failed_reason)
+		return 0
+	return 1
+
+
+def is_rsc_running(manager):
+	status = manager.get_rsc_status("dlm_controld")
+	if status == "running":
+		return True
+	status = manager.get_rsc_status("gfs")
+	if status == "running":
+		return True
+	return False
+
+
+def delete_resource(manager, resource_name):
+	xml_clone = {}
+	for xml_clone in manager.xml_nodes["cib"].getElementsByTagName("clone"):
+		id = str(xml_clone.getAttribute("id"))	
+		if id == resource_name:
+			cmdxml = xml_clone.toxml().replace("\n","")
+			manager.cib_do_cmd("cib_delete\n%s\n%s"%(str("clone"),str(cmdxml)))
+                        if manager.failed_reason != "" :
+				msgbox(top_window, manager.failed_reason)
+				return 0
+			else:
+				return 1
+	return 0
+
+
+def delete_constraints(manager):
+	xml_constraints = {}
+	impl = getDOMImplementation()
+#		newdoc = impl.createDocument(None,"constraints",None)
+#		constraints = newdoc.documentElement
+	for xml_constraints in manager.xml_nodes["cib"].getElementsByTagName("rsc_colocation"):
+		id = str(xml_constraints.getAttribute("id"))
+		if id == "clone-gfs2-with-clone-dlm":
+			newdoc = impl.createDocument(None,"rsc_colocation",None)
+                	colocation = newdoc.documentElement
+			colocation.setAttribute("id","clone-gfs2-with-clone-dlm")
+			colocation.setAttribute("rsc","clone-gfs2")
+			colocation.setAttribute("score","INFINITY")
+			colocation.setAttribute("with-rsc","clone-dlm")
+			cmdxml = colocation.toxml().replace("\n","")
+			manager.cib_do_cmd("cib_delete\n%s\n%s"%(str("constraints"),str(cmdxml)))
+			if manager.failed_reason != "":
+				msgbox(top_window, manager.failed_reason)
+		if id == "clone-fs-with-clone-gfs2":
+			newdoc = impl.createDocument(None,"rsc_colocation",None)
+                	colocation = newdoc.documentElement
+			colocation.setAttribute("id","clone-fs-with-clone-gfs2")
+			colocation.setAttribute("rsc","clone-fs")
+			colocation.setAttribute("score","INFINITY")
+			colocation.setAttribute("with-rsc","clone-gfs2")
+			cmdxml = colocation.toxml().replace("\n","")
+			manager.cib_do_cmd("cib_delete\n%s\n%s"%(str("constraints"),str(cmdxml)))
+			if manager.failed_reason != "":
+				msgbox(top_window, manager.failed_reason)
+	for xml_constraints in manager.xml_nodes["cib"].getElementsByTagName("rsc_order"):
+		id = str(xml_constraints.getAttribute("id"))
+		if id == "clone-gfs2-after-clone-dlm":
+			newdoc = impl.createDocument(None,"rsc_order",None)
+                	order = newdoc.documentElement
+			order.setAttribute("first","clone-gfs2")
+			order.setAttribute("id","clone-fs-after-clone-gfs2")
+			order.setAttribute("then","clone-fs")
+			cmdxml = order.toxml().replace("\n","")
+			manager.cib_do_cmd("cib_delete\n%s\n%s"%(str("constraints"),str(cmdxml)))
+			if manager.failed_reason != "":
+				msgbox(top_window, manager.failed_reason)
+		if id == "clone-fs-after-clone-gfs2":	
+			newdoc = impl.createDocument(None,"rsc_order",None)
+                	order = newdoc.documentElement
+			order.setAttribute("first","clone-dlm")
+			order.setAttribute("id","clone-gfs2-after-clone-dlm")
+			order.setAttribute("then","clone-gfs2")
+			cmdxml = order.toxml().replace("\n","")
+			manager.cib_do_cmd("cib_delete\n%s\n%s"%(str("constraints"),str(cmdxml)))
+			if manager.failed_reason != "":
+				msgbox(top_window, manager.failed_reason)
+
+
+def is_existed(manager, type,resourceid):
+	xml_resource = {}
+	for xml_clone in manager.xml_nodes["cib"].getElementsByTagName(type):
+		id = str(xml_clone.getAttribute("id"))	
+		if id == resourceid:
+			return True
+	return False
+
+
+def add_gfs(manager, diskpath,directory,node_num="-1"):
+	impl = getDOMImplementation()
+	newdoc = impl.createDocument(None,"clone",None)
+	clonegfs = newdoc.documentElement
+	clonegfs.setAttribute("id","clone-gfs")
+	newdoc = impl.createDocument(None, "meta_attributes", None)
+        meta = newdoc.documentElement
+	meta.setAttribute("id","clone-gfs-meta_attributes")
+	newdoc = impl.createDocument(None, "nvpair", None)
+	nvpair1 = newdoc.documentElement
+	nvpair1.setAttribute("id","clone-gfs-meta_attributes-interleave")
+	nvpair1.setAttribute("name","interleave")
+	nvpair1.setAttribute("value","true")
+	meta.appendChild(nvpair1)
+	newdoc = impl.createDocument(None, "nvpair", None)
+	nvpair2 = newdoc.documentElement
+	nvpair2.setAttribute("id","clone-gfs-meta_attributes-target-role")
+	nvpair2.setAttribute("name","target-role")
+	nvpair2.setAttribute("value","Stopped")
+	meta.appendChild(nvpair2)
+	if node_num != '-1':
+		newdoc = impl.createDocument(None, "nvpair", None)
+		nvpair3 = newdoc.documentElement
+		nvpair3.setAttribute("id","clone-gfs-meta_attributes-clone-max")
+		nvpair3.setAttribute("name","clone-max")
+		nvpair3.setAttribute("value",node_num)
+		meta.appendChild(nvpair3)
+	
+	clonegfs.appendChild(meta)
+        #######groupgfs########
+	newdoc = impl.createDocument(None, "group", None)
+	groupgfs = newdoc.documentElement
+	groupgfs.setAttribute("id","gfs-group")
+
+	####################dlm#####################
+	newdoc = impl.createDocument(None, "primitive", None)
+	primitive = newdoc.documentElement
+	primitive.setAttribute("class","ocf")
+	primitive.setAttribute("id","dlm_controld")
+	primitive.setAttribute("provider","pacemaker")
+	primitive.setAttribute("type","controld")
+	newdoc = impl.createDocument(None, "operations", None)
+	operation = newdoc.documentElement
+	operation.setAttribute("id","dlm_controld-operations")
+	newdoc = impl.createDocument(None, "op", None)
+	op = newdoc.documentElement
+	op.setAttribute("id","dlm_controld-op-monitor-10")
+	op.setAttribute("interval","10")
+	op.setAttribute("name","monitor")
+	op.setAttribute("start-delay","0")
+	op.setAttribute("timeout","20")
+	operation.appendChild(op)
+	primitive.appendChild(operation)
+	groupgfs.appendChild(primitive)
+
+	##################fs################################
+	newdoc = impl.createDocument(None, "primitive", None)
+	primitive = newdoc.documentElement
+	primitive.setAttribute("class","ocf")
+	primitive.setAttribute("id","gfs")
+	primitive.setAttribute("provider","heartbeat")
+	primitive.setAttribute("type","Filesystem")
+	newdoc = impl.createDocument(None, "operations", None)
+	operation = newdoc.documentElement
+	operation.setAttribute("id","gfs-operations")
+	newdoc = impl.createDocument(None, "op", None)
+	op = newdoc.documentElement
+	op.setAttribute("id","gfs-op-monitor-20")
+	op.setAttribute("interval","20")
+	op.setAttribute("name","monitor")
+	op.setAttribute("timeout","40")
+	op.setAttribute("timeout","20")
+	operation.appendChild(op)
+	newdoc = impl.createDocument(None, "instance_attributes", None)
+	instance = newdoc.documentElement
+	instance.setAttribute("id","gfs-instance_attributes")
+	newdoc = impl.createDocument(None, "nvpair", None)
+	nvpair1 = newdoc.documentElement
+	nvpair1.setAttribute("id","gfs-instance_attributes-device")
+	nvpair1.setAttribute("name","device")
+	nvpair1.setAttribute("value",diskpath)
+	newdoc = impl.createDocument(None, "nvpair", None)
+	nvpair2 = newdoc.documentElement
+	nvpair2.setAttribute("id","gfs-instance_attributes-directory")
+	nvpair2.setAttribute("name","directory")
+	nvpair2.setAttribute("value",directory)
+	newdoc = impl.createDocument(None, "nvpair", None)
+	nvpair3 = newdoc.documentElement
+	nvpair3.setAttribute("id","gfs-instance_attributes-fstype")
+	nvpair3.setAttribute("name","fstype")
+	nvpair3.setAttribute("value","gfs2")
+	instance.appendChild(nvpair1)
+	instance.appendChild(nvpair2)
+	instance.appendChild(nvpair3)
+	primitive.appendChild(operation)
+	primitive.appendChild(instance)
+	groupgfs.appendChild(primitive)
+
+	####################################        
+	clonegfs.appendChild(groupgfs)
+        cmdxml = clonegfs.toxml().replace("\n","")
+	manager.cib_do_cmd("cib_create\n%s\n%s"%(str("resources"),str(cmdxml)))
+        if manager.failed_reason != "" :
+                msgbox(top_window, manager.failed_reason)
+		return 0
+	return 1
+
+
+def confirmbox(top_window, msg, button=(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES), title ="", default_response = gtk.RESPONSE_YES) :
+	dialog = gtk.Dialog(_("Confirm"),  top_window, gtk.DIALOG_MODAL,button)
+	dialog.set_border_width(5)
+	dialog.set_icon_from_file("@HA_DATADIR@/heartbeat-gui/ha.png")
+	im=gtk.Image()
+	im.set_from_stock(gtk.STOCK_DIALOG_QUESTION, gtk.ICON_SIZE_DIALOG)
+	frame = gtk.Frame()
+	confirm_title = gtk.Label()
+	confirm_title.set_markup('<b>'+title+'</b>')
+	frame.set_label_widget(confirm_title)
+	confirm_msg =  gtk.Label()
+	confirm_msg.set_text(msg)
+	confirm_msg.set_selectable(True)
+	confirm_msg.set_line_wrap(True)
+	dialog.vbox.pack_start(frame)
+	hb=gtk.HBox()
+	hb.pack_start(im)
+	hb.pack_start(confirm_msg)
+	frame.add(hb)
+	dialog.vbox.resize_children()
+	dialog.set_default_response(default_response)
+	dialog.show_all()
+	save_top_window = top_window
+	top_window = dialog
+	ret = dialog.run()
+	top_window = save_top_window
+	dialog.destroy()
+	return ret 
+
+
+def msgbox(top_window, msg, image=gtk.STOCK_DIALOG_WARNING) :
+	dialog = gtk.Dialog(_("Message"), top_window, gtk.DIALOG_MODAL, (gtk.STOCK_OK, True))
+	dialog.set_border_width(5)
+	dialog.set_icon_from_file("@HA_DATADIR@/heartbeat-gui/ha.png")
+	im=gtk.Image()
+	im.set_from_stock(image, gtk.ICON_SIZE_DIALOG)
+	hb=gtk.HBox()
+	hb.pack_start(im)
+	label = gtk.Label(_(msg))
+	label.set_selectable(True)
+	label.set_line_wrap(True)
+	hb.pack_start(label)
+	dialog.vbox.pack_start(hb)
+	dialog.show_all()
+	save_top_window = top_window
+	top_window = dialog
+	dialog.run()
+	top_window = save_top_window
+	dialog.destroy()

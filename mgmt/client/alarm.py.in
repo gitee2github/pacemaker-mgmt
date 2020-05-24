@@ -1,0 +1,383 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+class alarmview:
+        def on_email_toggled(self, widget):
+		self.changed = True
+                if self.is_send_email.get_active() or self.is_send_warn.get_active():
+                        self.smtpserver.set_sensitive(True)
+                        self.port.set_sensitive(True)
+                        self.sender.set_sensitive(True)
+                        self.password.set_sensitive(True)
+                        self.glade.get_widget("mail_receiver").set_sensitive(True)
+                        self.glade.get_widget("label275").set_sensitive(True)
+                        self.glade.get_widget("label276").set_sensitive(True)
+                        self.glade.get_widget("label277").set_sensitive(True)
+                        self.glade.get_widget("label278").set_sensitive(True)
+                        self.glade.get_widget("label279").set_sensitive(True)
+
+                        if self.sendmail_org or self.send_warn_org:
+                                return
+
+                	if self.is_send_email.get_active() and self.is_send_warn.get_active():
+				return
+
+			if not widget.get_active():
+				return
+
+                        retval = confirmbox(self.top_window, _("Please confirm whether the mail server within the network?"),
+                                   (gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+                                   _("Mail Server"))
+                        if retval == gtk.RESPONSE_NO:
+                                widget.set_active(False)
+                                return
+                else:
+                        self.smtpserver.set_sensitive(False)
+                        self.port.set_sensitive(False)
+                        self.sender.set_sensitive(False)
+                        self.password.set_sensitive(False)
+                        self.glade.get_widget("mail_receiver").set_sensitive(False)
+                        self.glade.get_widget("label275").set_sensitive(False)
+                        self.glade.get_widget("label276").set_sensitive(False)
+                        self.glade.get_widget("label277").set_sensitive(False)
+                        self.glade.get_widget("label278").set_sensitive(False)
+                        self.glade.get_widget("label279").set_sensitive(False)
+
+	'''def on_tel_toggled(self, widget):
+		self.changed = True
+		if self.is_send_message.get_active():
+                        self.glade.get_widget("tel_sender").set_sensitive(True)
+                        self.glade.get_widget("tel_password").set_sensitive(True)
+			self.glade.get_widget("tel_receiver").set_sensitive(True)
+                        self.glade.get_widget("label330").set_sensitive(True)
+                        self.glade.get_widget("label331").set_sensitive(True)
+                        self.glade.get_widget("label332").set_sensitive(True)
+		else:
+			self.glade.get_widget("tel_sender").set_sensitive(False)
+			self.glade.get_widget("tel_password").set_sensitive(False)
+			self.glade.get_widget("tel_receiver").set_sensitive(False)
+                        self.glade.get_widget("label330").set_sensitive(False)
+                        self.glade.get_widget("label331").set_sensitive(False)
+                        self.glade.get_widget("label332").set_sensitive(False)
+		return'''
+
+        def on_save(self):
+		if not self.changed:
+			return 1
+
+                if self.is_send_email.get_active() or self.is_send_warn.get_active():
+                        m = re.match('^[a-zA-Z0-9.]+$', self.smtpserver.get_text())
+                        if m is None:
+                                msgbox(self.top_window, _("Please input the smtp server\nfor example: mail.cs2c.com.cn"))
+                                return 0
+
+                        m = re.match('^\d+$', self.port.get_text())
+                        if m is None:
+                                msgbox(self.top_window, _("Please input the port to send email\nfor example: 25"))
+                                return 0
+
+                        m = re.match('^([a-zA-Z0-9._-]+)@([a-zA-Z0-9.]+)$', self.sender.get_text())
+                        if m is None:
+                                msgbox(self.top_window, _("Please input the email to send warning\nfor example: test@cs2c.com.cn"))
+                                return 0
+                        else:
+                                sendermail = m.groups()[0] + "\\@" + m.groups()[1]
+
+                        m = re.match('^.+$', self.password.get_text())
+                        if m is None:
+                                msgbox(self.top_window, _("Please input the password of email sender\nfor example: qwe123"))
+                                return 0
+
+                        receiver_num = 0
+                        start, end = self.receiver_buffer.get_bounds()
+                        receiver_chars = self.receiver_buffer.get_slice(start, end, False)
+			mail_receiver_user = ""
+                        for receiver in receiver_chars.split("\n"):
+                                if re.match('^\s*$', receiver) is not None:
+                                        continue
+
+                                if re.match('^([a-zA-Z0-9._-]+)@([a-zA-Z0-9.]+)$', receiver) is None:
+                                        msgbox(self.top_window, _("Please confirm the email to receive warning!"))
+                                        return 0
+                                else:
+                                        receiver_num = 1
+
+				if len(mail_receiver_user) == 0:
+					mail_receiver_user = receiver
+				else:
+					mail_receiver_user += "," + receiver
+
+                        if receiver_num == 0 :
+                                msgbox(self.top_window, _("Please confirm the email to receive warning!"))
+                                return 0
+
+		'''if self.is_send_message.get_active():
+			m = re.match('^\d+$', self.tel_sender.get_text())
+			if m is None or len(self.tel_sender.get_text())!=11 :
+				msgbox(self.top_window, _("Please input the sender of fetion number!"))
+				return 0
+
+			m = re.match('^.+$', self.tel_password.get_text())
+                        if m is None:
+                                msgbox(self.top_window, _("Please input the fetion password\nfor example: qwe123"))
+                                return 0
+
+                        receiver_num = 0
+                        start, end = self.tel_receiver_buffer.get_bounds()
+                        tel_receiver_chars = self.tel_receiver_buffer.get_slice(start, end, False)
+
+			tel_receiver_user = ""
+                        for receiver in tel_receiver_chars.split("\n"):
+                                if re.match('^\s*$', receiver) is not None:
+                                        continue
+
+                                if re.match('^\d+$', receiver) is None or len(receiver)!=11:
+                                        msgbox(self.top_window, _("Please confirm the fetion number to receive warning!"))
+                                        return 0
+                                else:
+                                        receiver_num = 1
+				if len(tel_receiver_user) == 0 :
+					tel_receiver_user = receiver
+				else:
+					tel_receiver_user += "," + receiver
+
+                        if receiver_num == 0 :
+                                msgbox(self.top_window, _("Please confirm the fetion number to receive warning!"))
+                                return 0'''
+
+		if self.is_send_warn.get_active() != self.send_warn_org:
+                        if self.is_send_warn.get_active():
+                                label = _("And please note that the Intellect Alarm will be also changed to on!")
+                        else:
+                                label = _("And please note that the Intellect Alarm will be also changed to off!")
+                else:
+                        label = ""
+
+                retval = confirmbox(self.top_window, _("Do you want to save the changes?")+label,
+                                   (gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),
+                                   _("Save Changes"))
+                if retval == gtk.RESPONSE_NO:
+                        return
+
+		impl = getDOMImplementation()
+		newdoc = impl.createDocument(None, "alarmd", None)
+		xml_node = newdoc.documentElement
+                #save beep
+		if self.is_beep.get_active():
+			newdoc = impl.createDocument(None, "echo", None)
+			echo = newdoc.documentElement
+			echo.setAttribute("flag", "on")
+			xml_node.appendChild(echo)
+		else:
+			pass
+                        '''cmd = "/usr/bin/killall -9 beep"
+                        self.manager.do_cmd("system\nsync\nhas_ret\n"+cmd)
+                        cmd = "/usr/bin/beep"
+                        self.manager.do_cmd("system\nsync\nhas_ret\n"+cmd)'''
+
+                #save email
+                if self.is_send_email.get_active() or self.is_send_warn.get_active():
+			newdoc = impl.createDocument(None, "mail", None)
+			mail = newdoc.documentElement
+			if self.is_send_email.get_active():
+				mail.setAttribute("flag", "on")
+			else:
+				mail.setAttribute("flag", "off")
+			mail.setAttribute("smtp", self.smtpserver.get_text())
+			mail.setAttribute("port", self.port.get_text())
+			mail.setAttribute("sender", self.sender.get_text())
+			password = self.manager.query("pwd_encode\n%s"%(str(self.password.get_text())))[0]       #bug 25447
+			mail.setAttribute("password", password)
+			mail.setAttribute("receiver", mail_receiver_user)   #receiver_chars.replace("\n",","))
+			xml_node.appendChild(mail)
+
+		#save tel
+		'''if self.is_send_message.get_active():
+			newdoc = impl.createDocument(None, "telel", None)
+			telel = newdoc.documentElement
+			telel.setAttribute("telsender", self.tel_sender.get_text())
+			password = self.manager.query("pwd_encode\n%s"%(str(self.tel_password.get_text())))[0]
+			telel.setAttribute("telpassword", password)
+			telel.setAttribute("telreceiver", tel_receiver_user)  #tel_receiver_chars.replace("\n",","))
+			xml_node.appendChild(telel)'''
+
+		xml_str = xml_node.toxml().replace("\n", "")
+		self.manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("alarmd"), str(xml_str)))
+
+                if self.manager.failed_reason != "" :
+                        msgbox(self.top_window, self.manager.failed_reason)
+                else:
+                        msgbox(self.top_window, _("Alarm Configure had Save Succeed!\n"), image=gtk.STOCK_DIALOG_INFO)
+
+		if self.is_send_warn.get_active() != self.send_warn_org:
+			if self.is_send_warn.get_active():
+				flag = "on"
+			else:
+				flag = "off"
+			self.manager.update_database("update is_flag set flag_mail=\'%s\';"%flag)
+
+                return 1
+
+        def update(self):
+                self.xml_alarm = self.manager.xml_nodes["cib"].getElementsByTagName("alarmd")[0]
+                if self.xml_alarm == None or self.xml_alarm == []:
+                        self.is_beep.set_active(0)
+			self.is_send_email.set_active(False)
+			self.is_send_warn.set_active(False)
+		#	self.is_send_message.set_active(False)
+			return
+
+		try:
+			self.xml_echo = self.xml_alarm.getElementsByTagName("echo")[0]
+			self.is_beep.set_active(1)
+		except:
+			self.is_beep.set_active(0)
+
+		try:
+			self.xml_mail = self.xml_alarm.getElementsByTagName("mail")[0]
+			if self.xml_mail.getAttribute("flag")=="on":
+				self.sendmail_org = True
+				self.is_send_email.set_active(True)
+			else:
+				self.sendmail_org = False
+				self.is_send_email.set_active(False)
+			self.smtpserver.set_text(self.xml_mail.getAttribute("smtp"))
+			self.port.set_text(self.xml_mail.getAttribute("port"))
+			self.sender.set_text(self.xml_mail.getAttribute("sender"))
+			passwd = self.xml_mail.getAttribute("password")
+			password = self.manager.query("pwd_decode\n%s"%(str(passwd)))[0]
+			self.password.set_text(password)
+			self.receiver_buffer.set_text(self.xml_mail.getAttribute("receiver").replace(",","\n"))
+
+			is_warn_flag=self.manager.do_cmd_twice("get_sqldata\n%s\n%s"%("", str("SELECT flag_mail from is_flag;")))
+			if self.manager.failed_reason != "" :
+				self.send_warn_org = False
+			else:
+				if "on" in is_warn_flag:
+					self.send_warn_org = True
+				else:
+					self.send_warn_org = False
+			self.is_send_warn.set_active(self.send_warn_org)
+
+                        self.on_email_toggled(self.is_send_email)
+		except:
+			self.sendmail_org = False
+			self.send_warn_org = False
+			self.is_send_email.set_active(False)
+			self.is_send_warn.set_active(False)
+                        self.on_email_toggled(self.is_send_email)
+
+		#try:
+		#	self.xml_tel = self.xml_alarm.getElementsByTagName("telel")[0]
+		#	self.is_send_message.set_active(True)
+		#	self.tel_sender.set_text(self.xml_tel.getAttribute('telsender'))
+		#	passwd = self.xml_tel.getAttribute("telpassword")
+		#	telpassword = self.manager.query("pwd_decode\n%s"%(str(passwd)))[0]
+		#	self.tel_password.set_text(telpassword)
+		#	self.tel_receiver_buffer.set_text(self.xml_tel.getAttribute('telreceiver').replace(",","\n"))
+		#except:
+		#	self.is_send_message.set_active(False)
+		#	self.on_tel_toggled(self.is_send_message)
+
+		self.changed = False
+                return
+
+        def on_reset(self, widget):
+                self.update()
+
+	def text_changed(self, widget):
+		self.changed = True
+
+	def on_beep_toggled(self, widget):
+		self.changed = True
+
+	def on_stop_beep(self, widget):
+		self.manager.update_database("update is_flag set flag_beep=\'off\';")
+		return
+
+        def __init__(self, top_window, manager):
+                self.manager = manager
+		self.top_window = top_window
+                dialog = gtk.Dialog(_("Alarm Configure"), top_window, gtk.DIALOG_MODAL, 
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+                glade = gtk.glade.XML(UI_FILE, "alarmdlg", "haclient")
+                self.glade = glade
+                layout = glade.get_widget("alarmdlg")
+                dialog.vbox.add(layout)
+
+                self.is_beep = glade.get_widget('is_beep')
+                self.is_beep.connect("toggled", self.on_beep_toggled)
+		glade.get_widget('stop_beep').connect("clicked", self.on_stop_beep)
+
+                self.is_send_email = glade.get_widget('is_send_email')
+                self.is_send_email.connect("toggled", self.on_email_toggled)
+		self.is_send_warn = glade.get_widget('is_send_warn')
+		self.is_send_warn.connect("toggled", self.on_email_toggled)
+
+		if not HALic_ctrl_IS_flag(manager) or len(manager.get_normal_nodes())<2:
+			self.is_send_warn.hide()
+
+                self.smtpserver = glade.get_widget('smtpserver')
+		self.smtpserver.connect("changed", self.text_changed)
+                self.port = glade.get_widget('port')
+		self.port.connect("changed", self.text_changed)
+                self.sender = glade.get_widget('sender')
+		self.sender.connect("changed", self.text_changed)
+                self.password = glade.get_widget('password')
+		self.password.connect("changed", self.text_changed)
+                self.receiver_buffer = glade.get_widget('textview1').get_buffer()
+		self.receiver_buffer.connect("changed", self.text_changed)
+
+		'''self.is_send_message = glade.get_widget("is_send_fetion")
+		self.is_send_message.connect("toggled", self.on_tel_toggled)
+		self.tel_sender = glade.get_widget("tel_sender")
+		self.tel_sender.connect("changed", self.text_changed)
+		self.tel_password = glade.get_widget("tel_password")
+		self.tel_password.connect("changed", self.text_changed)
+		self.tel_receiver_buffer = glade.get_widget('textview2').get_buffer()
+		self.tel_receiver_buffer.connect("changed", self.text_changed)'''
+
+                self.update()
+                save_top_window = top_window
+                top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                top_window = save_top_window
+                                dialog.destroy()
+                                return None
+                        else:
+                                ret = self.on_save()
+                                if ret == 1:
+                                        top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+
+

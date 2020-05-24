@@ -1,0 +1,512 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+from sync import syncview
+
+class adddiskhbview():
+        filename = "/etc/corosync/corosync.conf" 
+     	
+        def update(self):
+                self.device_list()
+                if self.dhbconfigured:
+                        self.widget_use_diskhb.set_active(True)
+                else:
+                        self.widget_not_use_diskhb.set_active(True)
+                self.callback(self.widget_use_diskhb)
+                self.widget_diskdevice.child.set_text(self.diskdevice)
+                self.widget_disklabel.set_text(self.disklabel)
+                self.widget_hbdinterval.child.set_text(self.hbdinterval)
+		if self.dhbconfigured:
+                        if self.locate_disk_label() == 2:
+                                return 2
+	def locate_disk_label(self):
+                cmd="partprobe" + " " + "&&" + "test ! -e" + " " + self.diskdevice + " " + "&&" + " " + "echo 1"
+                ret = self.manager.do_cmd_twice("system\n%s"%(str(cmd)))
+		
+                if '1' in ret:
+			label_bond = ""
+			label_list_search = self.device_index[::-1]
+			label_bond = self.manager.diskhb_labelbond(label_list_search, self.disklabel)
+			if label_bond != False:
+				ret1 = confirmbox(self.top_window, _("The \"%s\" you used has changed into \"%s\",so the configuration of current disk heartbeat in the file is wrong.Replace it?")%(self.diskdevice,label_bond),(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+				if ret1 == gtk.RESPONSE_OK:
+					self.widget_diskdevice.child.set_text(label_bond)
+					self.renamedev = label_bond
+					self.label_device_renamed = True 
+					return
+				else:
+					return 2
+					#cmd_move="test -e" + " " + label_bond + " " + "&&" + " " + "echo" + " " + " " + " " + ">" + " " + label_bond
+                                        #self.manager.do_cmd("system\n%s"%(str(cmd_move)))
+					
+			else:
+				ret2 = confirmbox(self.top_window, _("The \"%s\" you used has lost,so the configuration of current disk heartbeat in the file is wrong.")%self.diskdevice+"\n"+_("Dele the configuration and choose the disk device again?"),
+                                                (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                        	if ret2 == gtk.RESPONSE_OK :
+                        #msgbox(top_window, _("The \"%s\"lost,please choose the disk device again!")%self.diskdevice)
+                                	self.widget_diskdevice.child.set_text("")
+					self.widget_disklabel.set_text("")
+                                	self.widget_not_use_diskhb.set_active(True)
+					return
+				else:
+                        		return 2
+
+		else:
+			return 
+
+        	
+        def data_init(self):
+                self.diskdevice = ""
+                self.disklabel = ""
+                self.hbdinterval = ""
+                self.rrp_mode = None
+                self.dhbconfigured = False
+
+                f = self.manager.do_cmd("get_file_context\n"+adddiskhbview.filename)
+                self.file_corosync_org = []
+                self.interface_list = []
+                if f == None or f == []:
+                        return
+
+                index = 0
+                while index < len(f):
+                        self.file_corosync_org.append(f[index])
+                        if "#" in f[index]:
+                                strline = f[index].split("#")[0]
+                        else:
+                                strline = f[index]
+
+                        strline = strline.strip()
+                        top = 0
+
+			m = re.match('^rrp_mode:(.+)$', strline)
+                        if m is not None:
+                                self.rrp_mode = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                        m = re.match('^(interface).*$', strline)
+                        if m is not None:
+                                interface = {}
+                                index = index + 1
+                                if "#" in f[index]:
+                                        strline = f[index].split("#")[0]
+                                else:
+                                        strline = f[index]
+                                strline = strline.strip()
+				ncount = 0
+                                while top != -1:
+                                        if '{' in strline:
+                                                top += 1
+                                        if '}' in strline:
+                                                top -= 1
+                                        m = re.match('^bindnetaddr:(.+)$', strline)
+                                        if m is not None:
+                                                interface["bindnetaddr"] = m.groups()[0].strip()
+                                        m = re.match('^mcastaddr:(.+)$', strline)
+                                        if m is not None:
+                                                interface["mcastaddr"] = m.groups()[0].strip()
+                                        m = re.match('^broadcast:(.+)$', strline)
+                                        if m is not None and m.groups()[0].strip() == "yes":
+                                                interface["mcastaddr"] = str("broadcast")
+                                        m = re.match('^mcastport:(.+)$', strline)
+                                        if m is not None:
+                                                interface["mcastport"] = m.groups()[0].strip()
+                                        m = re.match('^memberaddr:(.+)$',strline)
+                                        if m is not None:
+                                                ncount += 1
+                                                if ncount>1:
+                                                        interface["mcastaddr"] += ","
+                                                        interface["mcastaddr"] += m.groups()[0].strip()
+                                                else:
+                                                        interface["mcastaddr"] = m.groups()[0].strip()
+                                        m = re.match('^disk:(.+)$', strline)
+                                        if m is not None:
+                                                interface["diskdevice"] = m.groups()[0].strip()
+                                        m = re.match('^label:(.+)$', strline)
+                                        if m is not None:
+                                                interface["disklabel"] = m.groups()[0].strip()
+                                        m = re.match('^serial:(.+)$', strline)
+                                        if m is not None:
+                                        	interface["serial"] = m.groups()[0].strip()
+                                        m = re.match('^speed:(.+)$', strline)
+                                        if m is not None: 
+                                                interface["speed"] = m.groups()[0].strip()
+                                        if top != -1:
+                                                index = index + 1
+                                        if "#" in f[index]:
+                                                strline = f[index].split("#")[0]
+                                        else:
+                                                strline = f[index]
+                                        strline = strline.strip()
+                                if len(interface) > 0:
+                                        self.interface_list.append(interface)
+			
+                        m = re.match('^token:(.+)$', strline)
+                        if m is not None:
+                                self.interval = {}
+                                self.interval["token"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                                self.hbinterval = int(self.interval["token"])/1000
+                        m = re.match('^token_retransmit:(.+)$', strline)
+                        if m is not None:
+                                self.interval["token_retransmit"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                        m = re.match('^hold:(.+)$', strline)
+                        if m is not None:
+                                self.interval["hold"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                        m = re.match('^join:(.+)$', strline)
+                        if m is not None:
+                                self.interval["join"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                        m = re.match('^consensus:(.+)$', strline)
+                        if m is not None:
+                                self.interval["consensus"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                        m = re.match('^merge:(.+)$', strline)
+                        if m is not None:
+                                self.interval["merge"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                        index = index + 1
+		self.hbdinterval = str(self.hbinterval)
+                for interface in self.interface_list:
+                	if  'diskdevice' and 'disklabel'  in interface: 
+                		self.dhbconfigured = True
+                		self.diskdevice = interface["diskdevice"]
+                		self.disklabel = interface["disklabel"]
+                return 
+
+
+	def callback(self, widget):
+                if self.widget_use_diskhb.get_active():
+                        self.widget_disklabel_label.set_sensitive(True)
+                        self.widget_disklabel.set_sensitive(True)
+                        self.widget_diskdevice_label.set_sensitive(True)
+                        self.widget_diskdevice.set_sensitive(True)
+                        self.widget_hbdinterval_label.set_sensitive(True)
+                        self.widget_hbdinterval.set_sensitive(True)
+                	if len(self.device_index)==0:
+                		self.widget_devicewarn.set_text(_("Warning: You don't have a suitable device!\n")+_("If you still want to use disk heartbeat,please set up a suitable device!"))
+				self.widget_disklabel_label.set_sensitive(False)
+                                self.widget_disklabel.set_sensitive(False)
+                                self.widget_diskdevice_label.set_sensitive(False)
+                                self.widget_diskdevice.set_sensitive(False)
+                                self.widget_hbdinterval_label.set_sensitive(False)
+                                self.widget_hbdinterval.set_sensitive(False)
+                else:
+                        self.widget_disklabel_label.set_sensitive(False)
+                        self.widget_disklabel.set_sensitive(False)
+                        self.widget_diskdevice_label.set_sensitive(False)
+                        self.widget_diskdevice.set_sensitive(False)
+                        self.widget_hbdinterval_label.set_sensitive(False)
+                        self.widget_hbdinterval.set_sensitive(False)
+                return 
+        def device_list(self):
+                cmd = "@HA_DATADIR@/heartbeat-gui/device.sh"
+                self.device_index = self.manager.do_cmd("system\n"+cmd)
+		model_device_list=gtk.ListStore(gobject.TYPE_STRING)
+                for device in self.device_index:
+			model_device_list.append([device])
+                self.widget_diskdevice.set_model(model_device_list)
+        	return
+       
+        def save(self):
+                if self.widget_not_use_diskhb.get_active() :
+                       
+               		for interface in self.interface_list:
+                        	if  'diskdevice' and 'disklabel'  in interface:
+	                        	cmd_re="partprobe" + " " + "&&" + "test -e" + " " + interface["diskdevice"] + " " + "&&" + " " + "echo" + " " + " " + " " + ">" + " " + interface["diskdevice"]
+	                        	self.manager.do_cmd_twice("system\n%s"%(str(cmd_re)))
+                        		self.interface_list.remove(interface)
+               
+			self.interval["token"] = '1000'
+                        self.interval["token_retransmit"] = '238'
+                        self.interval["hold"] = '180'
+                        self.interval["join"] = '50'
+                        self.interval["consensus"] = '1200'
+                        self.interval["merge"] = '200'
+
+                if self.widget_use_diskhb.get_active() :
+			disk = self.widget_diskdevice.child.get_text()
+                        if disk == "" :
+                                msgbox(self.top_window, _("Please choose the disk device, for example: /dev/sdb"))
+                                return 1
+
+			if not self.manager.check_device(disk):
+                                msgbox(self.top_window, _("The device is wrong,please input the device you want again!\n"))
+                                return 1
+			if len(disk)>128:
+                                msgbox(self.top_window, _("The length of Disk Name must be less than 128.\n")+_("Please input it again!\n"))
+                                return 1
+			if disk.startswith("/dev/mapper/"):
+				m = re.match('^/dev/mapper/(.+)$', disk)
+				if m is None :
+					msgbox(self.top_window, _("The device is wrong,please input the device you want again!\n"))
+                                	return 1
+			else:
+				m = re.match('^/dev/(\w+((\-|_)*\w*)*(/\w+((\-|_)*\w*)*)*)$', disk)
+                        	if m is None :
+                                	msgbox(self.top_window, _("Special characters can not appear in Disk Name!\n")+_("Please input it again!\n"))
+                                	return 1
+
+		        if self.widget_disklabel.get_text() == "" :
+				msgbox(self.top_window, _("Please input the disk Label, for example: abcd"))
+				return 1
+			if self.widget_diskdevice.child.get_text() != self.diskdevice:
+                                if confirmbox(self.top_window, _("Do you confirm using \"%s\"?")%disk + "\n" +_("If you use it, the date of this device may be deleted!")) == gtk.RESPONSE_NO:
+                                        return 1
+
+                            #    cmd="test ! -e" + " " + disk + " " +"&&" + " " + "echo 1"
+                             #   ret = self.manager.do_cmd("system\n%s"%(str(cmd))) 
+                              #  if '1' in ret:
+                               #		msgbox(top_window, _("The \"%s\"lost,please choose the disk device again!")%disk)
+                                #	return 1
+
+		        m = re.match('^[\w\d]+$', self.widget_disklabel.get_text())
+		        if m is None or len(self.widget_disklabel.get_text())>16:
+				msgbox(self.top_window, _("Special characters can not appear in Disk Label!\n")+_("And the length must be less than 16.\n")+_("Please input it again!\n"))
+				return 1
+                	sinclude = False          
+                	for interface in self.interface_list:	
+                		if 'disklabel' and 'diskdevice' in interface:
+                                    
+                        		interface["diskdevice"] =  self.widget_diskdevice.child.get_text()       
+                			interface["disklabel"] =  self.widget_disklabel.get_text()       
+                                	sinclude = True
+                        if not sinclude:
+				label_used = ""
+                                label_list_used = self.device_index[::-1]
+                                label_used = self.manager.diskhb_labelbond(label_list_used, self.widget_disklabel.get_text())
+                                if label_used != False :
+                                        cmd_move="partprobe" + " " + "&&" + "test -e" + " " + label_used + " " + "&&" + " " + "echo" + " " + " " + " " + ">" + " " + label_used
+                                        self.manager.do_cmd_twice("system\n%s"%(str(cmd_move)))
+                        	interface = {}
+                        	interface["diskdevice"] =  self.widget_diskdevice.child.get_text()       
+                		interface["disklabel"] =  self.widget_disklabel.get_text()       
+                                self.interface_list.append(interface) 
+			if self.label_device_renamed == True and self.widget_diskdevice.child.get_text() !=self.renamedev:
+				self.diskdevice = self.renamedev
+ 
+			if self.widget_diskdevice.child.get_text() != self.diskdevice and self.diskdevice != "":
+	                        cmd="partprobe" + " " + "&&" + "test -e" + " " + self.diskdevice + " " + "&&" + " " + "echo" + " " + " " + " " + ">" + " " + self.diskdevice
+	                        self.manager.do_cmd_twice("system\n%s"%(str(cmd)))
+			if self.widget_disklabel.get_text() != self.disklabel and self.disklabel != "":
+                                label_used = ""
+                                label_list_used = self.device_index[::-1]
+                                label_used = self.manager.diskhb_labelbond(label_list_used, self.widget_disklabel.get_text())
+                                if label_used != False :
+                                        cmd_move="partprobe" + " " + "&&" + "test -e" + " " + label_used + " " + "&&" + " " + "echo" + " " + " " + " " + ">" + " " + label_used
+                                        self.manager.do_cmd_twice("system\n%s"%(str(cmd_move)))
+
+
+			if self.widget_diskdevice.child.get_text() != self.diskdevice or self.widget_disklabel.get_text() != self.disklabel:
+	                        cmd="partprobe" + " " + "&&" + "test -e" + " " + self.widget_diskdevice.child.get_text() + " " + "&&" + " " + "echo" + " " + self.widget_disklabel.get_text() + " " + ">" + " " + self.widget_diskdevice.child.get_text() + " " +  "||" + " " +"echo 1"
+	                        ret = self.manager.do_cmd_twice("system\n%s"%(str(cmd)))
+                                if '1' in ret:
+                                        msgbox(self.top_window, _("The initialization of \"%s\" failed!\n")%self.widget_diskdevice.child.get_text()+_("Please choose another device."))
+                                        self.update()   
+					self.widget_diskdevice.child.set_text("")
+                                        return 1
+                                else:
+                                        msgbox(self.top_window, _("The initialization of \"%s\" succeed!")%self.widget_diskdevice.child.get_text())
+
+	
+                        hbdinterval = self.widget_hbdinterval.child.get_text()
+                	if hbdinterval != self.hbdinterval:
+                        	self.interval["token"] = str(int(hbdinterval)*1000)
+                        	self.interval["token_retransmit"] = str(int(hbdinterval)*238)
+                        	self.interval["hold"] = str(int(hbdinterval)*180)
+                        	self.interval["join"] = str(int(hbdinterval)*50)
+                        	self.interval["consensus"] = str(int(hbdinterval)*1200)
+                        	self.interval["merge"] = str(int(hbdinterval)*200)
+                file_corosync = []
+                added_interface = False
+     
+		for line in self.file_corosync_org:
+                        if "#" in line:
+                                strline = line.split("#")[0]
+                       	else:
+                                strline = line
+                        strline = strline.strip()
+                        m = re.match('^(interface).*$', strline)
+                        if m is not None :
+                        	if added_interface:
+                                	continue
+                        	if len(self.interface_list)>1:
+                                        if self.rrp_mode != None and self.rrp_mode != "none":
+                                        	file_corosync.append("\trrp_mode: %s"%(self.rrp_mode))
+                                        else:
+                                                file_corosync.append("\trrp_mode: passive")
+                	        ringnumber = -1
+                        	heart_type = -1
+                                for interface in self.interface_list:
+                                        ringnumber = ringnumber + 1
+                                        file_corosync.append("\tinterface {")
+                                        file_corosync.append("\t\tringnumber: %d"%(ringnumber))
+                                        if 'bindnetaddr' in interface:
+                                        	file_corosync.append("\t\tbindnetaddr: %s"%(interface["bindnetaddr"]))
+                                        	if interface["mcastaddr"] == "broadcast":
+                                                	heart_type = 0
+                                                	file_corosync.append("\t\tbroadcast: yes")
+                                        	elif interface["mcastaddr"].find(',') != -1:#process ucast
+                                                	heart_type = 1
+                                                	iplist = interface['mcastaddr'].split(',')
+                                                	for ipvalue in iplist:
+                                                        	file_corosync.append("\t\tmember{")
+                                                        	file_corosync.append("\t\t\tmemberaddr: %s"%(ipvalue))
+                                                        	file_corosync.append("\t\t}")
+                                        	else:
+                                                	heart_type = 2
+                                                	file_corosync.append("\t\tmcastaddr: %s"%(interface["mcastaddr"]))
+                                        	file_corosync.append("\t\tmcastport: %s"%(interface["mcastport"]))
+                                        	file_corosync.append("\t}")
+                                                continue
+                                        if  'serial' and 'speed'  in interface:
+                                        	file_corosync.append("\t\tserial: %s"%(interface["serial"]))
+                                        	file_corosync.append("\t\tspeed: %s"%(interface["speed"]))
+                                                file_corosync.append("\t\t}")
+                                                continue
+                                        if 'diskdevice' and 'disklabel' in interface:
+                                        	file_corosync.append("\t\tdisk: %s"%(interface["diskdevice"]))
+                                        	file_corosync.append("\t\tlabel: %s"%(interface["disklabel"]))
+                                                file_corosync.append("\t\t}")
+                                file_corosync.append("\ttoken:  %s"%(self.interval["token"]))
+                                file_corosync.append("\ttoken_retransmit:  %s"%(self.interval["token_retransmit"]))
+                                file_corosync.append("\thold:  %s"%(self.interval["hold"]))
+                                file_corosync.append("\tjoin:  %s"%(self.interval["join"]))
+                                file_corosync.append("\tconsensus:  %s"%(self.interval["consensus"]))
+                                file_corosync.append("\tmerge:  %s"%(self.interval["merge"]))
+                                added_interface = True
+                                if heart_type == 1:                                                                                                                              
+                                	file_corosync.append("\ttransport: udpu")
+                        else:
+                        	m = re.match('^(transport).*$',strline)
+                                if m is not None:
+                                        continue
+                   		file_corosync.append(line)
+
+                content_str = ""
+                for line in file_corosync:
+                        content_str = content_str + line + "\n"
+                
+                self.manager.do_cmd("save_file_context\nfalse\nfalse\n%s\n%s"%(str(self.filename), str(content_str)))
+                if self.manager.failed_reason != "" :
+                        msgbox(self.top_window, self.manager.failed_reason)
+                        return 1
+                else:
+                        msgbox(self.top_window, _("The disk heartbeat changes has saved.\n")+_("But the Configuration File must be synchronized to other nodes.\n")+_("After that please restart the NKHA on all nodes to make \nthe changes become effective!\n"), image=gtk.STOCK_DIALOG_INFO)
+
+                        file = [str(self.filename)]
+                        syncview(self.window, self.manager, file, _("Disk Heartbeat Configuration"), self.manager.get_all_nodes())
+                return 0
+
+        def __init__(self, window, manager):
+                self.window = window
+                self.top_window = window.win_widget
+                self.manager = manager
+                dialog = gtk.Dialog(_("Disk  Heartbeat Configuration"), self.top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+                glade = gtk.glade.XML(UI_FILE, "diskhbdlg", "haclient")
+
+                layout = glade.get_widget("diskhbdlg")
+                dialog.vbox.add(layout)
+
+                self.dhbconfigured = False
+                self.widget_use_diskhb = glade.get_widget("use_diskhb")
+                self.widget_not_use_diskhb = glade.get_widget("not_use_diskhb")
+                self.widget_use_diskhb.connect("toggled", self.callback)
+                self.widget_not_use_diskhb.connect("toggled", self.callback)
+                self.widget_diskdevice_label = glade.get_widget("diskdevice_label")
+                self.widget_diskdevice = glade.get_widget("diskdevice")
+                #self.widget_diskdevice.child.set_editable(False)
+                self.widget_devicewarn = glade.get_widget("device_null_warn")
+                  
+                self.widget_disklabel_label = glade.get_widget("disklabel_label")
+                self.widget_disklabel = glade.get_widget("disklabel")
+                self.widget_hbdinterval_label = glade.get_widget("hbdinterval_label")
+                self.widget_hbdinterval = glade.get_widget("hbdinterval")
+                self.widget_hbdinterval.append_text("1")
+                self.widget_hbdinterval.append_text("2")
+                self.widget_hbdinterval.append_text("3")
+                self.widget_hbdinterval.append_text("4")
+                self.widget_hbdinterval.child.set_editable(False)
+               
+		self.label_device_renamed = False
+                self.data_init()
+		if self.update()==2:
+                        return None
+
+                save_top_window = self.top_window
+                self.top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+				if self.dhbconfigured==self.widget_use_diskhb.get_active() and self.dhbconfigured and (self.widget_diskdevice.child.get_text()!=self.diskdevice or self.widget_disklabel.get_text()!=self.disklabel or self.widget_hbdinterval.child.get_text()!=self.hbdinterval):
+                                        ret_save = 0
+			                ret = confirmbox(self.top_window, _("The data of current view have been changed.")+"\n"+_("Apply the changes?"),
+                        			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+			                        gtk.STOCK_NO, gtk.RESPONSE_NO,
+                        			gtk.STOCK_YES, gtk.RESPONSE_YES))
+			                if ret == gtk.RESPONSE_YES :
+                        			ret_save = self.save()
+			                if ret != gtk.RESPONSE_CANCEL :
+						if ret_save == 0 :
+                                			self.top_window = save_top_window
+		                                	dialog.destroy()
+                		                	return None
+				if self.widget_not_use_diskhb.get_active() and self.dhbconfigured and len(self.device_index)==0:
+			                ret = confirmbox(self.top_window, _("The device you used has lost,and you don't have another suiable device.So the configuration  of current disk heartbeat in the file  is wrong.")+"\n"+_("Dele the configuration?"),
+                        			(gtk.STOCK_NO, gtk.RESPONSE_NO,
+                        			gtk.STOCK_YES, gtk.RESPONSE_YES))
+                                	if ret == gtk.RESPONSE_YES :
+						if self.save()==0:
+                                        		self.top_window = save_top_window
+                                        		dialog.destroy()
+                                       		 	return None
+                                        else:
+                                        	self.top_window = save_top_window
+                                        	dialog.destroy()
+                                        	return None
+                                        	
+				else:
+					self.top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+                        else:   
+                                if (self.dhbconfigured==self.widget_use_diskhb.get_active() and not self.dhbconfigured) or \
+					(self.dhbconfigured==self.widget_use_diskhb.get_active() and self.dhbconfigured and self.widget_diskdevice.child.get_text()==self.diskdevice and self.widget_disklabel.get_text()==self.disklabel and self.widget_hbdinterval.child.get_text()==self.hbdinterval) or (self.widget_use_diskhb.get_active() and self.widget_devicewarn.get_text() != ""):
+                                        self.top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+                                
+                                if self.save()==0:
+                                        self.top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+

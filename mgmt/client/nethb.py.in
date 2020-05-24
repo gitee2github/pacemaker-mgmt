@@ -1,0 +1,943 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+from sync import syncview
+
+class addnethbview :
+	filename = "/etc/corosync/corosync.conf"
+	def nethbnum(self):
+                nethbnum = 0
+                for interface in self.interface_list:
+                        if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface:
+                                nethbnum = nethbnum + 1
+                return nethbnum
+
+        def update(self):
+                hblist = gtk.ListStore(str, str, str)
+                for interface in self.interface_list:
+                        if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface:
+                        	hblist.append([interface["bindnetaddr"], interface["mcastaddr"], interface["mcastport"]])
+		if self.nethbnum() >=2:
+                        self.widget_add.set_sensitive(False)
+                else:
+                        self.widget_add.set_sensitive(True)
+     
+                self.hbview.set_model(hblist)
+
+        def set_nodeview(self):
+                nodelist = gtk.ListStore(str, str, str)
+                for nodeip in self.nodeip_list:
+                        if 'nodeid' and 'ring0_addr' in nodeip:
+                                if 'ring1_addr' in nodeip:
+                        	        nodelist.append([nodeip["nodeid"], nodeip["ring0_addr"], nodeip['ring1_addr']])
+                                else:
+                        	        nodelist.append([nodeip["nodeid"], nodeip["ring0_addr"],''])
+     
+                self.nodeipview.set_model(nodelist)
+
+        def data_init(self):
+                f = self.manager.do_cmd("get_file_context\n"+addnethbview.filename)
+                self.file_corosync_org = []
+                self.interface_list = []
+                if f == None or f == []:
+                        return
+
+                self.rrp_mode = None
+                #self.uart_mode = None
+                index = 0
+                while index < len(f):
+                        self.file_corosync_org.append(f[index])
+                        if "#" in f[index]:
+                                strline = f[index].split("#")[0]
+                        else:
+                                strline = f[index]
+
+                        strline = strline.strip()
+                        m = re.match('^rrp_mode:(.+)$', strline)
+                        if m is not None:
+                                self.rrp_mode = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+
+                        ### add by zxj###
+               #         m = re.match('^uart_mode:(.+)$',strline)
+               #         if m is not None:
+               #                 self.uart_mode = m.groups()[0].strip()
+                #                self.file_corosync_org.pop()
+                 #               self.buse_serial = 1
+                        top = 0
+
+                        m = re.match('^(interface).*$', strline)
+                        if m is not None:
+                                interface = {}
+                                index = index + 1
+                                if "#" in f[index]:
+                                        strline = f[index].split("#")[0]
+                                else:
+                                        strline = f[index]
+
+                                strline = strline.strip()
+                                ncount = 0
+                                #while '}' not in strline:
+                                while top != -1:
+                                        if '{' in strline:
+                                                top += 1
+                                        if '}' in strline:
+                                                top -= 1
+
+                                        m = re.match('^bindnetaddr:(.+)$', strline)
+                                        if m is not None:
+                                                interface["bindnetaddr"] = m.groups()[0].strip()
+                                        m = re.match('^mcastaddr:(.+)$', strline)
+                                        if m is not None:
+                                                interface["mcastaddr"] = m.groups()[0].strip()
+                                        m = re.match('^broadcast:(.+)$', strline)
+                                        if m is not None and m.groups()[0].strip() == "yes":
+                                                interface["mcastaddr"] = str("broadcast")
+                                        m = re.match('^mcastport:(.+)$', strline)
+                                        if m is not None:
+                                                interface["mcastport"] = m.groups()[0].strip()
+
+                                        #index = index + 1
+                                        m = re.match('^memberaddr:(.+)$',strline)
+                                        if m is not None:
+                                                ncount += 1
+                                                if ncount>1:
+                                                        interface["mcastaddr"] += ","
+                                                        interface["mcastaddr"] += m.groups()[0].strip()
+                                                else:
+                                                        interface["mcastaddr"] = m.groups()[0].strip()
+                                        m = re.match('^disk:(.+)$', strline)
+                                        if m is not None:
+                                                interface["diskdevice"] = m.groups()[0].strip()
+                                        m = re.match('^label:(.+)$', strline)
+                                        if m is not None:
+                                                interface["disklabel"] = m.groups()[0].strip()
+                                        m = re.match('^serial:(.+)$', strline)
+                                        if m is not None:
+                                        	interface["serial"] = m.groups()[0].strip()
+                                        m = re.match('^speed:(.+)$', strline)
+                                        if m is not None: 
+                                                interface["speed"] = m.groups()[0].strip()
+                                        if top != -1:
+                                                index = index + 1
+
+                                        if "#" in f[index]:
+                                                strline = f[index].split("#")[0]
+                                        else:
+                                                strline = f[index]
+                                        strline = strline.strip()
+                                if len(interface) > 0:
+                                        self.interface_list.append(interface)
+
+                        m = re.match('^token:(.+)$', strline)
+			if m is not None:
+                                self.interval = {}
+				self.interval["token"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+                                self.hbinterval = int(self.interval["token"])/1000
+			m = re.match('^token_retransmit:(.+)$', strline)
+			if m is not None:
+				self.interval["token_retransmit"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+		        m = re.match('^hold:(.+)$', strline)
+		        if m is not None:
+				self.interval["hold"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+	         	m = re.match('^join:(.+)$', strline)
+			if m is not None:
+			        self.interval["join"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+			m = re.match('^consensus:(.+)$', strline)
+			if m is not None:
+				self.interval["consensus"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+			m = re.match('^merge:(.+)$', strline)
+		        if m is not None:
+				self.interval["merge"] = m.groups()[0].strip()
+                                self.file_corosync_org.pop()
+
+                        top = 0
+                        m = re.match('^(nodelist).*$', strline)
+                        if m is not None:
+                                index = index + 1
+                                if "#" in f[index]:
+                                        strline = f[index].split("#")[0]
+                                else:
+                                        strline = f[index]
+
+                                strline = strline.strip()
+                                while top != -1:
+                                        if '{' in strline:
+                                                top += 1
+                                        if '}' in strline:
+                                                top -= 1
+                                        if top != -1:
+                                                index = index + 1
+                                        if "#" in f[index]:
+                                                strline = f[index].split("#")[0]
+                                        else:
+                                                strline = f[index]
+                                        strline = strline.strip()
+
+                        index = index + 1
+                
+                return
+
+
+        def get_nodelist(self):
+                fp = self.manager.do_cmd("get_file_context\n"+addnethbview.filename)
+                self.nodeip_list = []
+                if fp == None or fp == []:
+                        return
+
+                index = 0
+                while index < len(fp):
+                        if "#" in fp[index]:
+                                strline = fp[index].split("#")[0]
+                        else:
+                                strline = fp[index]
+
+                        strline = strline.strip()
+                        # 查询nodelist的位置
+                        m = re.match('^(node ).*$', strline)
+                        if m is not None:
+                            index = index + 1
+                            if "#" in fp[index]:
+                                 strline = fp[index].split("#")[0]
+                            else:
+                                 strline = fp[index]
+                            strline = strline.strip()
+                
+                            ncount = 0
+                            top = 0 
+                            nodeip = {}
+                            # 通过判断{}的匹配来查询node范围
+                            while top != -1:
+                                if '{' in strline:
+                                    top += 1
+                                if '}' in strline:
+                                    top -= 1
+                                m = re.match('^ring0_addr:(.+)$', strline)
+                                if m is not None:
+                		    nodeip['ring0_addr']=  m.groups()[0].strip()
+                
+                                m = re.match('^ring1_addr:(.+)$', strline)
+                                if m is not None:
+                		    nodeip['ring1_addr']=  m.groups()[0].strip()
+                
+                                m = re.match('^nodeid:(.+)$', strline)
+                                if m is not None :
+                		    nodeip['nodeid']=  m.groups()[0].strip()
+                		if top != -1:
+                                    index = index + 1
+                
+                                if "#" in fp[index]:
+                                     strline = fp[index].split("#")[0]
+                                else:
+                                     strline = fp[index]
+                                     strline = strline.strip()
+                
+                	    self.nodeip_list.append(nodeip)
+                        index = index + 1
+                return
+
+        def on_radio_changed(self, widget) :
+                if self.widget_mcast.get_active():
+                        self.widget_mcastaddr.set_sensitive(True)
+                        self.widget_ucastaddr.set_sensitive(False)
+                elif self.widget_broadcast.get_active():
+                        self.widget_mcastaddr.set_sensitive(False)
+                        self.widget_ucastaddr.set_sensitive(False)
+                else:
+                        self.widget_ucastaddr.set_sensitive(True)
+                        self.widget_mcastaddr.set_sensitive(False)
+
+	def edit_interface(self, widget):
+		if widget.get_name() == "add":
+			if self.nethbnum() >=2:
+				return
+			title = _("Add Heartbeat")
+		else:
+			selected_interface = self.get_nethb_interface()
+
+                        if selected_interface == None:
+				return
+			title = _("Edit Heartbeat")
+
+                dialog = gtk.Dialog(title, self.top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                glade = gtk.glade.XML(UI_FILE, "interfacedlg", "haclient")
+                layout = glade.get_widget("interfacedlg")
+                dialog.vbox.add(layout)
+
+                ##------modify by zxj-----##
+                ##---get radiobutton---##
+		self.widget_bindnetaddr = glade.get_widget('bindnetaddr')
+		self.widget_broadcast = glade.get_widget('broadcast')
+		self.widget_broadcast.connect('toggled', self.on_radio_changed)
+		self.widget_mcast = glade.get_widget('mcast')
+		self.widget_mcast.connect('toggled', self.on_radio_changed)
+                self.widget_ucastradio = glade.get_widget('ucast')
+                self.widget_ucastradio.connect('toggled',self.on_radio_changed)
+                ##---get textcontrol--##
+                self.widget_bindnetaddr = glade.get_widget('bindnetaddr')
+
+		self.widget_mcastaddr = glade.get_widget('mcastaddr')
+		self.widget_mcastaddr.set_sensitive(False)
+                self.widget_mcastport = glade.get_widget('port')
+                self.widget_ucastaddr = glade.get_widget('ucastaddr')
+		self.widget_ucastaddr.set_sensitive(False)
+
+		if widget.get_name() != "add":
+			self.widget_bindnetaddr.set_text(self.interface_list[selected_interface]["bindnetaddr"])
+			if self.interface_list[selected_interface]["mcastaddr"] == "broadcast":
+				self.widget_broadcast.set_active(True)
+                        elif ',' in self.interface_list[selected_interface]["mcastaddr"]: ##ucast
+                                self.widget_ucastradio.set_active(True)
+                                self.widget_mcast.set_active(False)
+                                self.widget_broadcast.set_active(False)
+                                buffer = self.widget_ucastaddr.get_buffer()
+                                iplist = self.interface_list[selected_interface]["mcastaddr"]
+                                iplist = iplist.replace(',','\n')
+                        #       iplist.replace(',','\t')
+                                buffer.set_text(iplist)
+                        #       self.widget_ucastaddr.set_text(self.interface_list[selected_interface]["mcastaddr"])
+			else:
+				self.widget_mcast.set_active(True)
+				self.widget_mcastaddr.set_text(self.interface_list[selected_interface]["mcastaddr"])
+			self.widget_mcastport.set_text(self.interface_list[selected_interface]["mcastport"])
+		else:
+			for interface in self.interface_list:
+                               if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface:
+                                       if interface["mcastaddr"] == "broadcast":
+                                               self.widget_ucastradio.set_sensitive(False)
+                                               self.widget_mcast.set_sensitive(False)
+                                               self.widget_broadcast.set_active(True)
+                                       elif ',' in interface["mcastaddr"]:
+                                               self.widget_broadcast.set_sensitive(False)
+                                               self.widget_mcast.set_sensitive(False)
+                                               self.widget_ucastradio.set_active(True)
+                                       else:
+                                               self.widget_broadcast.set_sensitive(False)
+                                               self.widget_ucastradio.set_sensitive(False)
+                                               self.widget_mcast.set_active(True)
+
+                save_top_window = self.top_window
+                self.top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                self.top_window = save_top_window
+                                dialog.destroy()
+                                return None
+                        else :
+				if widget.get_name() == "add":
+					if self.add_heartbeat() == 0:
+						self.top_window = save_top_window
+		                                dialog.destroy()
+						return None
+				else:
+					if self.edit_heartbeat(selected_interface) == 0:
+		                                self.top_window = save_top_window
+                		                dialog.destroy()
+                                		return None
+
+
+	def check_ip_valid(self, ipaddr):
+		netaddr = re.match('^(\d+)\.(\d+)\.(\d+)\.(\d+)$', ipaddr)
+                if netaddr is None or int(netaddr.groups()[0])<=0 or int(netaddr.groups()[0])>255 or \
+			 int(netaddr.groups()[1])<0 or int(netaddr.groups()[1])>255 or \
+			 int(netaddr.groups()[2])<0 or int(netaddr.groups()[2])>255 or \
+                         int(netaddr.groups()[3])<=0 or int(netaddr.groups()[3])>255 :
+                        msgbox(self.top_window, _("Please confirm the address which the ring uses. This is a IP address!\n"))
+			return 1
+		return 0
+
+	def check(self, bindnetaddr, mcastaddr, mcastport,type=0):
+		netaddr = re.match('^(\d+)\.(\d+)\.(\d+)\.(\d+)$', bindnetaddr)
+                if netaddr is None or int(netaddr.groups()[0])<=0 or int(netaddr.groups()[0])>255 or int(netaddr.groups()[1])<0 or \
+			 int(netaddr.groups()[1])>255 or int(netaddr.groups()[2])<0 or int(netaddr.groups()[2])>255 or \
+			 int(netaddr.groups()[3])<0 or int(netaddr.groups()[3])!= 0 :
+                        msgbox(self.top_window, _("Please confirm the address which the NKHA executive should bind. This is a IP address, and should always end in zero!\n"))
+                        return 1
+		if int(netaddr.groups()[3])==0 and len(netaddr.groups()[3])>1:
+			msgbox(self.top_window, _("net address error!\n"))
+			return 1
+
+		if self.widget_mcast.get_active():
+			if type == 0:#0 is add, 1 is modify 
+				for interface in self.interface_list:
+                                       if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface:
+                                               if interface["mcastaddr"] == mcastaddr:
+                                                       msgbox(self.top_window, _("The mcastaddr is already existed! please input again!\n"))
+                                                       return 1
+
+	                m = re.match('^(\d+)\.(\d+)\.(\d+)\.(\d+)$', mcastaddr)
+        	        if m is None or int(m.groups()[0])<225 or int(m.groups()[0])>239 or int(m.groups()[1])<0 or int(m.groups()[1])>255 or \
+				 int(m.groups()[2])<0 or int(m.groups()[2])>255 or int(m.groups()[3])<0 or int(m.groups()[3])>255 :
+                	        msgbox(self.top_window, _("Please input the multicast address used by NKHA executive. This address should be class D multicast address 225.0.0.0 - 239.255.255.255!\n"))
+                        	return 1
+		
+			if int(m.groups()[3])==0 and len(m.groups()[3])>1:
+				msgbox(self.top_window, _("mcast address error!\n"))
+                                return 1
+
+		##########add by zxj#####################
+                if self.widget_ucastradio.get_active():
+			#### 去掉多余的回车
+                        mcastaddr = self.get_mcastaddr(mcastaddr)
+                        if len(mcastaddr.replace('\n','').strip()) == 0:
+                                msgbox(self.top_window, _("please input address and the number must greater than 1\n"))
+                                return 1
+
+                        m = mcastaddr.split("\n")
+                        if len(m) == 1:
+				n = re.match('^(\d+)\.(\d+)\.(\d+)\.(\d+)$',m[0])
+				if n is not None:
+					msgbox(self.top_window, _("please input address and the number must greater than 1\n"))
+					return 1
+			ucast_addr = 0
+                        for addr in m:
+                                if len(addr) == 0:
+                                        continue
+                                n = re.match('^(\d+)\.(\d+)\.(\d+)\.(\d+)$',addr)
+                                if n is None or int(n.groups()[0])<=0 or int(n.groups()[0])>255 or int(n.groups()[1])<0 or int(n.groups()[1])>255 \
+					 or int(n.groups()[2])<0 or int(n.groups()[2])>255 or int(n.groups()[3])<=0 or int(n.groups()[3])>255 :
+                                        msgbox(self.top_window, _("Please confirm the address list which the NKHA executive should bind.\n"))
+                                        return 1
+				ucast_addr = ucast_addr + 1
+			if ucast_addr > 16:
+				msgbox(self.top_window, _("The num of addresses which the NKHA executive should bind should not be more than 16.\n"))                           
+				return 1
+                                #######check if ucast ip in the netaddress##########
+                                #if int(n.groups()[0]) != int(netaddr.groups()[0]) or int (n.groups()[1]) != int(netaddr.groups()[1]) or int(n.groups()[2]) != int(netaddr.groups()[2]):
+                                        #msgbox(self.top_window, _("ucast ip must in the same netaddr!"))
+                                        #return 1
+			####check ip address duplicate####
+			i = 0
+			while i < len(m):
+				if len(m[i])==0:
+                                        i = i+1
+                                        continue
+				j = i+1
+				while j < len(m):
+					if len(m[j])==0:
+                                                j = j+1
+                                                continue
+
+					if m[i] == m[j]:
+						msgbox(self.top_window, _("ip address duplicate!"))
+						return 1
+					j = j+1
+				i = i+1
+
+		m = re.match('^(\d+)$', mcastport)
+		if m is None or int(mcastport)<1025 or int(mcastport)>65535:
+			msgbox(self.top_window, _("Please specifies mcastport number. This should be a UDP port number between 1025 and 65535!\n"))
+			return 1
+		if type == 0: # 0 is add, 1 is modify
+			for interface in self.interface_list:
+                               if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface:
+                                       if interface["mcastport"] == mcastport:
+                                               msgbox(self.top_window, _("The port is already existed!,please input again!\n"))
+                                               return 1
+
+		return 0
+
+	def get_mcastaddr(self,mcastaddr):
+                m = mcastaddr.split('\n')
+                mcastaddr = ""
+                for addr in m:
+                        if len(addr)==0:
+                                continue;
+                        if mcastaddr == "":
+                                mcastaddr += addr
+                        else:
+                                mcastaddr += '\n'
+                                mcastaddr += addr       
+                return mcastaddr
+
+	### modify by zxj ###
+	def add_heartbeat(self):
+		bindnetaddr = self.widget_bindnetaddr.get_text()
+                if self.widget_broadcast.get_active():
+			mcastaddr = "broadcast"
+		elif self.widget_ucastradio.get_active():
+                        buffer = self.widget_ucastaddr.get_buffer()
+                        mcastaddr = buffer.get_text(*buffer.get_bounds())
+                        #mcastaddr = mcastaddr.replace('\r',',')
+                        #mcastaddr = mcastaddr.replace('\n',',')
+                else:
+                	mcastaddr = self.widget_mcastaddr.get_text()
+                mcastport = self.widget_mcastport.get_text()
+
+		if self.check(bindnetaddr, mcastaddr, mcastport) == 1:
+			return 1
+
+                if self.widget_ucastradio.get_active():
+			mcastaddr = self.get_mcastaddr(mcastaddr)
+                        mcastaddr = mcastaddr.replace('\n',',')
+
+                for interface in self.interface_list:
+                        if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface and  bindnetaddr == interface["bindnetaddr"]:
+				msgbox(self.top_window, _("Please confirm the address which the NKHA executive should bind. This address should be different with others!\n"))
+                                return 1
+
+		interface = {}
+		interface["bindnetaddr"] = bindnetaddr
+		interface["mcastaddr"] = mcastaddr
+		interface["mcastport"] = mcastport
+		self.interface_list.append(interface)
+		self.update()
+		self.changed = True
+		return 0
+
+	def del_heartbeat(self, widget):
+		if self.nethbnum()==1 :
+			msgbox(self.top_window, _("can not delete all network heartbeats! "))
+			return
+		index = self.get_nethb_interface()
+		self.interface_list.pop(index)
+		self.update()
+		self.changed = True
+		#if len(self.interface_list)==0:
+		#	self.widget_backup.set_sensitive(False)
+		return
+
+	def edit_heartbeat(self, index):
+                bindnetaddr = self.widget_bindnetaddr.get_text()
+                if self.widget_broadcast.get_active():
+                        mcastaddr = "broadcast"
+		elif self.widget_ucastradio.get_active():
+                        buffer = self.widget_ucastaddr.get_buffer()
+                        mcastaddr = buffer.get_text(*buffer.get_bounds())
+                else:
+                        mcastaddr = self.widget_mcastaddr.get_text()
+                mcastport = self.widget_mcastport.get_text()
+
+		if self.check(bindnetaddr, mcastaddr, mcastport,1) == 1:
+                        return 1
+
+		if self.widget_ucastradio.get_active():
+			#### 去掉多余的\n ######
+                        mcastaddr = self.get_mcastaddr(mcastaddr)
+                        mcastaddr = mcastaddr.replace('\n',',')
+
+		i = 0
+                for interface in self.interface_list:
+                        if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface and  bindnetaddr == interface["bindnetaddr"] and index != i :
+                                msgbox(self.top_window, _("Please confirm the address which the NKHA executive should bind. This address should be different with others!\n"))
+                                return 1
+                        if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface and  mcastport == interface["mcastport"] and index != i :
+				msgbox(self.top_window, _("The port is already existed!,please input again!\n"))
+                                return 1
+			i = i + 1
+
+		#if self.nethbnum()==2:
+		#	nethb_copy = []
+		#	for interface in self.interface_list:
+		#		if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface:
+		#		
+                 #       if mcastaddr =="broadcast":
+                  #              newtype = 0
+                   #     elif mcastaddr.find(',') != -1:
+                    #           newtype = 1
+                     #   else:
+                      #          newtype = 2
+                       # if self.interface_list[index]["mcastaddr"] == "broadcast":
+                        #        oldtype = 0
+                        #elif self.interface_list[index]["mcastaddr"].find(',')!=-1:
+                         #       oldtype = 1
+                        #else: 
+                          #      oldtype = 2
+                        #if newtype != oldtype:
+                         #       msgbox(self.top_window, _("two heartbeat must be the same type"))
+                           #     return 1
+
+                self.interface_list[index]["bindnetaddr"] = bindnetaddr
+                self.interface_list[index]["mcastaddr"] = mcastaddr
+                self.interface_list[index]["mcastport"] = mcastport
+                self.update()
+		self.changed = True
+		return 0
+
+        def get_selected_interface(self):
+                (model, iter) = self.hbview.get_selection().get_selected()
+		if iter == None:
+			return None
+		else:
+			return model.get_path(iter)[0]
+
+        def get_nethb_interface(self):
+		selected_interface=self.get_selected_interface()
+                if selected_interface==None:
+                       return None
+                nhbnum=self.nethbnum()
+
+                nethb_interface = False 
+                index = 0
+                for interface in self.interface_list:
+			if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface and nhbnum==1 and nethb_interface == False :
+                                return index
+                        if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface and nhbnum==2 and nethb_interface == False and  selected_interface==0:
+                                return index
+			if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface and nethb_interface == True and nhbnum==2 and  selected_interface==1:
+                                return index
+                        if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface and nethb_interface == False and nhbnum==2 and  selected_interface==1:
+	                	nethb_interface = True          
+                        index = index +1
+
+	def bindnetaddr_first(self,list):#保证网络心跳是第一心跳
+		if 'bindnetaddr' and 'mcastaddr' and 'mcastport' not in list[0]:
+			interface_backup = list[0]
+			for interface in list:
+				if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface:
+					list[0] = interface
+					list.remove(interface)
+					list.append(interface_backup)
+					break
+		return list 
+
+        def save(self):
+		if not self.changed:
+			return 0
+
+		if self.nethbnum() >= 2:
+                	mcastaddr=[]
+                        for interface in self.interface_list:
+                        	if 'bindnetaddr' and 'mcastaddr' and 'mcastport' in interface:
+                        		mcastaddr.append(interface["mcastaddr"])
+                        
+			#if mcastaddr[0]!= mcastaddr[1] :
+			#	msgbox(self.top_window, _("two heartbeat must be the same type"))
+                         #       return 1
+			if (mcastaddr[0]!= mcastaddr[1] and (mcastaddr[0] == "broadcast" or mcastaddr[1] == "broadcast")) or (',' in mcastaddr[0] and ',' not in mcastaddr[1]) or (',' in mcastaddr[1] and ',' not in mcastaddr[0]) :
+				msgbox(self.top_window, _("two heartbeat must be the same type"))
+				return 1
+
+		file_corosync = []
+		added_interface = False
+		ringnumber = 0
+		for line in self.file_corosync_org:
+                        if "#" in line:
+       	                        strline = line.split("#")[0]
+               	        else:
+                       	        strline = line
+
+                        strline = strline.strip()
+
+       	                m = re.match('^(interface).*$', strline)
+               	        if m is not None :
+				if added_interface:
+					continue
+				if len(self.interface_list)>1:
+					if self.rrp_mode != None and self.rrp_mode != "none":
+						file_corosync.append("\trrp_mode: %s"%(self.rrp_mode))
+					else:
+						file_corosync.append("\trrp_mode: passive")
+				#####   add by zxj ###
+                                #if self.buse_serial:
+                                #        if self.uart_mode != None:
+                                 #               file_corosync.append("\tuart_mode: %s"%(self.uart_mode))
+				#if len(self.interface_list)==0:
+				#	file_corosync.append("\tinterface {")
+				#	file_corosync.append("\t}")
+                	        ringnumber = -1
+				heart_type = -1
+				self.interface_list = self.bindnetaddr_first(self.interface_list)
+                               	for interface in self.interface_list:
+                                        ringnumber = ringnumber + 1
+					file_corosync.append("\tinterface {")
+					file_corosync.append("\t\tringnumber: %d"%(ringnumber))
+                                        if 'bindnetaddr' in interface:
+						file_corosync.append("\t\tbindnetaddr: %s"%(interface["bindnetaddr"]))
+						if interface["mcastaddr"] == "broadcast":
+							heart_type = 0
+							file_corosync.append("\t\tbroadcast: yes")
+						elif interface["mcastaddr"].find(',') != -1:#process ucast
+							heart_type = 1
+                                                	iplist = interface['mcastaddr'].split(',')
+                                                	for ipvalue in iplist:
+                                                        	file_corosync.append("\t\tmember{")
+                                                        	file_corosync.append("\t\t\tmemberaddr: %s"%(ipvalue))
+                                                        	file_corosync.append("\t\t}")
+						else:
+							heart_type = 2
+							file_corosync.append("\t\tmcastaddr: %s"%(interface["mcastaddr"]))
+						file_corosync.append("\t\tmcastport: %s"%(interface["mcastport"]))
+						file_corosync.append("\t}")
+                                                continue
+                                        if  'serial' and 'speed'  in interface:
+                                        	file_corosync.append("\t\tserial: %s"%(interface["serial"]))
+                                        	file_corosync.append("\t\tspeed: %s"%(interface["speed"]))
+                                                file_corosync.append("\t\t}")
+                                                continue
+                                        if 'diskdevice' and 'disklabel' in interface:
+                                        	file_corosync.append("\t\tdisk: %s"%(interface["diskdevice"]))
+                                        	file_corosync.append("\t\tlabel: %s"%(interface["disklabel"]))
+                                                file_corosync.append("\t\t}")
+                                file_corosync.append("\ttoken:  %s"%(self.interval["token"]))
+                                file_corosync.append("\ttoken_retransmit:  %s"%(self.interval["token_retransmit"]))
+                                file_corosync.append("\thold:  %s"%(self.interval["hold"]))
+                                file_corosync.append("\tjoin:  %s"%(self.interval["join"]))
+                                file_corosync.append("\tconsensus:  %s"%(self.interval["consensus"]))
+                                file_corosync.append("\tmerge:  %s"%(self.interval["merge"]))
+				added_interface = True
+				if heart_type == 1:
+                                        file_corosync.append("\ttransport: udpu")
+                            
+			elif re.match('^(nodelist).*$', strline) is not None:
+				file_corosync.append(line)
+                               	for nodeip in self.nodeip_list:
+					file_corosync.append("\tnode {")
+					if nodeip.has_key("ring0_addr"):
+						file_corosync.append("\t\tring0_addr: %s"%(nodeip["ring0_addr"]))
+					if nodeip.has_key("ring1_addr"):
+						file_corosync.append("\t\tring1_addr: %s"%(nodeip["ring1_addr"]))
+					file_corosync.append("\t\tnodeid: %s"%(nodeip["nodeid"]))
+					file_corosync.append("\t}")
+				file_corosync.append("}")
+			else:
+				m = re.match('^(transport).*$',strline)
+                                if m is not None:
+                                        continue
+				file_corosync.append(line)
+		content_str = ""
+		for line in file_corosync:
+			content_str = content_str + line + "\n"
+
+		self.manager.do_cmd("save_file_context\nfalse\nfalse\n%s\n%s"%(str(self.filename), str(content_str)))
+                if self.manager.failed_reason != "" :
+                        msgbox(self.top_window, self.manager.failed_reason)
+			return 1
+		else:
+                        msgbox(self.top_window, _("The heartbeat changes has saved.\n")+_("But the Configuration File must be synchronized to other nodes.\n")+_("After that please restart the NKHA on all nodes to make \nthe changes become effective!\n"), image=gtk.STOCK_DIALOG_INFO)
+
+                        file = [str(self.filename)]
+                        syncview(self.window, self.manager, file, _("Heartbeat Configuration"), self.manager.get_all_nodes())
+		return 0
+
+        def on_click(self, widget, event) :
+                if (event.type == gtk.gdk._2BUTTON_PRESS and event.button == 1) \
+                        or ( event.type == gtk.gdk.KEY_PRESS and event.keyval == gtk.keysyms.Return) :
+                        self.edit_interface(widget)
+
+        def on_nodeip_click(self, widget, event) :
+                if (event.type == gtk.gdk._2BUTTON_PRESS and event.button == 1) \
+                        or ( event.type == gtk.gdk.KEY_PRESS and event.keyval == gtk.keysyms.Return) :
+                        self.edit_node_ip(widget)
+
+        # change nodelist
+	def edit_node_ip(self, widget):
+                (model, iter) = self.nodeipview.get_selection().get_selected()
+		if iter == None:
+			return None
+		else:
+			selected_node =  model.get_path(iter)[0]
+
+		title = _("Edit Nodelist IP")
+                dialog = gtk.Dialog(title, self.top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                glade = gtk.glade.XML(UI_FILE, "ipdlg", "haclient")
+                layout = glade.get_widget("ipdlg")
+                dialog.vbox.add(layout)
+
+		self.widget_nodeid = glade.get_widget('nodeid')
+		self.widget_ip1 = glade.get_widget('ip1')
+		self.widget_ip2 = glade.get_widget('ip2')
+
+                self.widget_nodeid.set_text(self.nodeip_list[selected_node]['nodeid'])
+                self.widget_ip1.set_text(self.nodeip_list[selected_node]['ring0_addr'])
+	        if self.nodeip_list[selected_node].has_key("ring1_addr"):
+                        self.widget_ip2.set_text(self.nodeip_list[selected_node]['ring1_addr'])
+                else:
+                        self.widget_ip2.set_text('')
+
+                save_top_window = self.top_window
+                self.top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                self.top_window = save_top_window
+                                dialog.destroy()
+                                return None
+			else:
+				#check input
+				if self.check_ip_valid(self.widget_ip1.get_text()) == 1:
+					continue 
+				if self.widget_ip2.get_text() != '' and  self.check_ip_valid(self.widget_ip2.get_text()) == 1:
+					continue
+				#get input value and set to nodeip_list
+                                self.nodeip_list[selected_node]['ring0_addr'] = self.widget_ip1.get_text()
+				if self.widget_ip2.get_text() != '':
+                                         self.nodeip_list[selected_node]['ring1_addr'] = self.widget_ip2.get_text()
+				else:
+	                                 if self.nodeip_list[selected_node].has_key("ring1_addr"):
+				                 del self.nodeip_list[selected_node]["ring1_addr"]	
+				
+		                self.set_nodeview()
+		                self.changed = True
+                                self.top_window = save_top_window
+                                dialog.destroy()
+                                return None
+
+	def delete_node_ip(self, widget):
+		(model, iter) = self.nodeipview.get_selection().get_selected()
+                if iter == None:
+                        return None
+                else:
+                        selected_node =  model.get_path(iter)[0]
+
+		del self.nodeip_list[selected_node]
+		del self.nodeipview[selected_node]
+		self.set_nodeview()
+		self.changed = True
+		return
+
+
+	def on_serial_radio_changed(self,widget):
+		self.changed = True
+
+	def __init__(self, window, manager):
+		self.window = window
+                self.top_window = window.win_widget
+		self.manager = manager
+                dialog = gtk.Dialog(_("Heartbeat Configuration"), self.top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+                glade = gtk.glade.XML(UI_FILE, "hbdlg", "haclient")
+
+                layout = glade.get_widget("hbdlg")
+                dialog.vbox.add(layout)
+
+		self.changed = False
+
+		self.hbview = glade.get_widget('hbview')
+                self.renderer_hb1 = gtk.CellRendererText()
+                #self.renderer_hb1.set_property('editable', True)
+                #self.renderer_hb1.connect('edited', self.on_edit)
+                self.column1 = gtk.TreeViewColumn(_("Bindnetaddr"), self.renderer_hb1, text=0)
+                self.renderer_hb2 = gtk.CellRendererText()
+                #self.renderer_hb2.set_property('editable', True)
+                #self.renderer_hb2.connect('edited', self.on_edit)
+                self.column2 = gtk.TreeViewColumn(_("Address type"), self.renderer_hb2, text=1)
+		self.renderer_hb3 = gtk.CellRendererText()
+                #self.renderer_hb3.set_property('editable', True)
+                #self.renderer_hb3.connect('edited', self.on_edit)
+                self.column3 = gtk.TreeViewColumn(_("Port"), self.renderer_hb3, text=2)
+		self.hbview.append_column(self.column1)
+		self.hbview.append_column(self.column2)
+		self.hbview.append_column(self.column3)
+		self.hbview.connect("event-after", self.on_click)
+
+		self.widget_add = glade.get_widget('add')
+		glade.get_widget('add').connect('clicked', self.edit_interface)
+		glade.get_widget('edit').connect('clicked', self.edit_interface)
+		glade.get_widget('delete').connect('clicked', self.del_heartbeat)
+
+                # add nodelist show by yangli.wang in 2017.10.26
+
+		self.nodeipview = glade.get_widget('nodeipview')
+
+                self.renderer_nodeid = gtk.CellRendererText()
+                self.column1 = gtk.TreeViewColumn(_("Node Id"), self.renderer_nodeid, text=0)
+
+                self.renderer_nodeip1 = gtk.CellRendererText()
+                self.column2 = gtk.TreeViewColumn(_("Node Ip1"), self.renderer_nodeip1, text=1)
+
+                self.renderer_nodeip2 = gtk.CellRendererText()
+                self.column3 = gtk.TreeViewColumn(_("Node Ip2"), self.renderer_nodeip2, text=2)
+
+		self.nodeipview.append_column(self.column1)
+		self.nodeipview.append_column(self.column2)
+		self.nodeipview.append_column(self.column3)
+
+		self.nodeipview.connect("event-after", self.on_nodeip_click)
+
+		glade.get_widget('editip').connect('clicked', self.edit_node_ip)
+		glade.get_widget('deleteip').connect('clicked', self.delete_node_ip)
+
+              #  self.widget_useserial = glade.get_widget("useserial")
+               # self.buse_serial = 0
+                #self.widget_useserial.connect('toggled',self.on_check_changed)
+	#	nodes = self.manager.get_all_nodes()
+	#	nodes_num = len(nodes)
+	#	if nodes_num>2:
+	#		self.widget_useserial.set_sensitive(False)
+               # self.widget_backup = glade.get_widget("backup")
+		#self.widget_backup.connect('toggled',self.on_serial_radio_changed)
+                #self.widget_backup.set_sensitive(False)
+                #self.widget_serialonly = glade.get_widget("serialonly")
+		#self.widget_serialonly.connect('toggled',self.on_serial_radio_changed)
+                #self.widget_serialonly.set_sensitive(False)
+		
+		self.data_init()
+                self.get_nodelist()
+		self.update()
+		self.set_nodeview()
+
+                save_top_window = self.top_window
+                self.top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                if self.changed :
+					ret_save = 0
+			                ret = confirmbox(self.top_window, _("The data of current view have been changed.")+"\n"+_("Apply the changes?"),
+                        			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+			                        gtk.STOCK_NO, gtk.RESPONSE_NO,
+                        			gtk.STOCK_YES, gtk.RESPONSE_YES))
+			                if ret == gtk.RESPONSE_YES :
+						###### add by zxj #####
+                                               # if self.buse_serial:
+                                                        #if self.widget_backup.get_active():
+                                                #        self.uart_mode = "passive"
+                                                        #else:
+                                                         #       self.uart_mode = "active"
+                        			ret_save = self.save()
+			                if ret != gtk.RESPONSE_CANCEL :
+						if ret_save == 0 :
+                                			self.top_window = save_top_window
+		                                	dialog.destroy()
+                		                	return None
+				else:
+					self.top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+			else:
+				###### add by zxj #####
+                                #if self.buse_serial:
+                                        #if self.widget_backup.get_active():
+                                 #       self.uart_mode = "passive"
+                                        #else:
+                                        #        self.uart_mode = "active"
+                                if self.save() == 0 :
+	                                self.top_window = save_top_window
+                                	dialog.destroy()
+                                	return None

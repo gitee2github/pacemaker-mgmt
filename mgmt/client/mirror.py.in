@@ -1,0 +1,3183 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+from sync import syncview
+
+class mirror_and_recoveryview:
+	drbd_filename = "/etc/drbd.d/drbd0.res"
+	drbd_global_conf = "/etc/drbd.d/global_common.conf"
+	corosync_filename = "/etc/corosync/corosync.conf"
+	corosync_filename_tmp = "/tmp/corosync.conf"
+	ms_drbd_name = ""
+	drbd_name = ""
+	group_fs_name = ""
+	fs_name = ""
+	#clone_dlm_name = ""
+	dlm_name = ""
+	#clone_gfs_name = ""
+	gfs_name = ""
+	#clone_fs_name = ""
+	group_gfs_name = ""
+	clone_group_name = ""
+	sync_update_name = ""
+
+	def on_recovery_use_toggled(self, widget):
+		active = widget.get_active()
+		if active and (not self.recovery_conf_ucast):
+			changed = self.changed
+			if confirmbox(top_window, _("Please use the Heartbeat Configuration model to modify the configure file!\n")+_("And change the heartbeat to ucast!\n")
+					+_("Do you want switch to Heartbeat Configuration model?")) == gtk.RESPONSE_YES:
+				addnethbview()
+			widget.set_active(False)
+			self.changed = changed
+			return
+
+		self.widget_recovery_vbox.set_sensitive(active)
+		self.changed = True
+		return
+
+	#远程容灾初始化
+	def disaster_recovery_init(self):
+		self.recovery_conf_ucast = True
+		self.recovery_rsc_list_org=[]  #原始镜像资源列表
+		self.recovery_is_use = False
+		self.recovery_dir_org = ''  #原始目录
+		self.recovery_main_node_org = ""
+		self.recovery_interval_org = 5
+		self.recovery_start_time_org = time.time()
+		self.local_node_password_list_org = {}  #节点名、密码列表
+		self.remote_node_password_list_org = {}  #节点名、密码列表
+		self.rsc_location_id = {}
+		self.rsc_location_score = {}
+		self.recovery_conf_org = {}   #corosync.conf 
+		str_local_node = ""
+		str_local_passwd = ""
+		str_remote_node = ""
+		str_remote_passwd = ""
+		self.local_bindaddr = []
+		self.remote_bindaddr = []
+
+		#根据已添加的资源类型及相关参数判断是否使用了远程容灾，并确定相应的参数
+		for primitive_node in manager.xml_nodes["cib"].getElementsByTagName("primitive") :
+			rsc_type = primitive_node.getAttribute("type")
+			if rsc_type != "NKSync_plan":
+				continue
+			parent_node = primitive_node.parentNode
+			parent_id = parent_node.getAttribute('id')
+			if not manager.get_rsc_type(parent_id) in ['group']:
+				continue
+
+			self.recovery_is_use = True
+			for nvpair in primitive_node.getElementsByTagName('nvpair'):
+				if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+					continue
+				if nvpair.getAttribute('name') == 'data_dir':
+					self.recovery_dir_org = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'node_list':
+					str_local_node = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'passwd_list':
+					str_local_passwd = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'remote_node_list':
+					str_remote_node = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'remote_passwd_list':
+					str_remote_passwd = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'time_interval':
+					self.recovery_interval_org = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'time_start':
+					try:
+						#self.recovery_start_time_org = time.strftime("%Y-%m-%d %H:%M" , time.strptime(nvpair.getAttribute('value'), "%Y%m%d%H%M"))
+						self.recovery_start_time_org = time.mktime(time.strptime(nvpair.getAttribute('value'), "%Y%m%d%H%M"))
+					except:
+						self.recovery_start_time_org = time.time()
+			self.recovery_rsc_list_org.append(primitive_node)
+			self.recovery_main_node_org = self.get_rsc_mainnode(str(parent_id), "main")
+
+		if self.recovery_is_use :
+			self.get_local_totem_conf()
+			self.node_ip = manager.get_node_ip()
+		else:
+			return
+
+		#if not self.recovery_is_use:
+		#	return
+
+		nodelist = str_local_node.split()
+		passwdlist = str_local_passwd.split()
+		if len(nodelist) != len(passwdlist) and self.recovery_is_use:
+			msgbox(top_window, _("Make sure to match the local node and password!"))
+		index = 0
+		while index < len(nodelist):
+			node = nodelist[index]
+			if index < len(passwdlist):
+				password = passwdlist[index]
+				passwd = manager.query("pwd_decode\n%s"%(str(password)))[0]
+			else:
+				passwd = ""
+			self.local_node_password_list_org[node] = passwd
+			index = index + 1
+
+		nodelist = str_remote_node.split()
+		if len(nodelist)<1:
+			self.recovery_is_use = False
+
+		passwdlist = str_remote_passwd.split()
+		if len(nodelist) != len(passwdlist) and self.recovery_is_use:
+			msgbox(top_window, _("Please Make sure to match the remote node and password!"))
+		index = 0
+		while index < len(nodelist):
+			node = nodelist[index]
+			if index < len(passwdlist):
+				password = passwdlist[index]
+				passwd = manager.query("pwd_decode\n%s"%(str(password)))[0]
+			else:
+				passwd = ""
+			self.remote_node_password_list_org[node] = passwd
+			index = index + 1
+
+		self.get_remote_totem_conf()
+
+	def get_local_totem_conf(self):
+		cmd = "corosync-objctl -b totem"
+		#ret = window.do_cmd_with_pbar("system\n"+cmd,_("Get Local totem"),_("Getting Local totem may take a while..."),_("Failed to get local totem"))
+		ret = manager.query("system\n%s"%(str(cmd)))
+		if ret == [] or ret == None:
+			return
+		for r in ret:
+			r = r.strip()
+			m = re.match('^totem.interface.mcastport=(.*)$', r)
+                        if m is not None :
+				self.recovery_conf_org["mcastport"] = m.groups()[0]
+
+			m = re.match('^totem.transport=(.*)$', r)
+                        if m is not None :
+				self.recovery_conf_org["transport"] = m.groups()[0]
+
+			m = re.match('^totem.interface.bindnetaddr=(.*)$', r)
+                        if m is not None :
+				if "bindnetaddr" not in self.recovery_conf_org.keys():
+					self.recovery_conf_org["bindnetaddr"] = []
+				self.recovery_conf_org["bindnetaddr"].append(m.groups()[0])
+
+			m = re.match('^totem.interface.member.memberaddr=(.*)$', r)
+                        if m is not None :
+				if "memberaddr" not in self.recovery_conf_org.keys():
+					self.recovery_conf_org["memberaddr"] = []
+				self.recovery_conf_org["memberaddr"].append(m.groups()[0])
+
+		self.local_bindaddr = self.recovery_conf_org["bindnetaddr"]
+
+		if "memberaddr" not in self.recovery_conf_org.keys():
+			self.recovery_is_use = False
+			self.recovery_conf_ucast = False
+			#return
+
+        def get_some_node_ip(self, node):
+                if node not in self.nodes:
+                        return [node]
+
+                if self.node_ip == {} or node not in self.node_ip.keys():
+                        self.node_ip = manager.get_node_ip()
+
+                ip = self.node_ip[node]
+                return ip
+
+	def get_remote_totem_conf(self):
+		self.remote_bindaddr = []
+		for node in self.remote_node_password_list_org.keys():
+			if len(self.remote_bindaddr) > 0:
+				break
+			if node not in manager.get_active_nodes():
+				continue
+			try:
+				ip = self.get_some_node_ip(node)[0]
+			except:
+				continue
+			passwd = self.remote_node_password_list_org[node]
+			cmd = "corosync-objctl -b totem |grep bindnetaddr"
+			cmd = "@HA_DATADIR@/heartbeat-gui/ssh.expect "+ip+" "+passwd+ " \""+cmd+"\""
+			ret = manager.query("system\n%s"%(str(cmd)))
+			#ret = window.do_cmd_with_pbar("system\n%s"%(str(cmd)), _("Get remote bindnetaddr"), 
+			#			_("Getting remote bindnetaddr may take a while..."), _("Failed to get remote bindnetaddr"))
+			for r in ret:
+				r = r.strip()
+				m = re.match("^totem.interface.bindnetaddr=(.*)$", r)
+				if m is not None:
+					self.remote_bindaddr.append(m.groups()[0])
+		return
+
+	#更新界面，根据初始化信息或用户操作刷新远程容灾界面
+	def disaster_recovery_update(self):
+		changed = self.changed
+		main_node_changed = self.main_node_changed
+		self.widget_recovery_is_use.set_active(self.recovery_is_use)
+		self.on_recovery_use_toggled(self.widget_recovery_is_use)
+		model_local_nodetree_list = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
+		model_remote_nodetree_list = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
+		model_mainnode_list = gtk.ListStore(gobject.TYPE_STRING)
+                index = 0
+                i = 0
+		self.recovery_no_run_node = []
+		for node in self.nodes:
+			if node in self.local_node_password_list_org.keys():
+				passwd = self.local_node_password_list_org[node]
+				model_local_nodetree_list.append([node, passwd])
+				model_mainnode_list.append([node])
+                                if node == self.recovery_main_node_org:
+                                        index = i
+                                i = i + 1
+			elif node in self.remote_node_password_list_org.keys():
+				passwd = self.remote_node_password_list_org[node]
+				model_remote_nodetree_list.append([node, passwd])
+				model_mainnode_list.append([node])
+                                if node == self.recovery_main_node_org:
+                                        index = i
+                                i = i + 1
+			else:
+				self.recovery_no_run_node.append(node)
+
+		self.widget_recovery_local_nodelist.set_model(model_local_nodetree_list)
+		self.widget_recovery_remote_nodelist.set_model(model_remote_nodetree_list)
+
+                self.widget_recovery_main_node.set_model(model_mainnode_list)
+                self.widget_recovery_main_node.set_active(index)
+		self.widget_recovery_dir.set_text(self.recovery_dir_org)
+
+		interval_org = int(self.recovery_interval_org)
+		if interval_org%1440==0:
+			interval=interval_org/1440
+			unit = 2
+		elif interval_org%60==0:
+			interval = interval_org/60
+			unit = 1
+		else:
+			interval = interval_org
+			unit = 0
+		self.widget_recovery_interval.set_text(str(interval))
+		self.widget_recovery_interval_unit.set_active(unit)
+
+		for child in self.glade.get_widget("hbox6").get_children():
+			self.glade.get_widget("hbox6").remove(child)
+
+		backup_time= time.localtime(self.recovery_start_time_org)
+		datetime = DateTime(backup_time)
+		self.glade.get_widget("hbox6").pack_start(datetime.time_hbox, False, padding=2)
+		self.widget_recovery_start_date = datetime.time_date
+		self.widget_recovery_start_date.connect('changed', self.on_main_node_changed)
+		self.widget_recovery_start_hour = datetime.time_hr
+		self.widget_recovery_start_hour.connect('changed', self.on_main_node_changed)
+		self.widget_recovery_start_min = datetime.time_min
+		self.widget_recovery_start_min.connect('changed', self.on_main_node_changed)
+		self.glade.get_widget("hbox6").show_all()
+		datetime.time_mincolon.hide()
+		datetime.time_sec.hide()
+
+		'''m = re.match('^(.*)\s(.*):(.*)$', self.recovery_start_time_org)
+		if m is not None:
+			self.widget_recovery_start_date.set_text(m.groups()[0])
+			self.widget_recovery_start_hour.set_text(m.groups()[1])
+			self.widget_recovery_start_min.set_text(m.groups()[2])
+		else:
+			self.widget_recovery_start_date.set_text("")
+			self.widget_recovery_start_hour.set_text("")
+			self.widget_recovery_start_min.set_text("")'''
+
+		self.changed = changed
+		self.main_node_changed = main_node_changed
+		return
+
+	#在界面的节点列表中添加参与远程容灾的节点信息；
+	def on_disaster_recovery_add_node(self, widget):
+		if widget.name == "recovery_local_add":
+			label = _("Local Node add")
+			type = "local"
+			bindaddr = self.local_bindaddr
+		else:
+			label = _("Remote Node add")
+			type = "remote"
+			bindaddr = self.remote_bindaddr
+
+		global top_window
+		dialog = gtk.Dialog(label, top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_default_response(gtk.RESPONSE_OK)
+		dialog.set_border_width(5)
+
+		name_labels = []
+		name_label_max_len = 0
+		widgets = {}
+		for key in ["Node", "NetMask", "password"] :
+			hbox = gtk.HBox()
+			name_label = gtk.Label(_(name_cap(key))+_(":"))
+			name_label.set_alignment(0, 0.5)
+			hbox.pack_start(name_label, False, padding=5)
+
+			name_labels.append(name_label)
+			name_label_len = name_label.size_request()[0]
+			if name_label_len > name_label_max_len :
+				name_label_max_len = name_label_len
+
+			if key == "Node":
+				widget = gtk.combo_box_new_text()
+			else:
+				widget = gtk.Entry()
+
+			if key == "password":
+				widget.set_visibility(False)
+				widget.set_property("invisible_char","*")
+
+			widgets[key] = widget
+			hbox.pack_start(widget, True, padding=2)
+			dialog.vbox.pack_start(hbox, False, padding=2)
+
+		for name_label in name_labels :
+			name_label.set_size_request(name_label_max_len, -1)
+
+		#model_node_list = gtk.ListStore(gobject.TYPE_STRING)
+		for node in self.recovery_no_run_node:
+			#model_node_list.append([node])
+			widgets["Node"].append_text(node)
+		#widgets["Node"].set_model(model_node_list)
+
+		save_top_window = top_window
+                top_window = dialog
+
+		dialog.show_all()
+		while True:
+			ret =  dialog.run()
+			if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT]:
+				top_window = save_top_window
+				dialog.destroy()
+				return
+			else:
+				node = widgets["Node"].get_active_text()
+				netmask = widgets["NetMask"].get_text()
+				passwd = widgets["password"].get_text()
+				if self.add_recovery_node(node, netmask, passwd, type, bindaddr) == 0:
+					dialog.destroy()
+					return
+
+	#添加本地集群节点或异地集群节点
+	def add_recovery_node(self, node, netmask, passwd, type, bindaddr):
+		if self.disaster_recovery_add_check(node, netmask, passwd, bindaddr) == 1:
+			return 1
+
+		if type == "local":
+			model = self.widget_recovery_local_nodelist.get_model()
+		else:
+			if node in manager.get_local_node():
+				msgbox(top_window, _("Node %s must be Local Node!"%(str(node))))
+				return 1
+			model = self.widget_recovery_remote_nodelist.get_model()
+			if bindaddr == [] and node in manager.get_active_nodes():
+				try:
+					ip = self.get_some_node_ip(node)[0]
+					netaddr = IP(ip).make_net(netmask)
+				except:
+					msgbox(top_window, _("Please check the netmask"))
+					return 1
+					
+				self.remote_bindaddr.append(netaddr)
+
+		model.append([node, passwd])
+		self.widget_recovery_main_node.get_model().append([node])
+		self.recovery_no_run_node.remove(node)
+		self.changed = True
+		return 0
+
+	def disaster_recovery_add_check(self, node, netmask, passwd, bindaddr):
+		if node is None or node == "":
+			msgbox(top_window, _("Please select the node that to be added!"))
+			return 1
+
+		#如果节点node在线，则根据节点名node取IP地址ip
+		if node in manager.get_active_nodes():
+			ips = self.get_some_node_ip(node)
+			#根据ip及netmask取网段netaddr
+			bindaddr_netaddr = False
+			for ip in ips:
+				if bindaddr == []:
+					bindaddr_netaddr = True
+					break
+				try:
+					netaddr = IP(ip).make_net(netmask)
+					#判断netaddr与本地或异地网段是否相同，如果不相同则返回错误
+					for addr in bindaddr:
+						if str(addr) in str(netaddr):
+							bindaddr_netaddr = True
+							break
+					if bindaddr_netaddr:
+						break
+				except:
+					msgbox(top_window, _("Please check the netmask"))
+					return 1
+			if not bindaddr_netaddr:
+				msgbox(top_window, _("the netaddr must be same with bindaddr %s")%(str(bindaddr)))
+				return 1
+			#判断节点密码是否正确，如果正确则添加，否则返回错误
+			if self.check_node_passwd(node, passwd)==1:
+				return 1
+		else:
+			msgbox(top_window, _("The Node %s is not on line.\n")%(str(node))+_("So you must make sure the password is correct by yourself!"))
+		return 0
+
+	#在节点列表中删除所选择的节点信息
+	def on_disaster_recovery_del_node(self, widget):
+		#删除本地集群节点或异地集群节点
+		if widget.name == "recovery_local_del":
+			remove_widget = self.widget_recovery_local_nodelist
+		else:
+			remove_widget = self.widget_recovery_remote_nodelist
+		
+		selection = remove_widget.get_selection()
+                model, iter = selection.get_selected()
+		if iter == None:
+			return
+		node = model.get_value(iter, 0)
+		remove_widget.get_model().remove(iter)
+		self.recovery_no_run_node.append(node)
+
+		model = self.widget_recovery_main_node.get_model()
+                root = model.get_iter_first()
+                while root:
+                        if model.get_value(root, 0) == node:
+                                model.remove(root)
+                                break
+                        root = model.iter_next(root)
+
+		self.changed = True
+		return
+
+	#删除原有的远程容灾资源
+	def disaster_recovery_del_org(self):
+		if len(self.recovery_rsc_list_org) == 0:
+			return 0
+		rsc_id = ""
+		for rsc in self.recovery_rsc_list_org:
+			rsc_id += rsc.getAttribute('id') + "      "
+		if confirmbox(top_window, _("Cancel the Remote Disaster Recovery will delete the following resources:\n")
+				+str(rsc_id)+"\n"+_("Do you want to continue?")) == gtk.RESPONSE_YES :
+			for rsc in self.recovery_rsc_list_org:
+				if window.del_res(rsc, True)==1:
+					return 1
+		return 0
+
+	def disaster_recovery_save_check(self, value, main_node_active):
+		if main_node_active < 0:
+                        msgbox(top_window, _("Please select the main node"))
+                        return 1
+
+		dir = value["data_dir"]
+		if self.check_dir_exist(dir, "recovery")==1:
+			return 1
+
+		m = re.match('^\d*$', value["time_interval"])
+		if m is None or int(value["time_interval"]) < 5:
+			msgbox(top_window, _("Please input the time interval of backup!\n")+_("And the minimum of time interval is 5 minutes!"))
+			return 1
+
+		return 0
+
+	def check_turn_time(self, str_date, str_hour, str_min):
+		m = re.match('^\d\d\d\d-\d\d-\d\d$', str_date)
+		if m is None:
+			msgbox(top_window, _("Please input the start date of backup!"))
+			return
+		m = re.match('^(\d+)$', str_hour)
+		if m is None or int(m.groups()[0])>23:
+			msgbox(top_window, _("Please input the start time of backup!"))
+			return
+		m = re.match('^(\d+)$', str_min)
+		if m is None or int(m.groups()[0])>59:
+			msgbox(top_window, _("Please input the start time of backup!"))
+			return
+		str_time = str_date+" "+str_hour+":"+str_min
+		return time.strftime("%Y%m%d%H%M" ,time.strptime(str_time, "%Y-%m-%d %H:%M"))
+
+	#保存远程容灾配置信息
+	def disaster_recovery_save(self):
+		if not self.changed and not self.main_node_changed:
+			return 0
+		#如果不使用远程容灾则删除原有的rsync2资源；
+		if not self.widget_recovery_is_use.get_active():
+			if self.disaster_recovery_del_org()==1:
+				return 1
+			return 0
+
+		main_node_active = self.widget_recovery_main_node.get_active()
+
+		#如果使用远程容灾则集群
+		#否则根据用户的配置添加或修改NKSync_plan资源
+		str_node_passwd = ["","","","", "local", 0]
+		self.local_node_passwd = {}
+		model = self.widget_recovery_local_nodelist.get_model()
+		model.foreach(self.get_node_passwd, str_node_passwd)
+		if str_node_passwd[5] < 1:
+			msgbox(top_window, _("There must be one node in the local nodelist at least!"))
+			return 1
+
+		str_node_passwd[4] = "remote"
+		str_node_passwd[5] = 0
+		self.remote_node_passwd = {}
+		model = self.widget_recovery_remote_nodelist.get_model()
+		model.foreach(self.get_node_passwd, str_node_passwd)
+		if str_node_passwd[5] < 1:
+			msgbox(top_window, _("There must be one node in the remote nodelist at least!"))
+			return 1
+
+		value = {}
+		value["node_list"] = str_node_passwd[0]
+		value["passwd_list"] = str_node_passwd[1]
+		value["remote_node_list"] = str_node_passwd[2]
+		value["remote_passwd_list"] = str_node_passwd[3]
+		value["data_dir"] = self.widget_recovery_dir.get_text()
+
+		unit_active = self.widget_recovery_interval_unit.get_active()
+		if unit_active == 0 :
+			unit = 1
+		elif unit_active == 1:
+			unit=60
+		elif unit_active == 2:
+			unit = 1440
+		else:
+			msgbox(top_window, _("Please select the time interval unit!"))
+			return 1
+
+		m = re.match('^\d*$', self.widget_recovery_interval.get_text())
+		if m is None:
+			msgbox(top_window, _("Please input the time interval of backup!\n"))
+			return 1
+		value["time_interval"] = str(int(self.widget_recovery_interval.get_text()) * unit)
+		if self.disaster_recovery_save_check(value, main_node_active)==1:
+			return 1
+
+		value["time_start"] = self.check_turn_time(self.widget_recovery_start_date.get_text(), self.widget_recovery_start_hour.get_text(), self.widget_recovery_start_min.get_text())
+		if value["time_start"] == None:
+			return 1
+
+		main_node_mode = self.widget_recovery_main_node.get_model()
+                main_node = main_node_mode[main_node_active][0]
+
+		if len(self.recovery_rsc_list_org) > 0:
+			primitive = self.recovery_rsc_list_org[0]
+			group_plan_name = primitive.parentNode.getAttribute('id')
+			if self.edit_rsync_plan_resource(primitive, value) == 1:
+				return 1
+		else:
+			group_plan_name = str("group-plan")
+			plan_name = str("plan")
+			if self.create_rsync_plan_resource(group_plan_name, plan_name, value) == 1:
+				return 1
+
+		if group_plan_name not in self.rsc_location_score.keys():
+			self.get_rsc_location(group_plan_name)
+		self.new_location_score = {}
+
+		for node in self.nodes:
+			if node in self.recovery_no_run_node:
+				self.new_location_score[node] = str("-INFINITY")
+			else:
+				self.new_location_score[node] = str("16000")
+		self.new_location_score[main_node] = str("20000")
+
+		#add location
+		self.xml_constraints = manager.xml_nodes["cib"].getElementsByTagName("constraints")[0]
+		self.edit_location(group_plan_name, False)
+		xml_str = self.xml_constraints.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("constraints"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+
+		if self.local_bindaddr == []:
+			self.get_local_totem_conf()
+		#是否使用ucast进行通信, 如果未使用ucast则
+			#修改corosync.conf配置文件将心跳修改为ucast方式并同步到集群中的其他节点
+		if "memberaddr" in self.recovery_conf_org.keys():
+			return 0
+		else:
+			#（同步到异地集群时需要重新设置配置文件中的网段）；同步完成后提示用户重启HA高可用服务；
+			recovery_conf = {}
+			for key in self.recovery_conf_org.keys():
+				recovery_conf[key]=self.recovery_conf_org[key]
+
+			recovery_conf["memberaddr"]=[]
+			#node_ip = self.get_node_ip()
+			for node in self.nodes:
+				if node in self.node_ip.keys():
+					recovery_conf["memberaddr"].append(self.node_ip[node][0])
+				else:
+					msgbox(top_window, _("Some nodes are not on line, and can't get the IP address.\n")+
+						_("Please use the Heartbeat Configuration model to modify the configure file!\n")+
+						_("And change the heartbeat to ucast!\n"))
+					addnethbview()
+					return 0
+			recovery_conf["remote_bindaddr"] = self.remote_bindaddr
+			file_context = self.get_corosync_file()
+			return self.save_corosync_file(file_context, recovery_conf)
+
+		return 0
+
+
+	def get_corosync_file(self):
+		f = manager.query("get_file_context\n"+self.corosync_filename)
+		if f == None or f == []:
+			f = manager.do_cmd("get_file_context\n"+self.corosync_filename)
+			if f == None or f == []:
+				msgbox(top_window, _("can't get the file of %s"%(str(self.corosync_filename))))
+				return []
+                file_corosync_org = []
+		index = 0
+		had_interface = False
+                while index < len(f):
+			file_corosync_org.append(f[index])
+                        if "#" in f[index]:
+                                strline = f[index].split("#")[0]
+                        else:
+                                strline = f[index]
+			strline = strline.strip()
+                        m = re.match('^(interface).*$', strline)
+                        if m is not None:
+				if had_interface:
+					file_corosync_org.pop()
+				had_interface = True
+				index = index + 1
+				if "#" in f[index]:
+                                        strline = f[index].split("#")[0]
+       	                        else:
+               	                        strline = f[index]
+
+				top = 0
+                       	        strline = strline.strip()
+                                while top != -1:
+                                        if '{' in strline:
+                                                top += 1
+                                        if '}' in strline:
+                                                top -= 1
+
+                                        if top != -1:
+                                                index = index + 1
+
+                                        if "#" in f[index]:
+       	                                        strline = f[index].split("#")[0]
+               	                        else:
+                       	                        strline = f[index]
+                               	        strline = strline.strip()
+			m = re.match('^transport.*$', strline)
+			if m is not None:
+				file_corosync_org.pop()
+			index = index + 1
+		return file_corosync_org
+
+	def save_corosync_file(self, file_org, interface):
+		file_corosync = []
+		for line in file_org:
+                        if "#" in line:
+       	                        strline = line.split("#")[0]
+               	        else:
+                       	        strline = line
+
+                        strline = strline.strip()
+
+       	                m = re.match('^(interface).*$', strline)
+               	        if m is not None :
+				file_corosync.append("\tinterface {")
+				file_corosync.append("\t\tringnumber: 0")
+				file_corosync.append("\t\tbindnetaddr: %s"%(interface["bindnetaddr"][0]))
+                                for ipvalue in interface["memberaddr"]:
+                                      	file_corosync.append("\t\tmember{")
+                                        file_corosync.append("\t\t\tmemberaddr: %s"%(ipvalue))
+                                        file_corosync.append("\t\t}")
+				file_corosync.append("\t\tmcastport: %s"%(interface["mcastport"]))
+				file_corosync.append("\t}")
+				if "transport" not in interface.keys():
+					file_corosync.append("\ttransport: udpu")
+			else:
+				file_corosync.append(line)
+
+		content_str = ""
+		for line in file_corosync:
+			content_str = content_str + line + "\n"
+
+		manager.do_cmd("save_file_context\nfalse\nfalse\n%s\n%s"%(str(self.corosync_filename), str(content_str)))
+                if manager.failed_reason != "" :
+                        msgbox(top_window, manager.failed_reason)
+			msgbox(top_window, _("Please use the Heartbeat Configuration model to modify the configure file!\n")+_("And change the heartbeat to ucast!\n"))
+			addnethbview()
+			return 1
+		else:
+                        ret = confirmbox(top_window, _("The heartbeat changes has saved.\n")+_("But the Configuration File must be synchronized to other nodes.\n")+
+				_("After that please restart the NKHA on all nodes to make \nthe changes become effective!\n")+
+				_("And you can choose use the Heartbeat Configuration model to modify the configure file!\n")+
+				_("And change the heartbeat to ucast!\n")+
+				_("Do you want continue to synchronize?"), 
+				(gtk.STOCK_YES, gtk.RESPONSE_YES, gtk.STOCK_NO, gtk.RESPONSE_NO),_("Synchronize to other nodes"))
+			if ret == gtk.RESPONSE_YES:
+                                manager.do_cmd_twice("system\n%s"%(str("echo '' > /root/.ssh/known_hosts")))
+                                if manager.failed_reason != "" :
+                                        msgbox(top_window, manager.failed_reason)
+                                file = self.corosync_filename
+				local_sync_node = {}
+                                for node in manager.get_all_nodes():
+                                        if node not in self.remote_node_passwd.keys():
+						if node in manager.get_local_node():
+							continue
+						try:
+							ip = self.get_some_node_ip(node)[0]
+						except:
+							continue
+                                                if node in self.local_node_passwd.keys():
+                                                        local_sync_node[ip] = self.local_node_passwd[node]
+                                                else:
+                                                        local_sync_node[ip] = ""
+
+                                ret_msg = self.sync_file_nodes(file, file, local_sync_node)
+
+                                #change remote node's bindnetaddr
+                                cmd = "cp " + self.corosync_filename + " " + self.corosync_filename_tmp
+                                manager.do_cmd_twice("system\n"+cmd)
+                                cmd = "sed -i s/bindnetaddr: %s/bindnetaddr: %s/ %s"%(interface["bindnetaddr"][0], interface["remote_bindaddr"][0], self.corosync_filename_tmp)
+                                manager.do_cmd_twice("system\n"+cmd)
+                                file = str(self.corosync_filename_tmp)
+				remote_sync_node = {}
+				for node in self.remote_node_passwd.keys():
+					try:
+						ip = self.get_some_node_ip(node)[0]
+					except:
+						continue
+					remote_sync_node[ip] = self.remote_node_passwd[node]
+
+                                ret_msg += self.sync_file_nodes(file, self.corosync_filename, remote_sync_node)
+				msgbox(top_window, ret_msg, image=gtk.STOCK_DIALOG_INFO)
+                        else:
+                                addnethbview()
+
+		msgbox(top_window, _("Please restart the NKHA on all nodes in the cluster to make \nthe changes become effective!\n")+ "service neokylinha restart\n")
+
+                return 0
+
+	def label_box(self, node) :
+        	global top_window
+	        dialog = gtk.Dialog(_("Message"), top_window, gtk.DIALOG_MODAL, (gtk.STOCK_OK, True))
+        	dialog.set_border_width(5)
+		im=gtk.Image()
+	        im.set_from_stock(gtk.STOCK_DIALOG_QUESTION, gtk.ICON_SIZE_DIALOG)
+        	hb=gtk.HBox()
+	        hb.pack_start(im)
+        	label = gtk.Label(_("Please input the root password of node %s:")%(str(node)))
+	        label.set_selectable(True)
+        	label.set_line_wrap(True)
+		vb = gtk.VBox()
+		vb.pack_start(label)
+		entry = gtk.Entry()
+		entry.set_visibility(False)
+		entry.set_property("invisible_char","*")
+		vb.pack_start(entry)
+	        hb.pack_start(vb)
+        	dialog.vbox.pack_start(hb)
+	        dialog.show_all()
+        	save_top_window = top_window
+	        top_window = dialog
+        	dialog.run()
+		passwd = entry.get_text()
+	        top_window = save_top_window
+        	dialog.destroy()
+		return passwd
+
+        def sync_file_nodes(self, from_file, to_file, nodes_passwd):
+                result = {}
+                for node in nodes_passwd.keys():
+                        passwd = nodes_passwd[node]
+                        if passwd == "":
+				passwd = self.label_box(node)
+                        cmd = "@HA_DATADIR@/heartbeat-gui/sync.sh " + from_file + " " + to_file + " " + node + " " + passwd
+                        detail_lines = window.do_cmd_with_pbar("system\n%s"%(str(cmd)), _("Synchronizing")+node, _("Synchronizing the configuration file may take a while..."), _("Failed to synchronize!"), False)
+                        if detail_lines == None :
+                                result[node] = ""
+                                continue
+                        detail_str = "\n".join(detail_lines)
+                        if "100%" in detail_str:
+                                result[node] = "Succeed"
+                        elif "Permission denied" in detail_str:
+                                result[node] = "Permission denied. IP or Password may be wrong."
+                        elif "No route to host" in detail_str:
+                                result[node] = "No route to host. IP may be wrong."
+                        elif "No such file or directory" in detail_str:
+                                result[node] = "No such file or directory."
+                        elif "REMOTE HOST IDENTIFICATION HAS CHANGED" in detail_str :
+                                result[node] = "Host key verification failed. Offending key in /root/.ssh/known_hosts"
+                        else:
+                                result[node] = "Maybe network failures or some other reasons."
+
+                msg = ""
+                for key in result.keys():
+                        if result[key] == "Succeed" :
+                                msg += key + _(":Succeed\n") + "\n"
+                        else:
+                                msg += key + _(":Synchronization Error\n") + _(result[key]) + "\n" +_("Please synchronize it manually!\n")
+                                msg += _("Configuration File need to be Synchronized:\n") + file + _("\n\n")
+                return msg
+
+	#计划备份初始化，根据已添加的资源类型及相关参数判断是否使用了计划备份，并确定相应的参数
+	def backup_init(self):
+		self.backup_rsc_list_org=[]  #原始镜像资源列表
+		self.backup_is_use = False
+		self.backup_dir_org = ''  #原始目录
+		self.backup_main_node_org = ""
+		self.backup_interval_org = 5
+		self.backup_start_time_org = time.time()
+		self.local_node_password_list_org = {}  #节点名、密码列表
+		self.remote_node_password_list_org = {}  #节点名、密码列表
+		self.rsc_location_id = {}
+		self.rsc_location_score = {}
+		str_local_node = ""
+		str_local_passwd = ""
+		str_remote_node = ""
+		str_remote_passwd = ""
+
+		#获取已配置的资源列表，如果未配置NKSync_plan资源，则说明未使用计划备份，
+		#否则说明使用了计划备份，获取NKSync_plan资源中的节点名及密码参数，备份目录，备份时间间隔，备份起始时间；
+		#根据NKSync_plan资源的location限制条件确定主节点
+		for primitive_node in manager.xml_nodes["cib"].getElementsByTagName("primitive") :
+			rsc_type = primitive_node.getAttribute("type")
+			if rsc_type != "NKSync_plan":
+				continue
+			parent_node = primitive_node.parentNode
+			parent_id = parent_node.getAttribute('id')
+			if not manager.get_rsc_type(parent_id) in ['group']:
+				continue
+
+			self.backup_is_use = True
+			for nvpair in primitive_node.getElementsByTagName('nvpair'):
+				if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+					continue
+				if nvpair.getAttribute('name') == 'data_dir':
+					self.backup_dir_org = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'node_list':
+					str_local_node = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'passwd_list':
+					str_local_passwd = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'remote_node_list':
+					str_remote_node = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'remote_passwd_list':
+					str_remote_passwd = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'time_interval':
+					self.backup_interval_org = nvpair.getAttribute('value')
+				elif nvpair.getAttribute('name') == 'time_start':
+					try:
+						#self.backup_start_time_org = time.strftime("%Y-%m-%d %H:%M" , time.strptime(nvpair.getAttribute('value'), "%Y%m%d%H%M"))
+						self.backup_start_time_org = time.mktime(time.strptime(nvpair.getAttribute('value'), "%Y%m%d%H%M"))
+					except:
+						self.backup_start_time_org = time.time()
+			self.backup_rsc_list_org.append(primitive_node)
+			self.backup_main_node_org = self.get_rsc_mainnode(str(parent_id), "main")
+
+		nodelist = str_local_node.split()
+		passwdlist = str_local_passwd.split()
+		if len(nodelist) != len(passwdlist):
+			msgbox(top_window, _("Make sure to match the local node and password!"))
+		index = 0
+		while index < len(nodelist):
+			node = nodelist[index]
+			if index < len(passwdlist):
+				password = passwdlist[index]
+				passwd = manager.query("pwd_decode\n%s"%(str(password)))[0]
+			else:
+				passwd = ""
+			self.local_node_password_list_org[node] = passwd
+			index = index + 1
+
+		nodelist = str_remote_node.split()
+		passwdlist = str_remote_passwd.split()
+		if len(nodelist) != len(passwdlist):
+			msgbox(top_window, _("Please Make sure to match the remote node and password!"))
+		index = 0
+		while index < len(nodelist):
+			node = nodelist[index]
+			if index < len(passwdlist):
+				password = passwdlist[index]
+				passwd = manager.query("pwd_decode\n%s"%(str(password)))[0]
+			else:
+				passwd = ""
+			self.remote_node_password_list_org[node] = passwd
+			index = index + 1
+
+		return
+
+	#更新界面，根据初始化信息或用户操作刷新计划备份界面
+	def backup_update(self):
+		changed = self.changed
+		main_node_changed = self.main_node_changed
+		self.widget_backup_is_use.set_active(self.backup_is_use)
+		self.on_backup_use_toggled(self.widget_backup_is_use)
+		model_nodetree_list = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
+		model_node_list = gtk.ListStore(gobject.TYPE_STRING)
+		model_mainnode_list = gtk.ListStore(gobject.TYPE_STRING)
+		index = 0
+		i = 0
+		self.backup_no_run_node = []
+		for node in self.nodes:
+			if node in self.local_node_password_list_org.keys():
+				passwd = self.local_node_password_list_org[node]
+				model_nodetree_list.append([node, passwd])
+				model_mainnode_list.append([node])
+				if node == self.backup_main_node_org:
+					index = i
+				i = i + 1
+			elif node in self.remote_node_password_list_org.keys():
+				passwd = self.remote_node_password_list_org[node]
+				model_nodetree_list.append([node, passwd])
+				model_mainnode_list.append([node])
+				if node == self.backup_main_node_org:
+					index = i
+				i = i + 1
+			else:
+				self.backup_no_run_node.append(node)
+				model_node_list.append([node])
+
+		self.widget_backup_nodelist.set_model(model_nodetree_list)
+		self.widget_backup_node.set_model(model_node_list)
+
+		self.widget_backup_main_node.set_model(model_mainnode_list)
+		self.widget_backup_main_node.set_active(index)
+		self.widget_backup_dir.set_text(self.backup_dir_org)
+
+		interval_org = int(self.backup_interval_org)
+		if interval_org%1440==0:
+			interval=interval_org/1440
+			unit = 2
+		elif interval_org%60==0:
+			interval=interval_org/60
+			unit = 1
+		else:
+			interval = interval_org
+			unit = 0
+		self.widget_backup_interval.set_text(str(interval))
+		self.widget_backup_interval_unit.set_active(unit)
+
+		for child in self.glade.get_widget("hbox5").get_children():
+			self.glade.get_widget("hbox5").remove(child)
+		backup_time= time.localtime(self.backup_start_time_org)
+		datetime = DateTime(backup_time)
+		self.glade.get_widget("hbox5").pack_start(datetime.time_hbox, False, padding=2)
+		self.widget_backup_start_date = datetime.time_date
+		self.widget_backup_start_date.connect('changed', self.on_main_node_changed)
+		self.widget_backup_start_hour = datetime.time_hr
+		self.widget_backup_start_hour.connect('changed', self.on_main_node_changed)
+		self.widget_backup_start_min = datetime.time_min
+		self.widget_backup_start_min.connect('changed', self.on_main_node_changed)
+		self.glade.get_widget("hbox5").show_all()
+		datetime.time_mincolon.hide()
+		datetime.time_sec.hide()
+
+		'''m = re.match('^(.*)\s(.*):(.*)$', self.backup_start_time_org)
+		if m is not None:
+			self.widget_backup_start_date.set_text(m.groups()[0])
+			self.widget_backup_start_hour.set_text(m.groups()[1])
+			self.widget_backup_start_min.set_text(m.groups()[2])
+		else:
+			self.widget_backup_start_date.set_text("")
+			self.widget_backup_start_hour.set_text("")
+			self.widget_backup_start_min.set_text("")'''
+
+		self.changed = changed
+		self.main_node_changed = main_node_changed
+		return
+
+
+	def on_backup_use_toggled(self, widget):
+		active = widget.get_active()
+		self.widget_backup_vbox.set_sensitive(active)
+		self.changed = True
+
+	def check_node_passwd(self, node, passwd):
+		try:
+			ip = self.get_some_node_ip(node)[0]
+		except:
+	                msgbox(top_window, _("Password error! Please input it again!\n"))
+	                return 1
+
+		cmd = "@HA_DATADIR@/heartbeat-gui/ssh.expect "+ip+" "+passwd
+		ret =  manager.do_cmd_twice("system\n%s"%(str(cmd)))
+		if ret != None and ret != []:
+			for r in ret:
+				if "@@successed" in r:
+					return 0
+		msgbox(top_window, _("Password error! Please input it again!\n"))
+		return 1
+
+	#在界面的节点列表中添加参与计划备份的节点信息，同时在主节点的下拉列表中加入该节点名
+	def backup_add_node(self, widget):
+		node_active = self.widget_backup_node.get_active()
+		if node_active < 0:
+			msgbox(top_window, _("Please select the node that to be added!"))
+			return 
+		node_model = self.widget_backup_node.get_model()
+		node = node_model[node_active][0]
+
+		passwd = self.widget_backup_passwd.get_text()
+		if passwd == "":
+			msgbox(top_window, _("Please input the password!"))
+			return
+
+		if node in manager.get_active_nodes():
+			if self.check_node_passwd(node, passwd)==1:
+				return
+		else:
+			msgbox(top_window, _("The Node %s is not on line.\n")%(str(node))+_("So you must make sure the password is correct by yourself!"))
+
+		self.widget_backup_nodelist.get_model().append([node, passwd])
+		self.widget_backup_main_node.get_model().append([node])
+		iter = self.widget_backup_node.get_active_iter()
+		if iter :
+			node_model.remove(iter)
+		self.widget_backup_passwd.set_text("")
+		self.backup_no_run_node.remove(node)
+		self.changed = True
+		return
+
+	#在节点列表中删除所选择的节点信息，同时在主节点的下拉列表中删除该节点；
+	def backup_del_node(self, widget):
+		selection = self.widget_backup_nodelist.get_selection()
+                model, iter = selection.get_selected()
+		if iter == None:
+			return
+		node = model.get_value(iter, 0)
+		self.widget_backup_nodelist.get_model().remove(iter)
+		self.widget_backup_node.get_model().append([node])
+		self.backup_no_run_node.append(node)
+
+		model = self.widget_backup_main_node.get_model()
+		root = model.get_iter_first()
+		while root:
+			if model.get_value(root, 0) == node:
+				model.remove(root)
+				break
+			root = model.iter_next(root)
+		self.changed = True
+		return
+
+	#删除原有的计划备份资源
+	def backup_del_org(self):
+		if len(self.backup_rsc_list_org) == 0:
+			return 0
+		rsc_id = ""
+		for rsc in self.backup_rsc_list_org:
+			rsc_id += rsc.getAttribute('id') + "      "
+		if confirmbox(top_window, _("Cancel the Scheduled Backup will delete the following resources:\n")
+				+str(rsc_id)+"\n"+_("Do you want to continue?")) == gtk.RESPONSE_YES :
+			for rsc in self.backup_rsc_list_org:
+				if window.del_res(rsc, True)==1:
+					return 1
+		return 0
+
+	def get_node_passwd(self, model, path, iter, str_node_passwd):
+		node = model.get_value(iter, 0)
+		password = model.get_value(iter, 1)
+		passwd = manager.query("pwd_encode\n%s"%(str(password)))[0]
+		default = str_node_passwd[4]
+		str_node_passwd[5] = str_node_passwd[5]+1
+
+		if default == "local":
+			self.local_node_passwd[node] = password
+			if node in self.remote_node_password_list_org.keys():
+				if str_node_passwd[2] == "":
+					str_node_passwd[2] = node
+				else:
+					str_node_passwd[2] = str_node_passwd[2] + " " + node
+				if str_node_passwd[1] == "":
+					str_node_passwd[3] = passwd
+				else:
+					str_node_passwd[3] = str_node_passwd[3] + " " + passwd
+			else:
+				if str_node_passwd[0] == "":
+					str_node_passwd[0] = node
+				else:
+					str_node_passwd[0] = str_node_passwd[0] + " " + node
+				if str_node_passwd[1] == "":
+					str_node_passwd[1] = passwd
+				else:
+					str_node_passwd[1] = str_node_passwd[1] + " " + passwd
+		else:
+			self.remote_node_passwd[node] = password
+			if str_node_passwd[2] == "":
+				str_node_passwd[2] = node
+			else:
+				str_node_passwd[2] = str_node_passwd[2] + " " + node
+			if str_node_passwd[1] == "":
+				str_node_passwd[3] = passwd
+			else:
+				str_node_passwd[3] = str_node_passwd[3] + " " + passwd
+
+	def backup_save_check(self, value, len, main_node_active):
+		if len < 2:
+			msgbox(top_window, _("There must be two nodes in the nodelist at least!"))
+			return 1
+
+		if main_node_active < 0:
+			msgbox(top_window, _("Please select the main node"))
+			return 1
+
+		dir = value["data_dir"]
+		if self.check_dir_exist(dir, "backup", main_node_active)==1:
+			return 1
+
+		m = re.match('^\d*$', value["time_interval"])
+		if m is None or int(value["time_interval"]) < 5:
+			msgbox(top_window, _("Please input the time interval of backup!\n")+_("And the minimum of time interval is 5 minutes!"))
+			return 1
+
+		return 0
+
+	#保存计划备份配置信息
+	def backup_save(self):
+		if not self.changed and not self.main_node_changed:
+			return 0
+
+		#如果不使用计划备份则删除原有的NKSync_plan资源
+		if not self.widget_backup_is_use.get_active():
+			return self.backup_del_org()
+
+		main_node_active = self.widget_backup_main_node.get_active()
+
+		str_node_passwd = ["","","","", "local",0]
+		model = self.widget_backup_nodelist.get_model()
+		self.local_node_passwd = {}
+		model.foreach(self.get_node_passwd, str_node_passwd)
+
+		node_len = str_node_passwd[5]
+		value = {}
+		value["node_list"] = str_node_passwd[0]
+		value["passwd_list"] = str_node_passwd[1]
+		value["remote_node_list"] = str_node_passwd[2]
+		value["remote_passwd_list"] = str_node_passwd[3]
+		value["data_dir"] = self.widget_backup_dir.get_text()
+		unit_active = self.widget_backup_interval_unit.get_active()
+		if unit_active == 0 :
+			unit = 1
+		elif unit_active == 1:
+			unit=60
+		elif unit_active == 2:
+			unit = 1440
+		else:
+			msgbox(top_window, _("Please select the time interval unit!"))
+			return 1
+		m = re.match('^\d+$', self.widget_backup_interval.get_text())
+		if m is None:
+			msgbox(top_window, _("Please input the time interval of backup!\n"))
+			return 1
+		value["time_interval"] = str(int(self.widget_backup_interval.get_text())*unit)
+		if self.backup_save_check(value, node_len, main_node_active) == 1:
+			return 1
+		value["time_start"] = self.check_turn_time(self.widget_backup_start_date.get_text(), self.widget_backup_start_hour.get_text(), self.widget_backup_start_min.get_text())
+		if value["time_start"] == None:
+			return 1
+
+                main_node_mode = self.widget_backup_main_node.get_model()
+                main_node = main_node_mode[main_node_active][0]
+
+		self.new_location_score = {}
+		for node in self.nodes:
+			if node in self.backup_no_run_node:
+				self.new_location_score[node] = str("-INFINITY")
+			else:
+				score=16000-value["node_list"].split().index(node)*1000
+				if value["node_list"].split().index(node) > value["node_list"].split().index(main_node):
+					score=score+1000
+				self.new_location_score[node] = str(score)
+
+		self.new_location_score[main_node] = str("20000")
+
+		#否则根据用户的配置添加或修改NKSync_plan资源
+		if len(self.backup_rsc_list_org) > 0:
+			primitive = self.backup_rsc_list_org[0]
+			group_plan_name = primitive.parentNode.getAttribute('id')
+			if self.edit_rsync_plan_resource(primitive, value) == 1:
+				return 1
+		else:
+			group_plan_name = str("group-plan")
+			plan_name = str("plan")
+			if self.create_rsync_plan_resource(group_plan_name, plan_name, value) == 1:
+				return 1
+			
+		#add location
+		self.xml_constraints = manager.xml_nodes["cib"].getElementsByTagName("constraints")[0]
+		self.edit_location(group_plan_name, False)
+		xml_str = self.xml_constraints.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("constraints"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+
+		return 0
+
+	def create_rsync_plan_resource(self, group_id, rsc_id, value):
+		impl = getDOMImplementation()
+		newdoc = impl.createDocument(None, "group", None)
+		new_group = newdoc.documentElement
+		new_group.setAttribute('id', group_id)
+
+                newdoc = impl.createDocument(None, "meta_attributes", None)
+                new_meta = newdoc.documentElement
+                new_meta.setAttribute('id', group_id+"-meta_attributes")
+
+                newdoc = impl.createDocument(None, "nvpair", None)
+                new_nvpair = newdoc.documentElement
+                new_nvpair.setAttribute('id', group_id+"-meta_attributes-target-role")
+                new_nvpair.setAttribute('name', "target-role")
+                new_nvpair.setAttribute('value', "Stopped")
+                new_meta.appendChild(new_nvpair)
+		new_group.appendChild(new_meta)
+
+		newdoc = impl.createDocument(None, "primitive", None)
+		new_primitive = newdoc.documentElement
+		new_primitive.setAttribute("class", "ocf")
+		new_primitive.setAttribute("id", rsc_id)
+		new_primitive.setAttribute("provider", "common")
+		new_primitive.setAttribute("type", "NKSync_plan")
+
+                newdoc = impl.createDocument(None, "operations", None)
+                new_operation = newdoc.documentElement
+                new_operation.setAttribute('id', rsc_id+"-operations")
+
+                newdoc = impl.createDocument(None, "op", None)
+                new_op = newdoc.documentElement
+                new_op.setAttribute('id', rsc_id+"-op-monitor-10")
+                new_op.setAttribute('interval', "10")
+                new_op.setAttribute('name', "monitor")
+                new_op.setAttribute('timeout', "20")
+                new_operation.appendChild(new_op)
+		new_primitive.appendChild(new_operation)
+
+                newdoc = impl.createDocument(None, "instance_attributes", None)
+                new_ins = newdoc.documentElement
+                new_ins.setAttribute('id', rsc_id+"-instance_attributes")
+
+		for nv in ["node_list", "passwd_list", "remote_node_list", "remote_passwd_list", "data_dir", "time_start", "time_interval"]:
+			newdoc = impl.createDocument(None, "nvpair", None)
+			new_nvpair = newdoc.documentElement
+			new_nvpair.setAttribute('id', rsc_id+"-instance_attributes-"+nv)
+			new_nvpair.setAttribute('name', nv)
+			new_nvpair.setAttribute('value', value[nv])
+			new_ins.appendChild(new_nvpair)
+
+		new_primitive.appendChild(new_ins)
+		new_group.appendChild(new_primitive)
+
+		xml_str = new_group.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_create\n%s\n%s"%(str("resources"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+
+		return 0
+
+	def edit_rsync_plan_resource(self, xml_node, value):
+		for nvpair in xml_node.getElementsByTagName('nvpair'):
+			if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			if nvpair.getAttribute("name") == "node_list":
+				nvpair.setAttribute("value", value["node_list"])
+			elif nvpair.getAttribute("name") == "passwd_list":
+				nvpair.setAttribute("value", value["passwd_list"])
+			elif nvpair.getAttribute("name") == "remote_node_list":
+				nvpair.setAttribute("value", value["remote_node_list"])
+			elif nvpair.getAttribute("name") == "remote_passwd_list":
+				nvpair.setAttribute("value", value["remote_passwd_list"])
+			elif nvpair.getAttribute("name") == "data_dir":
+				nvpair.setAttribute("value", value["data_dir"])
+			elif nvpair.getAttribute("name") == "time_start":
+				nvpair.setAttribute("value", value["time_start"])
+			elif nvpair.getAttribute("name") == "time_interval":
+				nvpair.setAttribute("value", value["time_interval"])
+		xml_str = xml_node.toxml().replace("\n", "")
+
+		manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("primitive"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+		return 0
+
+	def edit_location(self, rsc, del_flag):
+		if rsc not in self.rsc_location_id.keys():
+			self.get_rsc_location(rsc)
+		location_id = self.rsc_location_id[rsc]
+		location_score = self.rsc_location_score[rsc]
+		for node in location_score.keys():
+			if del_flag:
+				for rsc_location in manager.xml_nodes["cib"].getElementsByTagName("rsc_location"):
+					id = str(rsc_location.getAttribute("id"))
+					if node in location_id.keys() and id in location_id[node]:
+						self.xml_constraints.removeChild(rsc_location)
+			else:
+				if location_score[node] == self.new_location_score[node]:
+					continue
+				for rsc_location in manager.xml_nodes["cib"].getElementsByTagName("rsc_location"):
+					id = str(rsc_location.getAttribute("id"))
+					if node in location_id.keys() and id in location_id[node]:
+						self.xml_constraints.removeChild(rsc_location)
+				impl = getDOMImplementation()
+				newdoc = impl.createDocument(None, "rsc_location", None)
+				loc = newdoc.documentElement
+				loc.setAttribute("id", str("%s-location-on-%s"%(rsc, node)))
+				loc.setAttribute("node", str(node))
+				loc.setAttribute("rsc", str(rsc))
+				loc.setAttribute("score", str(self.new_location_score[node]))
+				self.xml_constraints.appendChild(loc)
+		return 0
+
+	#删除原有的实时镜像资源
+	def mirror_del_org(self):
+		rsc_deled = []
+		gfs_had_deled = False
+		for type in self.mirror_rsc_list_org.keys():
+			if type in ["clone_fs",  "clone_dlm", "clone_gfs"]:
+				if not gfs_had_deled:
+					gfs_had_deled = True
+					for xml_clone in manager.xml_nodes["cib"].getElementsByTagName("clone"):
+						id = str(xml_clone.getAttribute("id"))
+						if id == self.clone_group_name:
+							rsc = xml_clone
+							rsc_deled.append(rsc)
+							break
+				continue
+			
+			for rsc in self.mirror_rsc_list_org[type]:
+				if type in ["ms_drbd"]:
+					rsc = rsc.parentNode
+				parent = rsc.parentNode.getAttribute('id')
+				if len(manager.get_sub_rsc(str(parent))) == 1:
+					rsc = rsc.parentNode
+				rsc_deled.append(rsc)
+
+		if len(rsc_deled) == 0 :
+			return 0
+
+		rsc_id = ""
+		for rsc in rsc_deled:
+			rsc_id += rsc.getAttribute('id') + "      "
+		if confirmbox(top_window, _("This will delete the following resource, or there may be some mistakes.\n") 
+				+ _("Do you want to continue?")+"\n"+str(rsc_id)) == gtk.RESPONSE_YES :
+			for rsc in rsc_deled:
+				if window.del_res(rsc, True)==1:
+					return 1
+		else:
+			return 1
+
+		return 0
+
+	#保存实时镜像配置信息,根据镜像模式的不同调用不同函数生成相关资源及配置
+	def mirror_save(self):
+		if not self.changed and not self.main_node_changed:
+			return 0
+
+		if not self.widget_mirror_is_use.get_active():
+			return self.mirror_del_org()
+
+		if self.widget_mirror_two_nodes.get_active():
+			if self.widget_mirror_standby_mode.get_active():
+				ret = self.mirror_save_drbd_ps()
+			else:
+				ret = self.mirror_save_drbd_pp()
+		else:
+			if self.widget_mirror_standby_mode.get_active():
+				ret = self.mirror_save_more_ps()
+			else:
+				ret = self.mirror_save_more_pp()
+		return ret
+
+	def check_dir_exist(self, dirs, type, main_node_active=None):
+		if dirs == "" :
+			label=_("Please input the backup directories!")
+			if type != "drbd" and (type!="mirror" or main_node_active != None):
+				label=label+_("And different directories should be separated by a semicolon!")
+			msgbox(top_window, label)
+			return 1
+
+		all_dir = dirs.split(";")
+		if type == "drbd" and len(all_dir)>1:
+			msgbox(top_window, _("Please check the mount directory!"))
+			return 1
+
+		if type == "mirror" and main_node_active == None and len(all_dir)>1:
+			msgbox(top_window, _("Please check the mount directory!"))
+			return 1
+
+		check_local_host = True
+		if main_node_active != None:
+			if type == "mirror":
+		                main_node_mode = self.mirror_glade.get_widget('main_node').get_model()
+			else:
+		                main_node_mode = self.widget_backup_main_node.get_model()
+        	        main_node = main_node_mode[main_node_active][0]
+
+			if main_node in manager.get_local_node():
+				check_local_host = True
+			else:
+				check_local_host = False
+	                        ip = manager.get_one_node_ip(main_node)
+        	                if ip == None:
+                	                msgbox(top_window, _("Can not get the ipaddress of main node!") + _("Or can not be connected!") + "\n" + _("Please make sure that the environment is configured correctly!"))
+                        	        return 1
+
+		for dir in all_dir:
+			if dir == "":
+                                continue
+
+			if all_dir.count(dir)>1:
+				msgbox(top_window, _("Please check the directory %s, and do not repeat input!")%(dir))
+				return 1
+
+			cmd = "test -d "+dir+" && echo 'true' || echo 'false'"
+			if not check_local_host:
+                	        if "false" in manager.query("ssh_node\n%s\n%s\n%s\n%s"%(str(ip), str("HASql"), str("qwert12345"), str(cmd))):
+                	        	if "false" in manager.do_cmd("ssh_node\n%s\n%s\n%s\n%s"%(str(ip), str("HASql"), str("qwert12345"), str(cmd))):
+						label=_("Please confirm the directory %s is exist on the main node!")%(dir)
+						if type != "drbd"  and (type!="mirror" or main_node_active != None) :
+							label=label+_("And different directories should be separated by a semicolon!")
+						msgbox(top_window, label)
+						return 1
+			else:
+				ret = manager.query("system\n%s"%(str(cmd)))
+				if ret == None or ret == [] or "false" in ret:
+					if "false" in manager.do_cmd("system\n%s"%(str(cmd))):
+						label=_("Please confirm the directory %s is exist!")%(dir)
+						if type != "drbd" and (type!="mirror" or main_node_active != None) :
+							label=label+_("And different directories should be separated by a semicolon!")
+						msgbox(top_window, label)
+						return 1
+
+			if type == "backup":
+				if dir in self.mirror_dir_org.split(";"):
+					msgbox(top_window, _("Please confirm the directory %s is not in the mirror backup directories!")%(dir))
+					return 1
+			elif type == "mirror":
+				if dir in self.backup_dir_org.split(";"):
+					msgbox(top_window, _("Please confirm the directory %s is not in the scheduled backup directories!")%(dir))
+					return 1
+
+		return 0
+
+	def is_larger(self, first, last):
+		if first in ['infinity', 'INFINITY', '+infinity', '+INFINITY']:
+			return True
+		elif first in ['-infinity', '-INFINITY']:
+			return False
+		elif last in ['infinity', 'INFINITY', '+infinity', '+INFINITY']:
+			return False
+		elif last in ['-infinity', '-INFINITY']:
+			return True
+		elif int(first) > int(last):
+			return True
+		else:
+			return False
+
+	def mirror_save_drbd(self, ms_drbd_name, type):
+		main_node_name_active = self.mirror_glade.get_widget("main_node_name").get_active()
+		main_node_name_mode = self.mirror_glade.get_widget("main_node_name").get_model()
+		main_node_name = main_node_name_mode[main_node_name_active][0]
+		main_node_ip = self.mirror_glade.get_widget("main_node_ip").get_text()
+		main_node_disk = self.mirror_glade.get_widget("main_node_device").get_text()
+
+		slave_node_name_active = self.mirror_glade.get_widget("slave_node_name").get_active()
+		slave_node_name_mode = self.mirror_glade.get_widget("slave_node_name").get_model()
+		slave_node_name = slave_node_name_mode[slave_node_name_active][0]
+		slave_node_ip = self.mirror_glade.get_widget("slave_node_ip").get_text()
+		slave_node_disk = self.mirror_glade.get_widget("slave_node_device").get_text()
+
+		dir = self.mirror_glade.get_widget("dir").get_text()
+		#get location
+		if ms_drbd_name not in self.rsc_location_score.keys():
+			self.get_rsc_location(ms_drbd_name)
+		location_score = self.rsc_location_score[ms_drbd_name]
+		self.new_location_score = {}
+		for node in self.nodes:
+			self.new_location_score[node] = str('-INFINITY')
+		if self.is_larger(location_score[main_node_name], location_score[slave_node_name]):
+			self.new_location_score[main_node_name] = location_score[main_node_name]
+			self.new_location_score[slave_node_name] = location_score[slave_node_name]
+		elif self.is_larger(location_score[main_node_name], 20000):
+			self.new_location_score[slave_node_name] = str('16000')
+		else:
+			self.new_location_score[main_node_name] = str('20000')
+			self.new_location_score[slave_node_name] = str('16000')
+
+		#将信息保存至drbdx.res配置文件，将DRBD配置文件同步到其他节点，同步完成后提示用户运行脚本初始化DRBD设备
+		if self.mirror_main_node_org==main_node_name and self.mirror_main_ip_org==main_node_ip and self.mirror_main_disk_org==main_node_disk \
+			and self.mirror_slave_node_org==slave_node_name and self.mirror_slave_ip_org==slave_node_ip and self.mirror_slave_disk_org==slave_node_disk \
+			and self.mirror_type_org==type and self.mirror_dir_org==dir:
+			return 0
+
+		if self.check_drbd(main_node_name, main_node_ip, main_node_disk, slave_node_name, slave_node_ip, slave_node_disk, dir) == 1:
+			return 1
+
+		if self.save_drbd_file(main_node_name, main_node_ip, main_node_disk, slave_node_name, slave_node_ip, slave_node_disk, type) == 1:
+			return 1
+		
+		if type == "active":
+			msgbox(top_window, _("Please run command on both nodes:\n")+"/usr/sbin/drbd_init gfs2\n", image=gtk.STOCK_DIALOG_INFO)
+		else:
+			msgbox(top_window, _("Please run command on both nodes:\n")+"/usr/sbin/drbd_init\n", image=gtk.STOCK_DIALOG_INFO)
+		return 0
+
+	def create_drbd_resource(self, ms_drbd_name, drbd_name, type):
+		#添加drbd资源
+		impl = getDOMImplementation()
+		newdoc = impl.createDocument(None, "master", None)
+		new_master = newdoc.documentElement
+		new_master.setAttribute('id', ms_drbd_name)
+
+		newdoc = impl.createDocument(None, "meta_attributes", None)
+		new_meta = newdoc.documentElement
+		new_meta.setAttribute('id', ms_drbd_name+"-meta_attributes")
+
+		value = {}
+		value["clone-max"] = "2"
+		if type == "active":
+			value["master-max"] = "2"
+		else:
+			value["master-max"] = "1"
+		value["notify"] = "true"
+		value["target-role"] = "Stopped"
+
+		for name in value.keys():
+			newdoc = impl.createDocument(None, "nvpair", None)
+			new_nvpair = newdoc.documentElement
+			new_nvpair.setAttribute('id', ms_drbd_name+"-meta_attributes-"+name)
+			new_nvpair.setAttribute('name', name)
+			new_nvpair.setAttribute('value', value[name])
+			new_meta.appendChild(new_nvpair)
+
+		newdoc = impl.createDocument(None, "primitive", None)
+		new_primitive = newdoc.documentElement
+		new_primitive.setAttribute('class', "ocf")
+		new_primitive.setAttribute('id', drbd_name)
+		new_primitive.setAttribute('provider', "common")
+		new_primitive.setAttribute('type', "drbd")
+
+		newdoc = impl.createDocument(None, "operations", None)
+		new_operation = newdoc.documentElement
+		new_operation.setAttribute('id', drbd_name+"-operations")
+
+		newdoc = impl.createDocument(None, "op", None)
+		new_op = newdoc.documentElement
+		new_op.setAttribute('id', drbd_name+"-op-monitor-Slave-20")
+		new_op.setAttribute('interval', "20")
+		new_op.setAttribute('name', "monitor")
+		new_op.setAttribute('role', "Slave")
+		new_op.setAttribute('timeout', "20")
+		new_operation.appendChild(new_op)
+
+		newdoc = impl.createDocument(None, "op", None)
+		new_op = newdoc.documentElement
+		new_op.setAttribute('id', drbd_name+"-op-monitor-Master-10")
+		new_op.setAttribute('interval', "10")
+		new_op.setAttribute('name', "monitor")
+		new_op.setAttribute('role', "Master")
+		new_op.setAttribute('timeout', "20")
+		new_operation.appendChild(new_op)
+
+		new_primitive.appendChild(new_operation)
+
+		newdoc = impl.createDocument(None, "instance_attributes", None)
+		new_ins = newdoc.documentElement
+		new_ins.setAttribute('id', drbd_name+"-instance_attributes")
+
+		newdoc = impl.createDocument(None, "nvpair", None)
+		new_nvpair = newdoc.documentElement
+		new_nvpair.setAttribute('id', drbd_name+"-instance_attributes-drbd_resource")
+		new_nvpair.setAttribute('name', "drbd_resource")
+		new_nvpair.setAttribute('value', "drbd0")
+		new_ins.appendChild(new_nvpair)
+
+		new_primitive.appendChild(new_ins)
+		new_master.appendChild(new_meta)
+		new_master.appendChild(new_primitive)
+
+		xml_str = new_master.toxml().replace("\n", "")
+
+		manager.cib_do_cmd("cib_create\n%s\n%s"%(str("resources"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+		return 0
+
+	def edit_drbd_resource(self, ms_id, id, master_max):
+		for xml_node in self.mirror_rsc_list_org["ms_drbd"]:
+			if xml_node.getAttribute('id') != id :
+				continue
+			ms_drbd_node = xml_node.parentNode
+			for nvpair in ms_drbd_node.getElementsByTagName('nvpair'):
+                        	if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+                                	continue
+	                        if nvpair.getAttribute("name") == "master-max":
+					if nvpair.getAttribute("value") == master_max:
+						return 0
+					else:
+	        	                        nvpair.setAttribute("value", master_max)
+
+		xml_str = ms_drbd_node.toxml().replace("\n", "")
+
+                manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("master"), str(xml_str)))
+                if manager.failed_reason != "" :
+                        msgbox(top_window, manager.failed_reason)
+                        return 1
+                return 0
+
+	def create_group_fs_resource(self, group_name, fs_name):
+		#add group(fs)
+		impl = getDOMImplementation()
+		newdoc = impl.createDocument(None, "group", None)
+		new_group = newdoc.documentElement
+		new_group.setAttribute('id', group_name)
+
+		newdoc = impl.createDocument(None, "meta_attributes", None)
+		new_meta = newdoc.documentElement
+		new_meta.setAttribute('id', group_name+"-meta_attributes")
+
+		newdoc = impl.createDocument(None, "nvpair", None)
+		new_nvpair = newdoc.documentElement
+		new_nvpair.setAttribute('id', group_name+"-meta_attributes-target-role")
+		new_nvpair.setAttribute('name', "target-role")
+		new_nvpair.setAttribute('value', "Stopped")
+		new_meta.appendChild(new_nvpair)
+		new_group.appendChild(new_meta)
+
+		newdoc = impl.createDocument(None, "primitive", None)
+		new_primitive = newdoc.documentElement
+		new_primitive.setAttribute('class', "ocf")
+		new_primitive.setAttribute('id', fs_name)
+		new_primitive.setAttribute('provider', "common")
+		new_primitive.setAttribute('type', "Filesystem")
+
+		newdoc = impl.createDocument(None, "operations", None)
+		new_operations = newdoc.documentElement
+		new_operations.setAttribute('id', fs_name+"-operations")
+
+		newdoc = impl.createDocument(None, "op", None)
+		new_op = newdoc.documentElement
+		new_op.setAttribute('id', fs_name+"-op-monitor-20")
+		new_op.setAttribute('interval', "20")
+		new_op.setAttribute('name', "monitor")
+		new_op.setAttribute('timeout', "40")
+		new_operations.appendChild(new_op)
+		new_primitive.appendChild(new_operations)
+
+		newdoc = impl.createDocument(None, "instance_attributes", None)
+		new_ins = newdoc.documentElement
+		new_ins.setAttribute('id', fs_name+"-instance_attributes")
+
+		newdoc = impl.createDocument(None, "nvpair", None)
+		new_nvpair = newdoc.documentElement
+		new_nvpair.setAttribute('id', fs_name+"-instance_attributes-device")
+		new_nvpair.setAttribute('name', "device")
+		new_nvpair.setAttribute('value', "/dev/drbd0")
+		new_ins.appendChild(new_nvpair)
+
+		newdoc = impl.createDocument(None, "nvpair", None)
+		new_nvpair = newdoc.documentElement
+		new_nvpair.setAttribute('id', fs_name+"-instance_attributes-directory")
+		new_nvpair.setAttribute('name', "directory")
+		new_nvpair.setAttribute('value', self.mirror_glade.get_widget("dir").get_text())
+		new_ins.appendChild(new_nvpair)
+
+		newdoc = impl.createDocument(None, "nvpair", None)
+		new_nvpair = newdoc.documentElement
+		new_nvpair.setAttribute('id', fs_name+"-instance_attributes-fstype")
+		new_nvpair.setAttribute('name', "fstype")
+		new_nvpair.setAttribute('value', "ext4")
+		new_ins.appendChild(new_nvpair)
+
+		new_primitive.appendChild(new_ins)
+		new_group.appendChild(new_primitive)
+
+		xml_str = new_group.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_create\n%s\n%s"%(str("resources"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+
+		return 0
+
+	def edit_fs_resource(self, rsc_type, id, device, dir):
+		for xml_node in self.mirror_rsc_list_org[rsc_type]:
+			if xml_node.getAttribute('id') != id :
+				continue
+			for nvpair in xml_node.getElementsByTagName('nvpair'):
+                        	if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+                                	continue
+	                        if nvpair.getAttribute("name") == "directory":
+        	                        nvpair.setAttribute("value", dir)
+	                        elif nvpair.getAttribute("name") == "device":
+        	                        nvpair.setAttribute("value", device)
+
+		xml_str = xml_node.toxml().replace("\n", "")
+
+                manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("primitive"), str(xml_str)))
+                if manager.failed_reason != "" :
+                        msgbox(top_window, manager.failed_reason)
+                        return 1
+                return 0
+
+	#添加clone dlm+gfs+fs资源
+	def create_gfs_resource(self, disk, dir):
+		add_gfs(disk, dir)
+
+		return 0
+
+	#add NKSync_update resource
+	def create_rsync_update_resource(self,value):
+		group_id = self.sync_update_group_name
+		rsc_id = self.sync_update_name
+
+		impl = getDOMImplementation()
+		newdoc = impl.createDocument(None, "group", None)
+		new_group = newdoc.documentElement
+		new_group.setAttribute('id', group_id)
+
+                newdoc = impl.createDocument(None, "meta_attributes", None)
+                new_meta = newdoc.documentElement
+                new_meta.setAttribute('id', group_id+"-meta_attributes")
+
+                newdoc = impl.createDocument(None, "nvpair", None)
+                new_nvpair = newdoc.documentElement
+                new_nvpair.setAttribute('id', group_id+"-meta_attributes-target-role")
+                new_nvpair.setAttribute('name', "target-role")
+                new_nvpair.setAttribute('value', "Stopped")
+                new_meta.appendChild(new_nvpair)
+		new_group.appendChild(new_meta)
+
+		newdoc = impl.createDocument(None, "primitive", None)
+		new_primitive = newdoc.documentElement
+		new_primitive.setAttribute("class", "ocf")
+		new_primitive.setAttribute("id", rsc_id)
+		new_primitive.setAttribute("provider", "common")
+		new_primitive.setAttribute("type", "NKSync_update")
+
+                newdoc = impl.createDocument(None, "operations", None)
+                new_operation = newdoc.documentElement
+                new_operation.setAttribute('id', rsc_id+"-operations")
+
+                newdoc = impl.createDocument(None, "op", None)
+                new_op = newdoc.documentElement
+                new_op.setAttribute('id', rsc_id+"-op-monitor-10")
+                new_op.setAttribute('interval', "10")
+                new_op.setAttribute('name', "monitor")
+                new_op.setAttribute('timeout', "20")
+                new_operation.appendChild(new_op)
+		new_primitive.appendChild(new_operation)
+
+                newdoc = impl.createDocument(None, "instance_attributes", None)
+                new_ins = newdoc.documentElement
+                new_ins.setAttribute('id', rsc_id+"-instance_attributes")
+
+		for nv in ["node_list", "passwd_list", "data_dir"]:
+			newdoc = impl.createDocument(None, "nvpair", None)
+			new_nvpair = newdoc.documentElement
+			new_nvpair.setAttribute('id', rsc_id+"-instance_attributes-"+nv)
+			new_nvpair.setAttribute('name', nv)
+			new_nvpair.setAttribute('value', value[nv])
+			new_ins.appendChild(new_nvpair)
+
+		new_primitive.appendChild(new_ins)
+		new_group.appendChild(new_primitive)
+
+		xml_str = new_group.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_create\n%s\n%s"%(str("resources"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+
+		return 0
+
+	def edit_rsync_update_resource(self, id, value):
+		for xml_node in self.mirror_rsc_list_org["group_update"]:
+			if xml_node.getAttribute('id') == id :
+				break
+		for nvpair in xml_node.getElementsByTagName('nvpair'):
+			if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			if nvpair.getAttribute("name") == "node_list":
+				nvpair.setAttribute("value", value["node_list"])
+			elif nvpair.getAttribute("name") == "passwd_list":
+				nvpair.setAttribute("value", value["passwd_list"])
+			elif nvpair.getAttribute("name") == "data_dir":
+				nvpair.setAttribute("value", value["data_dir"])
+		xml_str = xml_node.toxml().replace("\n", "")
+
+		manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("primitive"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+		return 0
+
+	#保存双机主备模式配置
+	def mirror_save_drbd_ps(self):
+		if self.ms_drbd_name == "":
+			self.ms_drbd_name = str("ms-drbd")
+		if self.drbd_name == "":
+			self.drbd_name = str("drbd-ps")
+		if self.group_fs_name == "":
+			self.group_fs_name = str("group-fs-ps")
+		if self.fs_name == "":
+			self.fs_name = str("fs-ps")
+
+		dir = self.mirror_glade.get_widget("dir").get_text()
+		device = "/dev/drbd0"
+
+		#将信息保存至drbdx.res配置文件同步
+		if self.mirror_save_drbd(self.ms_drbd_name, "standby") == 1:
+			return 1
+
+		#脚本运行完成后添加drbd+group(fs)资源；
+		if self.mirror_node_type_org != "two" or self.mirror_type_org != "standby":
+			if self.mirror_del_org() == 1:
+				return 1
+			if self.create_drbd_resource(self.ms_drbd_name, self.drbd_name, "standby") == 1:
+				return 1
+			if self.create_group_fs_resource(self.group_fs_name, self.fs_name) == 1:
+				return 1
+		else:
+			if self.edit_drbd_resource(self.ms_drbd_name, self.drbd_name, "1") == 1:
+				return 1
+			if self.edit_fs_resource("group_fs", self.fs_name, device, dir) == 1:
+				return 1
+		#add location
+		self.xml_constraints = manager.xml_nodes["cib"].getElementsByTagName("constraints")[0]
+		if self.edit_location(self.ms_drbd_name, False) == 1:
+			return 1
+		if self.edit_location(self.group_fs_name, True) == 1:
+			return 1
+		xml_str = self.xml_constraints.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("constraints"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+
+		return 0
+
+	#保存双机主主模式配置
+	def mirror_save_drbd_pp(self):
+		if self.ms_drbd_name == "":
+			self.ms_drbd_name = str("ms-drbd")
+		if self.drbd_name == "":
+			self.drbd_name = str("drbd-pp")
+		if self.dlm_name == "":
+			self.dlm_name = str("dlm-drbd")
+		if self.gfs_name == "":
+			self.gfs_name = str("gfs-drbd")
+		if self.fs_name == "":
+			self.fs_name = str("fs-drbd")
+		if self.group_gfs_name == "":
+			self.group_gfs_name = str("group-gfs-drbd")
+		if self.clone_group_name == "":
+			self.clone_group_name = str("clone-gfs-drbd")
+
+		dir = self.mirror_glade.get_widget("dir").get_text()
+		device = "/dev/drbd0"
+
+		#将信息保存至drbdx.res配置文件同步
+		if self.mirror_save_drbd(self.ms_drbd_name, "active") == 1:
+			return 1
+
+		#脚本运行完成后添加drbd+dlm+gfs+fs+fencing资源
+		if self.mirror_node_type_org != "two" or self.mirror_type_org != "active":
+			if self.mirror_del_org() == 1:
+				return 1
+			if self.create_drbd_resource(self.ms_drbd_name, self.drbd_name, "active") == 1:
+				return 1
+			if self.create_gfs_resource(device, dir) == 1:
+				return 1
+		else:
+			if self.edit_fs_resource("clone_fs", self.fs_name, device, dir) == 1:
+				return 1
+			if self.edit_drbd_resource(self.ms_drbd_name, self.drbd_name, "2") == 1:
+				return 1
+
+		#add location
+		self.xml_constraints = manager.xml_nodes["cib"].getElementsByTagName("constraints")[0]
+		if self.edit_location(self.ms_drbd_name, True) == 1:
+			return 1
+		if self.edit_location(self.clone_group_name, True) == 1:
+			return 1
+		xml_str = self.xml_constraints.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("constraints"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+		return 0
+
+	def get_mirror_node_passwd(self, model, path, iter, str_node_passwd):
+		node = model.get_value(iter, 0)
+		password = model.get_value(iter, 1)
+		passwd = manager.query("pwd_encode\n%s"%(str(password)))[0]
+		str_node_passwd[2] = str_node_passwd[2]+1
+
+		if str_node_passwd[0] == "":
+			str_node_passwd[0] = node
+		else:
+			str_node_passwd[0] = str_node_passwd[0] + " " + node
+		if str_node_passwd[1] == "":
+			str_node_passwd[1] = passwd
+		else:
+			str_node_passwd[1] = str_node_passwd[1] + " " + passwd
+
+	def mirror_more_ps_save_check(self, len, dir, main_node_active):
+		if len < 2:
+			msgbox(top_window, _("There must be two nodes in the nodelist at least!"))
+			return 1
+			
+		if main_node_active < 0:
+			msgbox(top_window, _("Please select the main node"))
+			return 1
+
+		if self.check_dir_exist(dir, "mirror", main_node_active) == 1:
+			return 1
+		return 0
+
+	#保存多机单主模式配置
+	def mirror_save_more_ps(self):
+		if self.sync_update_group_name == "":
+			self.sync_update_group_name = str("group-sync-update")
+
+		if self.sync_update_name == "":
+			self.sync_update_name = str("sync-update")
+
+		str_node_passwd = ["","", 0]
+		model = self.mirror_glade.get_widget("node_list").get_model()
+		model.foreach(self.get_mirror_node_passwd, str_node_passwd)
+
+		main_node_active = self.mirror_glade.get_widget('main_node').get_active()
+
+                dir = self.mirror_glade.get_widget("dir").get_text()
+		if self.mirror_more_ps_save_check(str_node_passwd[2], dir, main_node_active) == 1:
+			return 1
+
+		main_node_mode = self.mirror_glade.get_widget('main_node').get_model()
+		main_node = main_node_mode[main_node_active][0]
+
+                value = {}
+                value["node_list"] = str_node_passwd[0]
+                value["passwd_list"] = str_node_passwd[1]
+                value["data_dir"] = dir
+
+		if self.sync_update_group_name not in self.rsc_location_score.keys():
+			self.get_rsc_location(self.sync_update_group_name)
+		location_score = self.rsc_location_score[self.sync_update_group_name]
+		self.new_location_score = {}
+		for node in self.nodes:
+			if node in self.mirror_no_run_node_list:
+				self.new_location_score[node] = str('-INFINITY')
+			else:
+				score=16000-value["node_list"].split().index(node)*1000
+				if value["node_list"].split().index(node) > value["node_list"].split().index(main_node):
+					score=score+1000
+				self.new_location_score[node] = str(score)
+
+		self.new_location_score[main_node] = str('20000')
+
+		#添加rsync1资源
+		if self.mirror_node_type_org != "multi" or self.mirror_type_org != "standby":
+			if self.mirror_del_org() == 1:
+				return 1
+			if self.create_rsync_update_resource(value) == 1:
+				return 1
+		else:
+			if self.edit_rsync_update_resource(self.sync_update_name, value) == 1:
+				return 1
+
+		#add location
+		self.xml_constraints = manager.xml_nodes["cib"].getElementsByTagName("constraints")[0]
+		if self.edit_location(self.sync_update_group_name, False) == 1:
+			return 1
+		xml_str = self.xml_constraints.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("constraints"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+
+		return 0
+
+	def mirror_more_pp_save_check(self, len, dir, device):
+		if len < 2:
+			msgbox(top_window, _("There must be two nodes in the nodelist at least!"))
+			return 1
+			
+		if not manager.check_device(device):
+                        msgbox(top_window, _("Please input the device you want!\n"))
+                        return 1
+
+		if self.check_dir_exist(dir, "mirror") == 1:
+			return 1
+		return 0
+
+	#保存多机全主模式配置
+	def mirror_save_more_pp(self):
+		dir = self.mirror_glade.get_widget("dir").get_text()
+		device = self.mirror_glade.get_widget("device").get_text()
+		if self.mirror_more_pp_save_check(len(self.mirror_main_node_list), dir, device) == 1:
+			return 1
+
+		if self.dlm_name == "":
+			self.dlm_name = str("dlm")
+		if self.gfs_name == "":
+			self.gfs_name = str("gfs")
+		if self.fs_name == "":
+			self.fs_name = str("fs")
+		if self.group_gfs_name == "":
+			self.group_gfs_name = str("group-gfs")
+		if self.clone_group_name == "":
+			self.clone_group_name = str("clone-gfs")
+
+		if self.clone_group_name not in self.rsc_location_score.keys():
+			self.get_rsc_location(self.clone_group_name)
+		location_score = self.rsc_location_score[self.clone_group_name]
+		self.new_location_score = {}
+		for node in self.nodes:
+			if node in self.mirror_no_run_node_list:
+				self.new_location_score[node] = str('-INFINITY')
+			elif self.is_larger(location_score[node], 0):
+				self.new_location_score[node] = location_score[node]
+			else:
+				self.new_location_score[node] = str('16000')
+
+		#添加dlm+gfs+fs资源
+		if self.mirror_node_type_org != "multi" or self.mirror_type_org != "active":
+			if self.mirror_del_org() == 1:
+				return 1
+			if self.create_gfs_resource(device, dir) == 1:
+				return 1
+		else:
+			if self.edit_fs_resource("clone_fs", self.fs_name, device, dir) == 1:
+				return 1
+
+		#add location
+		self.xml_constraints = manager.xml_nodes["cib"].getElementsByTagName("constraints")[0]
+		'''if self.edit_location(self.clone_dlm_name, True) == 1:
+			return 1
+		if self.edit_location(self.clone_gfs_name, False) == 1:
+			return 1
+		if self.edit_location(self.clone_fs_name, True) == 1:
+			return 1'''
+		if self.edit_location(self.clone_group_name, False) == 1:
+			return 1
+
+		xml_str = self.xml_constraints.toxml().replace("\n", "")
+		manager.cib_do_cmd("cib_replace\n%s\n%s"%(str("constraints"), str(xml_str)))
+		if manager.failed_reason != "" :
+			msgbox(top_window, manager.failed_reason)
+			return 1
+		if device != self.mirror_main_device_org:
+			msgbox(top_window, _("Please run the following command to format the device, and then start the resources:\n")+"/usr/sbin/gfs_init.sh")
+		return 0
+
+	#读取DRBD配置文件内容
+        def get_drbd_file(self):
+                f = manager.query("get_file_context\n"+self.drbd_filename)
+                if f == None or f == []:
+                	f = manager.do_cmd("get_file_context\n"+self.drbd_filename)
+			if f == None or f == []:
+                        	return
+
+                drbd = {}
+                index = 0
+                while index < len(f):
+                        #self.file_drbd_org.append(f[index])
+                        if "#" in f[index]:
+                                strline = f[index].split("#")[0]
+                        else:
+                                strline = f[index]
+
+                        strline = strline.strip()
+                        if drbd.has_key("name1") and drbd.has_key("ip1") and drbd.has_key("disk1"):
+                                m = re.match('^on(.+){$', strline)
+                                if m is not None:
+                                        drbd["name2"] = m.groups()[0].strip()
+                                m = re.match('^disk(.+);$', strline)
+                                if m is not None:
+                                        drbd["disk2"] = m.groups()[0].strip()
+
+                                m = re.match('^address(.+):(.+);$', strline)
+                                if m is not None:
+                                        drbd["ip2"] = m.groups()[0].strip()
+                        else:
+                                m = re.match('^on(.+){$', strline)
+                                if m is not None:
+                                        drbd["name1"] = m.groups()[0].strip()
+                                m = re.match('^disk(.+);$', strline)
+                                if m is not None:
+                                        drbd["disk1"] = m.groups()[0].strip()
+
+                                m = re.match('^address(.+):(.+);$', strline)
+                                if m is not None:
+                                        drbd["ip1"] = m.groups()[0].strip()
+                        index = index + 1
+
+                if drbd.has_key("name1") and drbd.has_key("ip1") and drbd.has_key("disk1") and drbd.has_key("name2") and drbd.has_key("ip2") and drbd.has_key("disk2"):
+                        return drbd
+                return
+
+
+	def check_drbd(self, name1, ip1, disk1, name2, ip2, disk2, dir):
+		if name1 == name2 :
+			msgbox(top_window, _("Please confirm the two nodes, they must be different!\n"))
+			return 1
+
+		if name1 == "" or name2 =="":
+			msgbox(top_window, _("Please select nodes!\n"))
+			return 1
+
+		m = re.match('^(\d+)\.(\d+)\.(\d+)\.(\d+)$', ip1)
+                if m is None or int(m.groups()[0])<=0 or int(m.groups()[0])>255 or int(m.groups()[1])<0 or int(m.groups()[1])>255 or int(m.groups()[2])<0 or int(m.groups()[2])>255 or int(m.groups()[3])<0 or int(m.groups()[3])>255 :
+                        msgbox(top_window, _("Please confirm the IP address of %s!\n")%(name1))
+                        return 1
+
+		m = re.match('^(\d+)\.(\d+)\.(\d+)\.(\d+)$', ip2)
+                if m is None or int(m.groups()[0])<=0 or int(m.groups()[0])>255 or int(m.groups()[1])<0 or int(m.groups()[1])>255 or int(m.groups()[2])<0 or int(m.groups()[2])>255 or int(m.groups()[3])<0 or int(m.groups()[3])>255 :
+                        msgbox(top_window, _("Please confirm the IP address of %s!\n")%(name2))
+                        return 1
+
+		if str(ip1) == str(ip2):
+                        msgbox(top_window, _("Please confirm the IP addresses! They must be different!\n"))
+                        return 1
+
+		'''self.node_ip = self.get_node_ip()
+
+		if name1 in manager.get_active_nodes():
+			ips = self.node_ip[name1]
+			if ip1 not in ips:
+				msgbox(top_window, _("Please check the ip address of %s")%(str(name1)))
+				return 1
+		else:
+			msgbox(top_window, _("The Node %s is not on line.\n")%(str(name1))+_("So you must make sure the IP address is correct by yourself!"))
+
+		if name2 in manager.get_active_nodes():
+			ips = self.node_ip[name2]
+			if ip2 not in ips:
+				msgbox(top_window, _("Please check the ip address of %s")%(str(name2)))
+				return 1
+		else:
+			msgbox(top_window, _("The Node %s is not on line.\n")%(str(name2))+_("So you must make sure the IP address is correct by yourself!"))'''
+
+		if not manager.check_device(disk1) or not manager.check_device(disk2):
+			msgbox(top_window, _("Please input the device you want!\n"))
+			return 1
+
+		if self.check_dir_exist(dir, "drbd") == 1:
+			return 1
+
+		return 0
+
+	def save_drbd_file(self, name1, ip1, disk1, name2, ip2, disk2, type):
+		#delete drbd file
+		#if len(self.drbd_list) == 0:
+                #        manager.do_cmd("save_file_context\nfalse\nfalse\n%s\n%s"%(str(self.drbd_filename), str("")))
+                #        if manager.failed_reason != "" :
+                #                msgbox(top_window, manager.failed_reason)
+                #                return
+
+		content_str = ""
+		content_str = content_str + "resource drbd0 {" + "\n"
+		content_str = content_str + "\ton " + name1 + " {\n"
+		content_str = content_str + "\t\tdevice      /dev/drbd0;" + "\n"
+		content_str = content_str + "\t\tdisk        " + disk1 + ";\n"
+		content_str = content_str + "\t\taddress     " + ip1 + ":7789;\n"
+		content_str = content_str + "\t\tmeta-disk   internal;" + "\n"
+		content_str = content_str + "\t}" + "\n"
+                content_str = content_str + "\ton " + name2 + " {\n"
+                content_str = content_str + "\t\tdevice      /dev/drbd0;" + "\n"
+                content_str = content_str + "\t\tdisk        " + disk2 + ";\n"
+                content_str = content_str + "\t\taddress     " + ip2 + ":7789;\n"
+                content_str = content_str + "\t\tmeta-disk   internal;" + "\n"
+                content_str = content_str + "\t}" + "\n"
+		content_str = content_str + "}"
+
+	        manager.do_cmd("save_file_context\nfalse\nfalse\n%s\n%s"%(str(self.drbd_filename), str(content_str)))
+        	if manager.failed_reason != "" :
+                        msgbox(top_window, manager.failed_reason)
+			return 1
+
+		cmd = "grep allow-two-primaries " + self.drbd_global_conf
+		try:
+			allow_two = manager.do_cmd_twice("system\n"+cmd)[0]
+		except:
+			allow_two = "#\sallow-two-primaries"
+
+		m = re.match("^.*(#\sallow-two-primaries).*$", str(allow_two))
+		if m is not None:
+			mirror_org_type = "standby"
+		else:
+			mirror_org_type = "active"
+		if type != mirror_org_type:
+			if type == "active":
+				cmd = "sed -i s/'# allow-two-primaries'/allow-two-primaries/ " + self.drbd_global_conf
+			else:
+				cmd = "sed -i s/allow-two-primaries/'# allow-two-primaries'/ " + self.drbd_global_conf
+			manager.do_cmd_twice("system\n"+cmd)
+        		if manager.failed_reason != "" :
+                	        msgbox(top_window, manager.failed_reason)
+				return 1
+
+		if type == "active":
+			msgbox(top_window, _("The DRBD changes has saved.\n")+_("But the Configuration File must be synchronized to other nodes.\n")+_("And then please run command on both nodes:\n")+"/usr/sbin/drbd_init gfs2\n", image=gtk.STOCK_DIALOG_INFO)
+		else:
+			msgbox(top_window, _("The DRBD changes has saved.\n")+_("But the Configuration File must be synchronized to other nodes.\n")+_("And then please run command on both nodes:\n")+"/usr/sbin/drbd_init\n", image=gtk.STOCK_DIALOG_INFO)
+
+		if type != self.mirror_type_org:
+	                file = [self.drbd_filename, self.drbd_global_conf]
+		else:
+	                file = [self.drbd_filename]
+		sync_node = []
+		sync_node.append(name1)
+		sync_node.append(name2)
+                syncview(self.top_window, self.manager, file, _("Disk Mirroring Configuration"), sync_node)
+		return 0
+
+	def add_score(self, score1, score2):
+		if score1 in ["-INFINITY", "-infinity"] or score2 in ["-INFINITY", "-infinity"] :
+			return str("-INFINITY")
+                if score1 in ["INFINITY","+INFINITY", "infinity", "+infinity"] or score2 in ["INFINITY", "+INFINITY", "infinity", "+infinity"] :
+                        return str("INFINITY")
+		return str(int(score1)+int(score2))
+
+	#get rsc's location score and id
+	def get_rsc_location(self, rsc):
+                location_score = {}
+		for node in self.nodes:
+			location_score[node] = 0
+
+		location_id = {}
+
+                constraints = manager.query("get_rsc_constraints\n%s"%(str(rsc)))
+		if constraints != None:
+	                for cons in constraints :
+				m = re.match('^\s\s:\sNode\s(.*)\s*\(score=(.*)\,\sid=(.*)\)', cons)
+                	        if m is None :
+                        	        continue
+	                        if m.groups()[0].strip() in self.nodes: #location
+        	                        node = m.groups()[0].strip()
+                	                score = m.groups()[1].strip()
+					id = m.groups()[2].strip()
+                                	if node in location_score.keys():
+                                        	location_score[node] = self.add_score(score, location_score[node])
+	                                else:
+        	                                location_score[node] = str(score)
+					if node not in location_id.keys():
+						location_id[node] = []
+					location_id[node].append(id)
+
+		self.rsc_location_score[rsc] = location_score
+		self.rsc_location_id[rsc] = location_id
+
+	#根据LOCATION取RSC的主节点
+	def get_rsc_mainnode(self, rsc, type):
+		if rsc not in self.rsc_location_id.keys():
+			self.get_rsc_location(rsc)
+		location_score = self.rsc_location_score[rsc]
+		if type == "main":
+			max = 0
+			main_node = manager.get_dc()[0]
+			for node in location_score.keys():
+				if self.is_larger(location_score[node], max):
+					max= location_score[node]
+					main_node = node
+			return main_node
+		else:
+			no_run_node = []
+			for node in location_score.keys():
+				if self.is_larger(0, location_score[node]) :
+					no_run_node.append(node)
+			return no_run_node
+
+	def mirror_append_rsc(self, key, node):
+		if key not in self.mirror_rsc_list_org.keys():
+			self.mirror_rsc_list_org[key]=[]
+		self.mirror_rsc_list_org[key].append(node)
+
+	#实时镜像初始化
+	def mirror_init(self):
+		#根据已添加的资源类型及相关参数确定是否配置了实时镜像，根据配置节点的个数确定其为两点镜像还是多点镜像，确定其为单主模式还是多主模式，根据模式的不同获取不同的参数
+		#获取资源列表rsc_list
+		self.mirror_rsc_list_org={}  #原始镜像资源列表
+		#self.mirror_dir_org = ''  #原始目录
+		#self.mirror_node_password_list_org = {}  #节点名、密码列表
+		#str_node = ""
+		#str_passwd = ""
+		mirror_has_gfs = False              #是否存在GFS资源
+		self.mirror_main_node_org = ""
+		self.mirror_no_run_node_org = []
+		self.rsc_location_id = {}
+		self.rsc_location_score = {}
+		self.mirror_is_use = False
+		self.mirror_node_type_org = ""
+		self.mirror_type_org=""
+		self.mirror_two_active_init = True
+
+		for primitive_node in manager.xml_nodes["cib"].getElementsByTagName("primitive") :
+			rsc_type = primitive_node.getAttribute("type")
+			parent_node = primitive_node.parentNode
+			parent_id = parent_node.getAttribute("id")
+			parent_type = manager.get_rsc_type(str(parent_id))
+			if rsc_type == "Filesystem":#如果类型为filesystem且device 属性值为/dev/drbd0则为镜像资源
+				if parent_type in ['clone']:
+					self.mirror_append_rsc("clone_fs", primitive_node)
+				elif parent_type in ['group']:
+					if manager.get_rsc_type(parent_node.parentNode.getAttribute('id')) in ["clone"]:
+						self.mirror_append_rsc("clone_fs", primitive_node)
+					else:
+						self.mirror_append_rsc("group_fs", primitive_node)
+			elif rsc_type == "controld":#如果类型为dlm，gfs，and rsc parent is clone则为镜像资源
+				controld_attr = []
+				for nvpair in primitive_node.getElementsByTagName('nvpair'):
+					if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+						continue
+					if nvpair.getAttribute('name') == 'args' and nvpair.getAttribute('value') == "-g 0" :
+						controld_attr.append('gfs_args') 
+					elif nvpair.getAttribute('name') == 'daemon' and nvpair.getAttribute('value') == "gfs_controld.pcmk" :
+						controld_attr.append('gfs_daemon')
+			
+				if parent_type in ["clone"]:
+					if 'gfs_args' in controld_attr and 'gfs_daemon'in controld_attr:
+						self.mirror_append_rsc("clone_gfs", primitive_node)
+					else:
+						self.mirror_append_rsc("clone_dlm", primitive_node)
+					self.mirror_no_run_node_org = self.get_rsc_mainnode(str(parent_id), "no_run")
+				elif parent_type in ['group']:
+					grandparent_id = parent_node.parentNode.getAttribute('id')
+					if manager.get_rsc_type(grandparent_id) in ["clone"]:
+						if 'gfs_args' in controld_attr and 'gfs_daemon'in controld_attr:
+							self.mirror_append_rsc("clone_gfs", primitive_node)
+						else:
+							self.mirror_append_rsc("clone_dlm", primitive_node)
+					self.mirror_no_run_node_org = self.get_rsc_mainnode(str(grandparent_id), "no_run")
+
+			elif rsc_type == "NKSync_update": #type is NKSync_update and parent is group
+				if parent_type in ["group"]:
+					self.mirror_append_rsc("group_update", primitive_node)
+			elif rsc_type == "drbd" :#rsc tyep is drbd and rsc parent is 主从资源
+				if parent_type in ["master"]:
+					self.mirror_append_rsc("ms_drbd", primitive_node)
+
+		if "clone_gfs" in self.mirror_rsc_list_org.keys() and "clone_dlm" in self.mirror_rsc_list_org.keys() and "clone_fs" in self.mirror_rsc_list_org.keys():
+			mirror_has_gfs = True
+
+		if "group_update" in self.mirror_rsc_list_org.keys():
+			self.mirror_is_use = True
+			self.mirror_node_type_org = "multi"
+			self.mirror_type_org="standby"#多机单主模式
+		elif "ms_drbd" in self.mirror_rsc_list_org.keys():
+			if "group_fs" in self.mirror_rsc_list_org.keys():
+				self.mirror_is_use = True
+				self.mirror_node_type_org = "two"
+				self.mirror_type_org="standby"#双机主备模式
+			elif mirror_has_gfs:
+				self.mirror_is_use = True
+				self.mirror_node_type_org = "two"
+				self.mirror_type_org="active"#双机主主模式
+		elif mirror_has_gfs:
+			self.mirror_is_use = True
+			self.mirror_node_type_org = "multi"
+			self.mirror_type_org="active"#双机主主模式
+		else:
+			#未配置实时镜像
+			self.mirror_is_use = False
+
+		return
+
+	#更新界面，根据初始化信息或用户操作刷新实时镜像界面
+	def mirror_update(self):
+		changed = self.changed
+		main_node_changed = self.main_node_changed
+		self.widget_mirror_is_use.set_active(self.mirror_is_use)
+		self.on_mirror_use_toggled(self.widget_mirror_is_use)
+		if self.mirror_is_use :
+			if self.mirror_node_type_org == "multi" :
+				self.widget_mirror_multi_nodes.set_active(True)
+				self.on_mirror_multi_nodes_toggled(self.widget_mirror_multi_nodes)
+			else:
+				self.widget_mirror_two_nodes.set_active(True)
+				self.on_mirror_two_nodes_toggled(self.widget_mirror_two_nodes)
+
+			if self.mirror_type_org == "active":
+				self.widget_mirror_active_mode.set_active(True)
+			else:
+				self.widget_mirror_standby_mode.set_active(True)
+		else:
+			self.widget_mirror_two_nodes.set_active(True)
+                        self.on_mirror_two_nodes_toggled(self.widget_mirror_two_nodes)
+
+		if len(manager.get_normal_nodes()) != 2:
+                       	self.widget_mirror_two_nodes.set_sensitive(False)
+			self.on_mirror_multi_nodes_toggled(self.widget_mirror_multi_nodes)
+
+		self.mirror_two_active_init = False
+		self.changed = changed
+		self.main_node_changed = main_node_changed
+		return
+
+	def on_mirror_two_nodes_toggled(self, widget):
+		if not widget.get_active():
+			self.changed = True
+			return
+
+		self.widget_mirror_standby_mode.set_label(_("active and standby"))
+		self.widget_mirror_active_mode.set_label(_("active and active"))
+		if self.mirror_node_type_org == "two" and self.mirror_type_org == "active":
+			self.widget_mirror_active_mode.set_active(True)
+			self.mirror_active_mode_active()
+		else:
+			self.widget_mirror_standby_mode.set_active(True)
+			self.mirror_standby_mode_active()
+		self.changed = True
+
+	def on_mirror_multi_nodes_toggled(self, widget):
+		if not widget.get_active():
+			self.changed = True
+			return
+
+		self.widget_mirror_standby_mode.set_label(_("one active"))
+		self.widget_mirror_active_mode.set_label(_("all active"))
+		if self.mirror_node_type_org == "multi" and self.mirror_type_org == "active":
+			self.widget_mirror_active_mode.set_active(True)
+			self.mirror_active_mode_active()
+		else:
+			self.widget_mirror_standby_mode.set_active(True)
+			self.mirror_standby_mode_active()
+		self.changed = True
+
+	def mirror_fs_init(self, gfs=True):
+		self.mirror_main_device_org = ""
+		self.mirror_dir_org = ""
+		if gfs:
+			#self.clone_fs_name = ""
+			self.group_gfs_name = ""
+			self.clone_group_name = ""
+			self.fs_name = ""
+			get_mirror_gfs = False
+			self.mirror_no_run_node_org = self.nodes
+			if "clone_fs" not in self.mirror_rsc_list_org.keys():
+				return
+			for primitive_node in self.mirror_rsc_list_org["clone_fs"]:
+				if get_mirror_gfs:
+					continue
+				for nvpair in primitive_node.getElementsByTagName('nvpair'):
+					if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+						continue
+					if nvpair.getAttribute('name') == 'device' :
+						self.mirror_main_device_org = nvpair.getAttribute('value')
+					elif nvpair.getAttribute('name') == 'directory':
+						self.mirror_dir_org = nvpair.getAttribute('value')
+					elif nvpair.getAttribute('name') == 'fstype' and nvpair.getAttribute('value') == 'gfs2':
+						get_mirror_gfs = True
+				if get_mirror_gfs:
+					self.fs_name = str(primitive_node.getAttribute("id"))
+					#self.clone_fs_name = str(primitive_node.parentNode.getAttribute("id"))
+					self.group_gfs_name = str(primitive_node.parentNode.getAttribute("id"))
+					self.clone_group_name = str(primitive_node.parentNode.parentNode.getAttribute("id"))
+					self.mirror_no_run_node_org = self.get_rsc_mainnode(str(self.clone_group_name), "no_run")
+		else:
+			self.group_fs_name = ""
+			self.fs_name = ""
+			get_mirror_group = False
+			if "group_fs" not in self.mirror_rsc_list_org.keys():
+				return
+			for primitive_node in self.mirror_rsc_list_org["group_fs"]:
+				if get_mirror_group:
+					continue
+				for nvpair in primitive_node.getElementsByTagName('nvpair'):
+					if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+						continue
+					if nvpair.getAttribute('name') == 'device' :
+						self.mirror_main_device_org = nvpair.getAttribute('value')
+						if self.mirror_main_device_org == "/dev/drbd0" :
+							get_mirror_group = True
+					elif nvpair.getAttribute('name') == 'directory':
+						self.mirror_dir_org = nvpair.getAttribute('value')
+				if get_mirror_group:
+					self.fs_name = str(primitive_node.getAttribute("id"))
+					self.group_fs_name = str(primitive_node.parentNode.getAttribute("id"))
+
+	def mirror_drbd_init(self):
+                self.mirror_main_ip_org = ""
+                self.mirror_main_disk_org = ""
+                self.mirror_slave_node_org = ""
+                self.mirror_slave_ip_org = ""
+                self.mirror_slave_disk_org = ""
+		self.ms_drbd_name = ""
+		self.drbd_name = ""
+		get_drbd_rsc = False
+		if "ms_drbd" not in self.mirror_rsc_list_org.keys():
+			return
+		for primitive_node in self.mirror_rsc_list_org["ms_drbd"]:
+			if get_drbd_rsc:
+				continue
+			for nvpair in primitive_node.getElementsByTagName('nvpair'):
+				if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+					continue
+				if nvpair.getAttribute('name') == 'drbd_resource' and nvpair.getAttribute('value')=="drbd0":
+					get_drbd_rsc = True
+			if get_drbd_rsc:
+				parent_node= primitive_node.parentNode
+				parent_id = parent_node.getAttribute("id")
+                		self.ms_drbd_name= str(parent_id)
+		                self.drbd_name = str(primitive_node.getAttribute("id"))
+				self.mirror_main_node_org = self.get_rsc_mainnode(parent_id, "main")
+
+		drbd = self.get_drbd_file()
+                if drbd != None :
+			if drbd["name1"] == self.mirror_main_node_org:
+				self.mirror_main_ip_org = drbd["ip1"]
+                                self.mirror_main_disk_org = drbd["disk1"]
+                                self.mirror_slave_node_org = drbd["name2"]
+                                self.mirror_slave_ip_org = drbd["ip2"]
+                                self.mirror_slave_disk_org = drbd["disk2"]
+			else:
+                                self.mirror_main_ip_org = drbd["ip2"]
+                                self.mirror_main_disk_org = drbd["disk2"]
+                                self.mirror_slave_node_org = drbd["name1"]
+                                self.mirror_slave_ip_org = drbd["ip1"]
+                                self.mirror_slave_disk_org = drbd["disk1"]
+		else:
+			msgbox(top_window, _("Please make sure you have configured the drbd file!"))
+			return
+
+	def update_drbd_mode(self, gfs):
+		self.mirror_drbd_init()
+		self.mirror_fs_init(gfs)
+
+		if gfs:
+			self.mirror_glade.get_widget("label1").set_text(_("Node1 Name:"))
+			self.mirror_glade.get_widget("label2").set_text(_("Node1 IP:"))
+			self.mirror_glade.get_widget("label3").set_text(_("Node1 Device:"))
+			self.mirror_glade.get_widget("label4").set_text(_("Node2 Name:"))
+			self.mirror_glade.get_widget("label5").set_text(_("Node2 IP:"))
+			self.mirror_glade.get_widget("label6").set_text(_("Node2 Device:"))
+		combo_name1_list = gtk.ListStore(gobject.TYPE_STRING)
+	        combo_name2_list = gtk.ListStore(gobject.TYPE_STRING)
+		i = 0
+		main_node_iter_active = 0
+		slave_node_iter_active = 0
+        	for node in self.nodes:
+                        combo_name1_list.append([node])
+                       	combo_name2_list.append([node])
+			if self.mirror_main_node_org == node:
+				main_node_iter_active = i
+			if self.mirror_slave_node_org == node:
+				slave_node_iter_active = i
+			i = i + 1
+	        self.mirror_glade.get_widget("main_node_name").set_model(combo_name1_list)
+	        self.mirror_glade.get_widget("slave_node_name").set_model(combo_name2_list)
+	        self.mirror_glade.get_widget("main_node_name").set_active(main_node_iter_active)
+	        self.mirror_glade.get_widget("slave_node_name").set_active(slave_node_iter_active)
+
+		self.mirror_glade.get_widget("main_node_name").connect('changed', self.on_mirror_changed)
+		self.mirror_glade.get_widget("slave_node_name").connect('changed', self.on_mirror_changed)
+		self.mirror_glade.get_widget("main_node_ip").connect('changed', self.on_mirror_changed)
+		self.mirror_glade.get_widget("slave_node_ip").connect('changed', self.on_mirror_changed)
+		self.mirror_glade.get_widget("main_node_device").connect('changed', self.on_mirror_changed)
+		self.mirror_glade.get_widget("slave_node_device").connect('changed', self.on_mirror_changed)
+		self.mirror_glade.get_widget("dir").connect('changed', self.on_mirror_changed)
+
+		if self.mirror_main_ip_org == "" or self.mirror_dir_org == "":
+			self.mirror_glade.get_widget("main_node_ip").set_text("")
+			self.mirror_glade.get_widget("main_node_device").set_text("")
+			self.mirror_glade.get_widget("slave_node_ip").set_text("")
+			self.mirror_glade.get_widget("slave_node_device").set_text("")
+			self.mirror_glade.get_widget("dir").set_text("")
+		else:
+			self.mirror_glade.get_widget("main_node_ip").set_text(self.mirror_main_ip_org)
+			self.mirror_glade.get_widget("main_node_device").set_text(self.mirror_main_disk_org)
+			self.mirror_glade.get_widget("slave_node_ip").set_text(self.mirror_slave_ip_org)
+			self.mirror_glade.get_widget("slave_node_device").set_text(self.mirror_slave_disk_org)
+			self.mirror_glade.get_widget("dir").set_text(self.mirror_dir_org)
+
+	def mirror_multi_one_node_add(self, widget):
+		node_active = self.mirror_glade.get_widget("node").get_active()
+		node_mode = self.mirror_glade.get_widget("node").get_model()
+		node = node_mode[node_active][0]
+
+		passwd = self.mirror_glade.get_widget("passwd").get_text()
+		if node == "" or passwd == "":
+			msgbox(top_window, _("Please input node and password!"))
+			return
+
+		if node in manager.get_active_nodes():
+			if self.check_node_passwd(node, passwd)==1:
+				return 
+		else:
+			msgbox(top_window, _("The Node %s is not on line.\n")%(str(node))+_("So you must make sure the password is correct by yourself!"))
+
+		if node in self.nodes:
+			self.mirror_no_run_node_list.remove(node)
+		self.mirror_multi_one_nodetree_list.append([node, passwd])
+		self.mirror_multi_one_mainnode_list.append([node])
+		iter = self.mirror_glade.get_widget("node").get_active_iter()
+		if iter :
+			self.mirror_multi_one_node_list.remove(iter)
+		self.mirror_glade.get_widget("node").set_active(0)
+		self.mirror_glade.get_widget("passwd").set_text("")
+		self.changed = True
+		return
+
+	def mirror_multi_one_node_del(self, widget):
+		selection = self.mirror_glade.get_widget("node_list").get_selection()
+                model, pathlist = selection.get_selected_rows()
+                data = ""
+                for path in pathlist:
+                        if not model[path][0]:
+                                continue
+                        iter = model.get_iter(path)
+			data = model.get_value(iter,0)
+			self.mirror_multi_one_nodetree_list.remove(iter)
+			self.mirror_multi_one_node_list.append([data])
+			if data in self.nodes:
+				self.mirror_no_run_node_list.append(data)
+
+		model = self.mirror_glade.get_widget("main_node").get_model()
+		root = model.get_iter_first()
+		while root:
+			if model.get_value(root, 0) == data:
+				model.remove(root)
+				break
+			root = model.iter_next(root)
+			
+                self.changed = True
+                return
+
+	def mirror_update_init(self):
+		self.mirror_node_password_list_org = {}
+		self.mirror_dir_org = ""
+		self.sync_update_group_name = ""
+		self.sync_update_name = ""
+		if "group_update" in self.mirror_rsc_list_org.keys():
+			primitive_node = self.mirror_rsc_list_org["group_update"][0]
+		else:
+			return
+
+		for nvpair in primitive_node.getElementsByTagName('nvpair'):
+			if nvpair.nodeType != xml.dom.Node.ELEMENT_NODE :
+				continue
+			if nvpair.getAttribute('name') == 'node_list':
+				str_node = nvpair.getAttribute('value')
+			elif nvpair.getAttribute('name') == 'passwd_list':
+				str_passwd = nvpair.getAttribute('value')
+			elif nvpair.getAttribute('name') == 'data_dir':
+				self.mirror_dir_org = nvpair.getAttribute('value')
+
+                if str_node != "":
+                        nodelist = str_node.split()
+                        passwdlist = str_passwd.split()
+                        if len(nodelist) != len(passwdlist):
+                                msgbox(top_window, _("Please Make sure to match the node and password!"))
+                        index = 0
+                        while index < len(nodelist):
+                                node = nodelist[index]
+                                if index < len(passwdlist):
+                                        passwd = passwdlist[index]
+					passwd = manager.query("pwd_decode\n%s"%(str(passwd)))[0]
+                                else:
+                                        passwd = ""
+                                self.mirror_node_password_list_org[node] = passwd
+                                index = index + 1
+
+		parent_node = primitive_node.parentNode
+		self.mirror_main_node_org = self.get_rsc_mainnode(str(parent_node.getAttribute("id")), "main")
+		self.sync_update_group_name = str(parent_node.getAttribute("id"))
+		self.sync_update_name = primitive_node.getAttribute("id")
+		return
+
+	def update_multi_oneactive_mode(self):
+		self.mirror_update_init()
+
+		self.mirror_multi_one_nodetree_list = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
+		self.mirror_multi_one_node_list = gtk.ListStore(gobject.TYPE_STRING)
+		self.mirror_multi_one_mainnode_list = gtk.ListStore(gobject.TYPE_STRING)
+		self.mirror_no_run_node_list = []
+
+		index = 0
+		i = 0
+		for node in self.nodes:
+			if node not in self.mirror_node_password_list_org.keys():
+				self.mirror_multi_one_node_list.append([node])
+				self.mirror_no_run_node_list.append(node)
+			else:
+				passwd = self.mirror_node_password_list_org[node]
+				self.mirror_multi_one_nodetree_list.append([node, passwd])
+				self.mirror_multi_one_mainnode_list.append([node])
+				if node == self.mirror_main_node_org:
+					index = i
+				i = i + 1
+
+		self.mirror_glade.get_widget("node").set_model(self.mirror_multi_one_node_list)
+		renderer = gtk.CellRendererText()
+		column = gtk.TreeViewColumn(_("Node"), renderer, text=0)
+		self.mirror_glade.get_widget("node_list").append_column(column)
+		renderer = gtk.CellRendererText()
+		column = gtk.TreeViewColumn(_("Password"), renderer, text=1)
+		column.set_visible(False)
+		self.mirror_glade.get_widget("node_list").append_column(column)
+		self.mirror_glade.get_widget("node_list").get_selection().set_mode(gtk.SELECTION_MULTIPLE)
+		self.mirror_glade.get_widget("node_list").set_model(self.mirror_multi_one_nodetree_list)
+
+		self.mirror_glade.get_widget("main_node").set_model(self.mirror_multi_one_mainnode_list)
+		self.mirror_glade.get_widget("add").connect('clicked', self.mirror_multi_one_node_add)
+		self.mirror_glade.get_widget("del").connect('clicked', self.mirror_multi_one_node_del)
+
+		self.mirror_glade.get_widget("main_node").set_active(index)
+		self.mirror_glade.get_widget("dir").set_text(self.mirror_dir_org)
+		self.mirror_glade.get_widget("main_node").connect('changed', self.on_main_node_changed)
+		self.mirror_glade.get_widget("dir").connect('changed', self.on_mirror_changed)
+		return
+
+	def on_main_node_changed(self, widget):
+		self.main_node_changed = True
+
+	def on_mirror_changed(self, widget):
+		self.changed = True
+
+	def mirror_multi_all_node_add(self, widget):
+		node_active = self.mirror_glade.get_widget("node").get_active()
+		node_mode = self.mirror_glade.get_widget("node").get_model()
+		data = node_mode[node_active][0]
+		if data == "":
+			msgbox(top_window, _("Please input the node"))
+			return
+
+		self.mirror_main_node_list.append([data])
+		iter = self.mirror_glade.get_widget("node").get_active_iter()
+		if iter :
+			self.mirror_node_list.remove(iter)
+		try:
+			if data in self.nodes:
+				self.mirror_no_run_node_list.remove(data)
+			self.mirror_glade.get_widget("node").set_active(0)
+		except:
+			self.mirror_glade.get_widget("node").set_active(0)
+		self.changed = True
+		return
+
+	def mirror_multi_all_node_del(self, widget):
+		selection = self.mirror_glade.get_widget("main_node_list").get_selection()
+                model, pathlist = selection.get_selected_rows()
+                iterlist = []
+                for path in pathlist:
+                        if not model[path][0]:
+                                continue
+                        iter = model.get_iter(path)
+			self.mirror_node_list.append([model.get_value(iter, 0)])
+			data = model.get_value(iter, 0)
+			if data in self.nodes:
+				self.mirror_no_run_node_list.append(data)
+			self.mirror_main_node_list.remove(iter)
+
+                self.changed = True
+                return
+
+	def update_multi_allactive_mode(self):
+		self.mirror_fs_init(gfs=True)
+
+		self.mirror_main_node_list = gtk.ListStore(gobject.TYPE_STRING)
+		self.mirror_node_list = gtk.ListStore(gobject.TYPE_STRING)
+		self.mirror_no_run_node_list = []
+		for node in self.nodes:
+			if node in self.mirror_no_run_node_org:
+				self.mirror_node_list.append([node])
+				self.mirror_no_run_node_list.append(node)
+			else:
+				self.mirror_main_node_list.append([node])
+
+		renderer = gtk.CellRendererText()
+		column = gtk.TreeViewColumn(_("Node"), renderer, text=0)
+		self.mirror_glade.get_widget("main_node_list").append_column(column)
+		self.mirror_glade.get_widget("main_node_list").get_selection().set_mode(gtk.SELECTION_MULTIPLE)
+		self.mirror_glade.get_widget("main_node_list").set_model(self.mirror_main_node_list)
+
+		self.mirror_glade.get_widget("node").set_model(self.mirror_node_list)
+		self.mirror_glade.get_widget("add").connect('clicked', self.mirror_multi_all_node_add)
+		self.mirror_glade.get_widget("del").connect('clicked', self.mirror_multi_all_node_del)
+
+		self.mirror_glade.get_widget("device").set_text(self.mirror_main_device_org)
+		self.mirror_glade.get_widget("dir").set_text(self.mirror_dir_org)
+		self.mirror_glade.get_widget("device").connect('changed', self.on_mirror_changed)
+		self.mirror_glade.get_widget("dir").connect('changed', self.on_mirror_changed)
+		return
+
+	def mirror_standby_mode_active(self):
+		if self.widget_mirror_two_nodes.get_active():#two nodes active and standby
+			self.mirror_glade = gtk.glade.XML(UI_FILE, "mirror_two_node_dlg", "haclient")
+			for child in self.widget_mirror_vbox.get_children():
+				self.widget_mirror_vbox.remove(child)
+			self.widget_mirror_notes.set_text(_("Note:")+_("Make sure the mirrored partition and \ndirectory are properly configured in \nthe cluster nodes.\n"))
+			self.widget_mirror_vbox.add(self.mirror_glade.get_widget("mirror_two_node_dlg"))
+			self.update_drbd_mode(gfs=False)
+		else: #multi node one active
+			self.mirror_glade = gtk.glade.XML(UI_FILE, "mirror_multi_standby_dlg", "haclient")
+			for child in self.widget_mirror_vbox.get_children():
+				self.widget_mirror_vbox.remove(child)
+			self.widget_mirror_notes.set_text("")
+			self.widget_mirror_vbox.add(self.mirror_glade.get_widget("mirror_multi_standby_dlg"))
+			self.update_multi_oneactive_mode()
+
+	def on_mirror_standby_mode_toggled(self, widget):
+		self.mirror_standby_mode_active()
+		self.changed = True
+
+	def mirror_active_mode_active(self):
+		if self.widget_mirror_two_nodes.get_active():#two nodes active
+			self.mirror_glade = gtk.glade.XML(UI_FILE, "mirror_two_node_dlg", "haclient")
+			for child in self.widget_mirror_vbox.get_children():
+				self.widget_mirror_vbox.remove(child)
+			self.widget_mirror_notes.set_text(_("Note:")+_("Make sure the mirrored partition and \ndirectory are properly configured in \nthe cluster nodes.\n"))
+			self.widget_mirror_vbox.add(self.mirror_glade.get_widget("mirror_two_node_dlg"))
+			self.update_drbd_mode(gfs=True)
+		else: #multi node all active
+			self.mirror_glade = gtk.glade.XML(UI_FILE, "mirror_multi_active_dlg", "haclient")
+			for child in self.widget_mirror_vbox.get_children():
+				self.widget_mirror_vbox.remove(child)
+			self.widget_mirror_notes.set_text(_("Note:")+_("Make sure there is a shared storage devices, and can be mounted by the mirror node correctly.\n"))
+			self.widget_mirror_vbox.add(self.mirror_glade.get_widget("mirror_multi_active_dlg"))
+			self.update_multi_allactive_mode()
+
+	def on_mirror_active_mode_toggled(self, widget):
+		if self.widget_mirror_two_nodes.get_active() and self.widget_mirror_active_mode.get_active() and not self.mirror_two_active_init:#two nodes active
+			ret = confirmbox(top_window, _("There is Shared Storage?"),
+					(gtk.STOCK_NO, gtk.RESPONSE_NO, gtk.STOCK_YES, gtk.RESPONSE_YES))
+			if ret == gtk.RESPONSE_YES:
+				self.widget_mirror_multi_nodes.set_active(True)
+				self.widget_mirror_active_mode.set_active(True)
+		self.mirror_active_mode_active()
+
+		self.changed = True
+
+	def on_mirror_use_toggled(self, widget):
+		active = widget.get_active()
+		self.widget_mirror_label_node_type.set_sensitive(active)
+		self.widget_mirror_two_nodes.set_sensitive(active)
+		self.widget_mirror_multi_nodes.set_sensitive(active)
+		self.widget_mirror_label_mirror_type.set_sensitive(active)
+		self.widget_mirror_standby_mode.set_sensitive(active)
+		self.widget_mirror_active_mode.set_sensitive(active)
+		self.widget_mirror_notes.set_sensitive(active)
+		self.widget_mirror_vbox.set_sensitive(active)
+
+		if self.mirror_node_type_org == "multi":
+			self.on_mirror_multi_nodes_toggled(self.widget_mirror_multi_nodes)
+		else:
+			self.on_mirror_two_nodes_toggled(self.widget_mirror_two_nodes)
+
+		if len(manager.get_normal_nodes()) != 2:
+			self.widget_mirror_two_nodes.set_sensitive(False)
+			self.widget_mirror_multi_nodes.set_active(True)
+			self.on_mirror_multi_nodes_toggled(self.widget_mirror_multi_nodes)
+
+		if self.mirror_type_org == "active":
+			self.widget_mirror_active_mode.set_active(True)
+		else:
+			self.widget_mirror_standby_mode.set_active(True)
+		self.changed = True
+
+	def on_notebook_event(self, widget, page, page_num) :
+		current_page = self.widget_mirror_recovery.get_current_page()
+		self.current_page = current_page
+		self.notebook_not_change = False
+		if self.changed or self.main_node_changed:
+			ret = confirmbox(top_window, _("There are unsaved changes in current page.")+"\n"+_("Apply the changes?"),
+					(gtk.STOCK_NO, gtk.RESPONSE_NO, 
+					gtk.STOCK_YES, gtk.RESPONSE_YES))
+			if ret == gtk.RESPONSE_YES :
+				if current_page == 0:
+					save_ret = self.mirror_save()
+				elif current_page == 1:
+					save_ret = self.backup_save()
+				else:
+					save_ret = self.disaster_recovery_save()
+				if save_ret == 1:
+					self.notebook_not_change = True
+
+		self.update(page_num)
+
+		self.changed = False
+		self.main_node_changed = False
+		return
+
+	def on_notebook_event_after(self, widget, event):
+		if event.type == gtk.gdk.BUTTON_PRESS and self.notebook_not_change:
+			self.widget_mirror_recovery.set_current_page(self.current_page)
+			return
+
+	def on_save(self):
+		current_page = self.widget_mirror_recovery.get_current_page()
+		if self.changed or self.main_node_changed:
+			if current_page == 0:
+				return self.mirror_save()
+			elif current_page == 1:
+				return self.backup_save()
+			else:
+				return self.disaster_recovery_save()
+		return 0
+
+	def update(self, page_num):
+		self.mirror_init()
+		self.backup_init()
+		if page_num == 0:
+			#self.mirror_init()
+			self.mirror_update()
+		elif page_num == 1:
+			#self.backup_init()
+			self.backup_update()
+		else:
+			self.disaster_recovery_init()
+			self.disaster_recovery_update()
+
+	'''def calendar_day_selected_double_click(self, widget, widget_date, dialog):
+		year, month, day = widget.get_date()
+		mytime = time.mktime((year, month+1, day, 0, 0, 0, 0, 0, -1))
+		date = time.strftime("%Y-%m-%d", time.localtime(mytime))
+		if widget_date.name == "backup_select_date":
+			self.widget_backup_start_date.set_text(date)
+		else:
+			self.widget_recovery_start_date.set_text(date)
+		dialog.destroy()
+		self.changed = True
+
+	def on_selecte_date(self, widget):
+		#if widget.name=="backup_select_date":
+		global top_window
+		dialog = gtk.Dialog(_("Select Date"), top_window, gtk.DIALOG_MODAL, 
+				(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
+
+        	# The top part of the window, Calendar, flags and fontsel.
+	        hbox = gtk.HBox(False, 10)
+        	dialog.vbox.pack_start(hbox, True, True, 10)
+	        hbbox = gtk.HButtonBox()
+        	hbox.pack_start(hbbox, False, False, 10)
+	        hbbox.set_layout(gtk.BUTTONBOX_SPREAD)
+        	hbbox.set_spacing(5)
+
+        	# Calendar widget
+	        calendar = gtk.Calendar()
+	        hbbox.pack_start(calendar, False, True, 10)
+        	calendar.connect("day_selected_double_click",
+                         self.calendar_day_selected_double_click, widget, dialog)
+
+		dialog.show_all()
+		ret = dialog.run()
+		if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+			dialog.destroy()
+		
+		return'''
+
+	def __init__(self):
+		global top_window
+		dialog = gtk.Dialog(_("Real time Mirror and Schedule Backup"), top_window, gtk.DIALOG_MODAL,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+		dialog.set_border_width(5)
+		dialog.set_default_response(gtk.RESPONSE_OK)
+
+                glade = gtk.glade.XML(UI_FILE, "mirror_recovery_dlg", "haclient")
+                self.glade = glade
+		
+                self.widget_mirror_recovery = glade.get_widget("mirror_recovery_dlg")
+                dialog.vbox.add(self.widget_mirror_recovery)
+		self.changed = False
+		self.main_node_changed = False
+
+		self.notebook_not_change = False
+		self.widget_mirror_recovery.connect("switch-page", self.on_notebook_event)
+		self.widget_mirror_recovery.connect("event-after", self.on_notebook_event_after)
+		self.widget_mirror_is_use = glade.get_widget("mirror_is_use")
+		self.widget_mirror_is_use.connect("toggled", self.on_mirror_use_toggled)
+
+		self.widget_mirror_label_node_type = glade.get_widget("mirror_label_node_type")
+		self.widget_mirror_two_nodes = glade.get_widget("mirror_two_nodes")
+		self.widget_mirror_multi_nodes = glade.get_widget("mirror_multi_nodes")
+		self.widget_mirror_two_nodes.connect("toggled", self.on_mirror_two_nodes_toggled)
+		self.widget_mirror_multi_nodes.connect("toggled", self.on_mirror_multi_nodes_toggled)
+
+		self.widget_mirror_label_mirror_type = glade.get_widget("mirror_label_mirror_type")
+		self.widget_mirror_standby_mode = glade.get_widget("mirror_standby_mode")
+		self.widget_mirror_active_mode = glade.get_widget("mirror_active_mode")
+		self.widget_mirror_standby_mode.connect("toggled", self.on_mirror_standby_mode_toggled)
+		self.widget_mirror_active_mode.connect("toggled", self.on_mirror_active_mode_toggled)
+
+		self.widget_mirror_notes = glade.get_widget("mirror_notes")
+		self.widget_mirror_vbox = glade.get_widget("mirror_vbox")
+
+		self.widget_backup_is_use = glade.get_widget("backup_is_use")
+		self.widget_backup_is_use.connect("toggled", self.on_backup_use_toggled)
+		self.widget_backup_vbox = glade.get_widget("backup_vbox")
+
+		self.widget_backup_nodelist = glade.get_widget("backup_node_list")
+		renderer = gtk.CellRendererText()
+		column = gtk.TreeViewColumn(_("Node"), renderer, text=0)
+		self.widget_backup_nodelist.append_column(column)
+		renderer = gtk.CellRendererText()
+		column = gtk.TreeViewColumn(_("Password"), renderer, text=1)
+		column.set_visible(False)
+		self.widget_backup_nodelist.append_column(column)
+		#self.widget_backup_nodelist.get_selection().set_model(gtk.SELECTION_MULTIPLE)
+
+		self.widget_backup_node = glade.get_widget("backup_node")
+		self.widget_backup_passwd = glade.get_widget("backup_passwd")
+		self.widget_backup_add = glade.get_widget("backup_add")
+		self.widget_backup_del = glade.get_widget("backup_del")
+		self.widget_backup_add.connect('clicked', self.backup_add_node)
+		self.widget_backup_del.connect('clicked', self.backup_del_node)
+
+		self.widget_backup_main_node = glade.get_widget("backup_main_node")
+		self.widget_backup_main_node.connect('changed', self.on_main_node_changed)
+		self.widget_backup_dir = glade.get_widget("backup_dir")
+		self.widget_backup_dir.connect('changed', self.on_mirror_changed)
+		self.widget_backup_interval = glade.get_widget("backup_interval")
+		self.widget_backup_interval.connect('changed', self.on_main_node_changed)
+		self.widget_backup_interval_unit = glade.get_widget("backup_interval_unit")
+		model_unit = gtk.ListStore(gobject.TYPE_STRING)
+		for s in [_("Min"), _("Hour"), _("Day")]:
+			model_unit.append([s])
+		self.widget_backup_interval_unit.set_model(model_unit)
+		self.widget_backup_interval_unit.set_active(0)
+		self.widget_backup_interval_unit.connect('changed', self.on_main_node_changed)
+
+		'''self.widget_backup_start_date = glade.get_widget("backup_start_date")
+		self.widget_backup_select_date = glade.get_widget("backup_select_date")
+		self.widget_backup_select_date.connect('clicked', self.on_selecte_date)
+		self.widget_backup_start_time = glade.get_widget("backup_start_time")
+		self.widget_backup_start_time.connect('changed', self.on_mirror_changed)'''
+
+		
+		'''current_time = time.time()
+		backup_time= time.localtime(current_time)
+		datetime = DateTime(backup_time)
+		glade.get_widget("hbox5").pack_start(datetime.time_hbox, False, padding=2)
+		self.widget_backup_start_date = datetime.time_date
+		self.widget_backup_start_hour = datetime.time_hr
+		self.widget_backup_start_min = datetime.time_min
+		glade.get_widget("hbox5").show_all()
+		datetime.time_sec.hide()'''
+
+		self.widget_recovery_is_use = glade.get_widget("recovery_is_use")
+		self.widget_recovery_is_use.connect("toggled", self.on_recovery_use_toggled)
+		self.widget_recovery_vbox = glade.get_widget("recovery_vbox")
+
+		self.widget_recovery_local_nodelist = glade.get_widget("recovery_local_node_list")
+		renderer = gtk.CellRendererText()
+		column = gtk.TreeViewColumn(_("Node"), renderer, text=0)
+		self.widget_recovery_local_nodelist.append_column(column)
+		renderer = gtk.CellRendererText()
+		column = gtk.TreeViewColumn(_("Password"), renderer, text=1)
+		column.set_visible(False)
+		self.widget_recovery_local_nodelist.append_column(column)
+		#self.widget_recovery_local_nodelist.get_selection().set_model(gtk.SELECTION_MULTIPLE)
+		self.widget_recovery_local_add = glade.get_widget("recovery_local_add")
+		self.widget_recovery_local_del = glade.get_widget("recovery_local_del")
+		self.widget_recovery_local_add.connect("clicked", self.on_disaster_recovery_add_node)
+		self.widget_recovery_local_del.connect("clicked", self.on_disaster_recovery_del_node)
+
+		self.widget_recovery_remote_nodelist = glade.get_widget("recovery_remote_node_list")
+		renderer = gtk.CellRendererText()
+		column = gtk.TreeViewColumn(_("Node"), renderer, text=0)
+		self.widget_recovery_remote_nodelist.append_column(column)
+		renderer = gtk.CellRendererText()
+		column = gtk.TreeViewColumn(_("Password"), renderer, text=1)
+		column.set_visible(False)
+		self.widget_recovery_remote_nodelist.append_column(column)
+		#self.widget_recovery_remote_nodelist.get_selection().set_model(gtk.SELECTION_MULTIPLE)
+		self.widget_recovery_remote_add = glade.get_widget("recovery_remote_add")
+		self.widget_recovery_remote_del = glade.get_widget("recovery_remote_del")
+		self.widget_recovery_remote_add.connect("clicked", self.on_disaster_recovery_add_node)
+		self.widget_recovery_remote_del.connect("clicked", self.on_disaster_recovery_del_node)
+
+                self.widget_recovery_main_node = glade.get_widget("recovery_main_node")
+                self.widget_recovery_main_node.connect('changed', self.on_main_node_changed)
+		self.widget_recovery_dir = glade.get_widget("recovery_dir")
+		self.widget_recovery_dir.connect('changed', self.on_mirror_changed)
+		self.widget_recovery_interval = glade.get_widget("recovery_interval")
+		self.widget_recovery_interval.connect('changed', self.on_main_node_changed)
+		self.widget_recovery_interval_unit = glade.get_widget("recovery_interval_unit")
+		self.widget_recovery_interval_unit.set_model(model_unit)
+		self.widget_recovery_interval_unit.set_active(0)
+		self.widget_recovery_interval_unit.connect('changed', self.on_main_node_changed)
+
+		'''self.widget_recovery_start_date = glade.get_widget("recovery_start_date")
+		self.widget_recovery_select_date = glade.get_widget("recovery_select_date")
+		self.widget_recovery_select_date.connect('clicked', self.on_selecte_date)
+		self.widget_recovery_start_time = glade.get_widget("recovery_start_time")
+		self.widget_recovery_start_time.connect('changed', self.on_mirror_changed)'''
+
+		'''recovery_time= time.localtime(current_time+ 1000)
+		recovery_datetime = DateTime(recovery_time)
+		glade.get_widget("hbox6").pack_start(recovery_datetime.time_hbox, False, padding=2)
+		self.widget_recovery_start_date = recovery_datetime.time_date
+		self.widget_recovery_start_hour = recovery_datetime.time_hr
+		self.widget_recovery_start_min = recovery_datetime.time_min
+		glade.get_widget("hbox6").show_all()
+		recovery_datetime.time_sec.hide()'''
+
+                nodes = manager.get_normal_nodes()
+                if nodes != None:
+                        nodes.sort()
+
+                self.nodes = []
+                for node in nodes :
+                        status = window.judge_node_status(node)
+                        if status == -1:
+                                continue
+                        self.nodes.append(node)
+
+		self.node_ip = {}
+		self.update(0)
+
+                save_top_window = top_window
+                top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+				if self.changed or self.main_node_changed:
+					con_ret = confirmbox(top_window, _("There are unsaved changes in current page.")+"\n"+_("Apply the changes?"),
+                                        		(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_NO, gtk.RESPONSE_NO,
+                                        		gtk.STOCK_YES, gtk.RESPONSE_YES))
+					if con_ret == gtk.RESPONSE_YES :
+						if self.on_save() == 0:
+                        		        	top_window = save_top_window
+	                                		dialog.destroy()
+        		                        	return None
+					elif con_ret == gtk.RESPONSE_NO:
+	                                	top_window = save_top_window
+        	                	        dialog.destroy()
+                		                return None
+				else:
+                                        top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+                        else:
+                                ret = self.on_save()
+                                if ret == 0:
+                                        top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+

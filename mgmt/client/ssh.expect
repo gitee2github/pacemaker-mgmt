@@ -1,0 +1,30 @@
+#! /usr/bin/expect
+set timeout 60
+set host [lindex $argv 0]
+#set username [lindex $argv 1]
+set password [lindex $argv 1]
+set command [lindex $argv 2]
+
+proc SendSSHPassword {{passwd}} {
+  set needPassword 0
+  set timeout 60
+  for {} {1} {} {
+    expect {
+      "#" {set timeout -1; puts "@@successed";return $needPassword}
+      "*key*changed*" {exec > /root/.ssh/known_hosts}
+      "*assword:" {send "$passwd\r"; set needPassword 1;continue}
+      "Permission denied*" {puts "@@wrong password"; return -4}
+      "*connecting*yes*" {send "yes\r"; set timeout -1}
+      "*closed*remote host" {puts "@@connection closed by remote host";return -2}
+      "*refused" {puts "@@connection refused"; return -3}
+      timeout {puts "@@Time out"; return -2}
+      -re . {exp_continue}
+      eof {break}
+    }
+  }
+}
+
+
+spawn ssh $host $command
+SendSSHPassword $password
+

@@ -1,0 +1,247 @@
+#!/usr/bin/python
+# coding: iso-8859-15
+
+'''haclient.py, the GUI manamgement tool for Linux-HA'''
+import sys, os, string, socket, syslog, webbrowser, pickle, xml, gc, time, binascii, thread, tarfile, tempfile
+from stat import *
+from xml.dom.minidom import parseString
+from xml.dom.minidom import getDOMImplementation
+import re
+import pdb
+import locale, gettext
+app_name = "haclient"
+
+sys.path.append("@HA_DATADIR@/heartbeat-gui")
+sys.path.append("@LIBDIR@/heartbeat-gui")
+
+from nkha_constants import *
+__authors__ = AUTHORS
+__license__ = GPLV2PLUS
+from license_register import HALicenseManager, HALic_ctrl_IS_flag
+from basefunc import confirmbox, msgbox
+
+from IPy import IP
+from pymgmt import *
+
+import pygtk
+pygtk.require('2.0')
+import gtk, gobject, gtk.glade
+import datetime
+from basefunc import edit_filesystem_clone, is_rsc_running, delete_resource, delete_constraints, is_existed, add_gfs
+from basefunc import confirmbox
+class gfsview:
+	xml_nodes = {}
+	def on_radio_changed(self,widget):
+		if self.widget_add.get_active():
+			self.widget_diskpath.set_sensitive(True)
+			self.widget_directory.set_sensitive(True)
+			self.widget_gfs_num_check.set_sensitive(True)
+		elif self.widget_modify.get_active():
+			if is_existed(self.manager, "clone","clone-gfs"):
+				self.widget_diskpath.set_sensitive(True)
+				self.widget_directory.set_sensitive(True)
+				self.widget_gfs_num_check.set_sensitive(True)
+				self.last_diskpath = self.widget_diskpath.get_text()
+				self.last_directory = self.widget_directory.get_text()
+				if self.widget_gfs_num_check.get_active():
+					self.widget_gfs_num.set_sensitive(True)
+					self.last_gfs_num = str(self.widget_gfs_num.get_value())
+				if self.clone_max == False:
+					self.widget_gfs_num_check.set_sensitive(False)
+					self.last_gfs_num = int(len(self.manager.get_all_nodes()))
+			else:
+				self.widget_diskpath.set_sensitive(False)
+				self.widget_directory.set_sensitive(False)
+				self.widget_gfs_num_check.set_sensitive(False)
+				
+		else:
+			self.widget_diskpath.set_sensitive(False)
+			self.widget_directory.set_sensitive(False)
+			self.widget_gfs_num_check.set_sensitive(False)
+			self.widget_gfs_num.set_sensitive(False)
+		return
+	def on_gfsnum_check(self,widget):
+		if self.widget_gfs_num_check.get_active()==True:
+			self.widget_gfs_num.set_sensitive(True)
+		else:
+			self.widget_gfs_num.set_sensitive(False)
+		return
+	def set_text(self):
+		for xml_clone in self.manager.xml_nodes["cib"].getElementsByTagName("nvpair"):
+			id = str(xml_clone.getAttribute("id"))	
+			if id == "fs-instance_attributes-device":
+				self.widget_diskpath.set_text(str(xml_clone.getAttribute("value")))
+			if id == "fs-instance_attributes-directory":
+				self.widget_directory.set_text(str(xml_clone.getAttribute("value")))
+			if id == "clone-gfs-meta_attributes-clone-max":
+				self.clone_max = True
+				self.widget_gfs_num_check.set_active(True)
+				self.widget_gfs_num.set_value(int(xml_clone.getAttribute("value")))
+				if self.widget_delete.get_active():
+					self.widget_gfs_num.set_sensitive(False)
+	def __init__(self, top_window, manager):
+                self.manager = manager
+                dialog = gtk.Dialog(_("GFS Configuration"), top_window, gtk.DIALOG_MODAL,
+                        (gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                glade = gtk.glade.XML(UI_FILE, "gfsdlg", "haclient")
+
+                layout = glade.get_widget("gfsdlg")
+                dialog.vbox.add(layout)
+
+		self.changed = False
+		self.clone_max  = False
+		self.widget_add = glade.get_widget("add")
+		self.widget_add.connect('toggled', self.on_radio_changed)
+		self.widget_modify = glade.get_widget("modify")
+		self.widget_modify.connect('toggled', self.on_radio_changed)
+		self.widget_delete = glade.get_widget("delete")
+		self.widget_delete.connect('toggled', self.on_radio_changed)
+		self.widget_diskpath = glade.get_widget("diskpath")
+		self.widget_directory = glade.get_widget("directory")
+		self.widget_gfs_num_check = glade.get_widget("gfs_num_check")
+		self.widget_gfs_num_check.connect('toggled',self.on_gfsnum_check)
+		self.widget_gfs_num = glade.get_widget("gfs_num")
+		self.widget_gfs_num.set_range(2,64)
+		self.widget_gfs_num.set_value(int(len(manager.get_all_nodes())))
+		self.widget_gfs_num.set_sensitive(False)
+		self.widget_gfs_num_check.set_active(False)
+
+		self.widget_add.set_active(True)
+		self.widget_delete.set_active(False)
+		self.widget_modify.set_active(False)
+
+		if is_existed(self.manager, "clone","clone-gfs") == True:
+			self.widget_add.set_sensitive(False)
+			self.widget_modify.set_sensitive(True)
+			self.widget_delete.set_sensitive(True)
+			self.widget_delete.set_active(True)
+			self.set_text()
+		else:
+			self.widget_modify.set_sensitive(False)
+			self.widget_delete.set_sensitive(False)
+			self.widget_add.set_sensitive(True)
+#                self.data_init()
+#                self.update()
+
+                save_top_window = top_window
+                top_window = dialog
+                while True :
+                        ret = dialog.run()
+                        if ret in [gtk.RESPONSE_CANCEL, gtk.RESPONSE_DELETE_EVENT] :
+                                if self.changed :
+                                        ret = confirmbox(top_window, _("The data of current view have been changed.")+"\n"+_("Apply the changes?"),
+                                                (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                                gtk.STOCK_NO, gtk.RESPONSE_NO,
+                                                gtk.STOCK_YES, gtk.RESPONSE_YES))
+                                        if ret == gtk.RESPONSE_YES :
+                                                self.save()
+                                        if ret != gtk.RESPONSE_CANCEL :
+                                                top_window = save_top_window
+                                                dialog.destroy()
+                                                return None
+                                else:
+                                        top_window = save_top_window
+                                        dialog.destroy()
+                                        return None
+                        else:
+				if self.widget_add.get_active():
+					self.diskpath = self.widget_diskpath.get_text()
+					self.directory = self.widget_directory.get_text()
+					if self.widget_gfs_num_check.get_active()==True:
+						self.gfs_num = str(int(self.widget_gfs_num.get_value()))
+					else:
+						self.gfs_num = "-1"
+
+			                if not manager.check_device(self.diskpath):
+						msgbox(top_window, _("please input diskpath"))
+						continue
+                                        if len(self.directory)==0:
+						msgbox(top_window, _("please input directory!"))
+						continue
+					if os.path.isdir(self.directory)==False:
+						msgbox(top_window, _("directory error!"))
+						continue
+
+					if int(self.gfs_num) > int(len(manager.get_all_nodes())):
+                                                msgbox(top_window, _("gfs num must little than the number of cluster nodes"))
+                                                continue
+
+			                ret = confirmbox(top_window, _("Are you sure you have format the shared disk to gfs?,please execute gfs_init.sh in /usr/sbin first"),
+                  	  			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                        			gtk.STOCK_OK, gtk.RESPONSE_OK))
+			                if ret == gtk.RESPONSE_OK :
+						self.start_add_gfs2(self.diskpath,self.directory,self.gfs_num)
+					else:
+						continue
+				elif self.widget_modify.get_active():
+					self.diskpath = self.widget_diskpath.get_text()
+					self.directory = self.widget_directory.get_text()
+					if self.widget_gfs_num_check.get_active()==True:
+						self.gfs_num = str(int(self.widget_gfs_num.get_value()))
+					else:
+						self.gfs_num = "-1"
+					if not manager.check_device(self.diskpath):
+						msgbox(top_window, _("please input diskpath"))
+						continue
+                                        if len(self.directory)==0:
+						msgbox(top_window, _("please input directory!"))
+						continue
+					if os.path.isdir(self.directory)==False:
+						msgbox(top_window, _("directory error!"))
+						continue
+
+					if int(self.gfs_num) > int(len(manager.get_all_nodes())):
+                                                msgbox(top_window, _("gfs num must little than the number of cluster nodes"))
+                                                continue
+
+					if self.last_diskpath == self.diskpath and self.last_directory == self.directory and self.last_gfs_num == self.gfs_num:
+						
+                                		top_window = save_top_window
+                                		dialog.destroy()
+                                		return None
+					if self.last_diskpath != self.diskpath:
+			                	ret = confirmbox(top_window, _("Are you sure you have format the shared disk to gfs?,please execute gfs_init.sh in /usr/sbin first"),
+                  	  					(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                        					gtk.STOCK_OK, gtk.RESPONSE_OK))
+			                	if ret == gtk.RESPONSE_OK :
+							edit_filesystem_clone(self.manager, self.diskpath,self.directory,self.gfs_num)
+						else:
+							continue
+					else:
+						edit_filesystem_clone(self.manager, self.diskpath,self.directory,self.gfs_num)
+						
+				else:
+			                ret = confirmbox(top_window, _("Do you want to delete GFS2?"),
+                  	  			(gtk.STOCK_NO, gtk.RESPONSE_NO,
+                        			gtk.STOCK_YES, gtk.RESPONSE_YES))
+			                if ret == gtk.RESPONSE_YES :
+						self.delete_gfs2()
+					else:
+						continue
+			        #        if ret != gtk.RESPONSE_NO :
+                                top_window = save_top_window
+                                dialog.destroy()
+                                return None
+	def update(self):
+		return
+	def start_add_gfs2(self,diskpath,directory,node_num):
+		####format shared disk#####
+                add_gfs(self.manager, diskpath,directory,node_num)
+		self.widget_add.set_sensitive(False)
+		self.widget_modify.set_sensitive(True)
+		self.widget_delete.set_sensitive(True)
+		return
+	def delete_gfs2(self):
+		if is_rsc_running(self.manager):
+			msgbox(top_window, "resources is running,please stop it first")
+			return
+		delete_resource(self.manager, "clone-gfs")
+	#	delete_constraints()
+	#	delete_resource("clone-dlm")
+	#	delete_resource("clone-gfs2")
+	#	delete_resource("clone-fs")
+		self.widget_add.set_sensitive(True)
+		self.widget_modify.set_sensitive(False)
+		self.widget_delete.set_sensitive(False)	
+		return
+

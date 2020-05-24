@@ -1,0 +1,145 @@
+#!/bin/sh
+#
+# Author:	CS2C
+# License:      GNU General Public License (GPL) 
+#
+#	usage: $0 {start|stop|status|monitor|validate-all|meta-data}
+#  OCF parameters:
+#
+##########################################################################
+# Initialization:
+#OCF_ROOT="/usr/lib/ocf"
+: ${OCF_FUNCTIONS_DIR=${OCF_ROOT}/lib/heartbeat}
+. ${OCF_FUNCTIONS_DIR}/ocf-shellfuncs
+#########################################################################
+
+name="test"
+start_path="/etc/rc.d/init.d/vsftpd"
+stop_path="/etc/rc.d/init.d/vsftpd"
+
+meta_data() {
+	cat <<END
+<?xml version="1.0"?>
+<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">
+<resource-agent name="$name">
+<version>1.0</version>
+
+<longdesc lang="en">
+This script manages $name
+</longdesc>
+<shortdesc lang="en">OCF Resource Agent compliant $name.</shortdesc>
+
+<parameters>
+</parameters>
+
+<actions>
+<action name="start"   timeout="50" />
+<action name="stop"    timeout="60" />
+<action name="monitor" depth="10"  timeout="15s" interval="30s" start-delay="1s" />
+<action name="validate-all"  timeout="30s" />
+<action name="meta-data"  timeout="5s" />
+</actions>
+</resource-agent>
+END
+}
+
+anything_status() 
+{
+	ret0=`ps -ef |grep -v grep |grep $monitor_process0 |wc -l`
+}
+
+anything_start()
+{
+    anything_status
+    ret=$?
+    if [ $ret -eq 0 ]; then
+      ocf_log info "$name agent already running"
+      return $OCF_SUCCESS;
+    else
+      $start_path >/dev/null 2>&1
+       anything_monitor
+       ret1=$?
+       if [ $ret1 -eq 0 ]; then
+          ocf_log info "$name agent start ok"
+          return $OCF_SUCCESS;
+       else
+          ocf_log info "$name agent start failed"
+          return $OCF_ERR_GENERIC;
+       fi
+  fi
+}
+
+
+anything_stop()
+{
+ anything_status
+ ret=$?
+ if [ $ret -ne 7 ]; then
+#   ocf_log info $ret
+   $stop_path >/dev/null 2>&1
+   sleep 3 
+   anything_monitor
+   ret=$?
+   if [ $ret -eq 7 ]; then
+     ocf_log info "$name agent stop ok"
+     return $OCF_SUCCESS;
+   else
+     ocf_log info "$name agent stop failed"
+     return $OCF_ERR_GENERIC;
+   fi
+ else
+   ocf_log info "$name agent not running"
+   return $OCF_SUCCESS;
+ fi
+
+}
+
+anything_monitor()
+{
+  anything_status
+  ret=$?
+  #ocf_log info $ret
+  if [ $ret -eq 0 ]; then
+     ocf_log info " $name is running!"
+     return $OCF_SUCCESS
+  elif [ $ret -eq 7 ]; then
+     ocf_log info "$name is not running" 
+     return $OCF_NOT_RUNNING
+  else
+    ocf_log info "$name is failed"
+    return $OCF_ERR_GENERIC
+  fi
+}
+
+anything_validate()
+{
+ return $OCF_SUCCESS
+}
+
+case $1 in
+    start)	anything_start
+		;;
+	
+    stop)	anything_stop
+    		;;
+		
+    status)	anything_status
+    		;;
+		
+    monitor)	anything_monitor
+    		;;
+		
+    validate-all)	anything_validate
+    			exit  $OCF_SUCCESS
+    			;;
+			
+    meta-data)	meta_data
+                exit  $OCF_SUCCESS
+  		;;
+    *)
+                ocf_log err "$0 was called with unsupported arguments: $*"
+                exit $OCF_ERR_UNIMPLEMENTED
+                ;;
+esac
+exit $?
+
